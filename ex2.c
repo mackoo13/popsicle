@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NUM_EVENTS 1
+#define NUM_EVENTS 2
 
 void handle_error (int retval)
 {
@@ -25,7 +25,16 @@ void list_components() {
         printf("\t\tNative events: %d\n", cmpinfo->num_native_events);
         printf("\t\tPreset Events: %d\n", cmpinfo->num_preset_events);
         if(cmpinfo->disabled) printf("\t\tWARNING! Component disabled - reason: %s\n", cmpinfo->disabled_reason);
+        printf("\n");
     }
+}
+
+void list_values(long long int* values, char* label) {
+    printf("%s", label);
+    for(int i=0; i<NUM_EVENTS; ++i) {
+        printf("\t%lld", values[i]);
+    }
+    printf("\n");
 }
 
 int exec(int retval) {
@@ -35,30 +44,29 @@ int exec(int retval) {
 
 int main()
 {
-    int Events[NUM_EVENTS] = {PAPI_TOT_INS};
+    int Events[NUM_EVENTS] = {PAPI_TOT_INS, PAPI_L1_DCM};
     long_long values[NUM_EVENTS];
     int retval;
 
     initialize();
     list_components();
 
-    printf("Counters count: %d\n", PAPI_num_counters());
+    printf("Counters count: %d\n\n", PAPI_num_counters());
 
     // Start counting events
     exec(PAPI_start_counters(Events, NUM_EVENTS));
 
     // Read the counters
     exec(PAPI_read_counters(values, NUM_EVENTS));
-    printf("After reading the counters: %lld\n",values[0]);
+    list_values(values, "After read");
 
     // Add the counters
     exec(PAPI_accum_counters(values, NUM_EVENTS));
-    printf("After adding the counters: %lld\n", values[0]);
+    list_values(values, "After accum");
 
     // Stop counting events
     exec(PAPI_stop_counters(values, NUM_EVENTS));
-    printf("After stopping the counters: %lld\n", values[0]);
-}
+    list_values(values, "After stop");}
 
 // gcc -I ~/papi/papi/src/ -c ex2.c
 // gcc ex2.o -L ~/papi/papi/src/libpfm4/lib -lpfm  -L ~/papi/papi/src/ -lpapi -static -o ex2
