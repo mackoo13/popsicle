@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-void f() {
+int loop() {
     int q=0;
 
     for (int i = 0; i < 999; ++i) {

@@ -26,6 +26,22 @@ void available_event_codes(int* res, int* number) {
     } while (PAPI_enum_event(&i, PAPI_ENUM_ALL) == PAPI_OK);
 }
 
+void create_some_event_set(int* set, int* number) {
+    int retval;
+
+    int event_codes[256];
+    int event_count;
+    available_event_codes(event_codes, &event_count);
+
+    *number = 0;
+    PAPI_create_eventset (set);
+
+    for (int i = 0; i < event_count; ++i) {
+        retval = PAPI_add_event(*set, event_codes[i]);
+        if(retval == PAPI_OK) *number = *number + 1;
+    }
+}
+
 void print_events_list() {
     int retval, is_available;
     int available_count = 0;
@@ -52,7 +68,21 @@ void print_events_list() {
     printf("\nAvailable events: %d\n", available_count);
 }
 
+void print_values(int set, long_long* values) {
+    int event_codes[256];
+    int event_count;
+    PAPI_list_events(set, event_codes, &event_count);
+
+    char event_name[PAPI_MAX_STR_LEN];
+    for (int i = 0; i < event_count; ++i) {
+        PAPI_event_code_to_name(event_codes[i], event_name);
+        printf("%s\t%lld\n", event_name, values[i]);
+
+    }
+}
+
 void print_event_chooser() {
+    // one big todo
     int event_codes[256];
     int event_count;
     int set = PAPI_NULL;

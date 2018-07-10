@@ -108,3 +108,5 @@
 [+]     PAPI_REF_CYC     107    Reference clock cycles
 
 Available events: 52
+
+
