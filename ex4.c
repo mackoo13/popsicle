@@ -1,4 +1,4 @@
-#include "kernel.h"
+#include "kernels/kernel1.h"
 #include "papi_utils/papi_events.h"
 
 int main() {
@@ -13,6 +13,7 @@ int main() {
 
     exec(PAPI_start(set));
 
+    int Class=2;
     loop();
 
     exec(PAPI_stop(set, values));
