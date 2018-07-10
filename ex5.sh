@@ -1,5 +1,15 @@
 #!/bin/bash
-for x in kernels/kernel*.c
+
+i=1
+
+while true
 do
-    echo $x
+    if [ -e kernels/kernel$i.c ]
+    then
+        echo $i
+    else
+        break
+    fi
+
+    ((i++))
 done
