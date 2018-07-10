@@ -8,6 +8,4 @@ int loop() {
     for (int i = 0; i < max; ++i) {
         q += i;
     }
-
-    printf("%d\n", q);
 }

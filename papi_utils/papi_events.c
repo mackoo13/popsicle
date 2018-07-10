@@ -76,7 +76,8 @@ void print_values(int set, long_long* values) {
     char event_name[PAPI_MAX_STR_LEN];
     for (int i = 0; i < event_count; ++i) {
         PAPI_event_code_to_name(event_codes[i], event_name);
-        printf("%s\t%lld\n", event_name, values[i]);
+//        printf("%s\t%lld\n", event_name, values[i]);
+        printf("%lld,", values[i]);
 
     }
 }

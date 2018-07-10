@@ -1,3 +1,4 @@
+#include <time.h>
 #include "kernels/kernel1.h"
 #include "papi_utils/papi_events.h"
 
@@ -13,10 +14,16 @@ int main() {
 
     exec(PAPI_start(set));
 
-    int Class=2;
+    clock_t begin = clock();
+
     loop();
+
+    clock_t end = clock();
 
     exec(PAPI_stop(set, values));
 
     print_values(set, values);
+
+    double time_spent = (double)(end - begin) * 1000 / CLOCKS_PER_SEC;
+    printf("%lf\n", time_spent);
 }
