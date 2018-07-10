@@ -7,6 +7,11 @@ void handle_error (int retval) {
     exit(1);
 }
 
+int exec(int retval) {
+    if (retval != PAPI_OK) handle_error(retval);
+    return retval;
+}
+
 void initialize() {
     if(!PAPI_is_initialized()) PAPI_library_init(PAPI_VER_CURRENT);
 }
@@ -71,11 +76,11 @@ void print_events_list() {
 void print_values(int set, long_long* values) {
     int event_codes[256];
     int event_count;
-    PAPI_list_events(set, event_codes, &event_count);
+    exec(PAPI_list_events(set, event_codes, &event_count));
 
-    char event_name[PAPI_MAX_STR_LEN];
+//    char event_name[PAPI_MAX_STR_LEN];
     for (int i = 0; i < event_count; ++i) {
-        PAPI_event_code_to_name(event_codes[i], event_name);
+//        PAPI_event_code_to_name(event_codes[i], event_name);
 //        printf("%s\t%lld\n", event_name, values[i]);
         printf("%lld,", values[i]);
 
@@ -112,9 +117,4 @@ void print_event_chooser() {
         }
         printf("\n");
     }
-}
-
-int exec(int retval) {
-    if (retval != PAPI_OK) handle_error(retval);
-    return retval;
 }
