@@ -4,6 +4,17 @@
 
 #define EVENT_COUNT 4
 
+void print_result(int set, long_long* values, double time_spent) {
+    int event_codes[256];
+    int event_count;
+    exec(PAPI_list_events(set, event_codes, &event_count));
+
+    for (int i = 0; i < event_count; ++i) {
+        printf("%lld,", values[i]);
+    }
+    printf("%lf\n", time_spent);
+}
+
 int main() {
 
     int set = PAPI_NULL;
@@ -23,8 +34,6 @@ int main() {
     clock_t end = clock();
     exec(PAPI_stop(set, values));
 
-    print_values(set, values);
-
     double time_spent = (double)(end - begin) * 1000 / CLOCKS_PER_SEC;
-    printf("%lf\n", time_spent);
+    print_result(set, values, time_spent);
 }

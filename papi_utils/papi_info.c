@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NUM_EVENTS 2
-
 void handle_error (int retval)
 {
     printf("PAPI error %d: %s\n", retval, PAPI_strerror(retval));
@@ -29,46 +27,33 @@ void list_components() {
     }
 }
 
-void list_values(long long int* values, char* label) {
-    printf("%s", label);
-    for(int i=0; i<NUM_EVENTS; ++i) {
-        printf("\t%lld", values[i]);
-    }
-    printf("\n");
+void list_events() {
+    int retval, is_available;
+    int available_count = 0;
+    int i = PAPI_PRESET_MASK;
+    PAPI_event_info_t info;
+
+    initialize();
+
+    do {
+        retval = PAPI_get_event_info(i, &info);
+
+        if (retval == PAPI_OK) {
+            is_available = (PAPI_query_event(i) == PAPI_OK);
+            if(is_available) available_count++;
+
+            printf("%s\t%-16s %d\t%s\n",
+                   (is_available ? "[+]" : "[ ]"),
+                   info.symbol,
+                   info.event_code % 256,
+                   info.long_descr);
+        }
+    } while (PAPI_enum_event(&i, PAPI_ENUM_ALL) == PAPI_OK);
+
+    printf("\nAvailable events: %d\n", available_count);
 }
 
 int exec(int retval) {
     if (retval != PAPI_OK) handle_error(retval);
     return retval;
 }
-
-int main()
-{
-    int Events[NUM_EVENTS] = {PAPI_TOT_INS, PAPI_L1_DCM};
-    long_long values[NUM_EVENTS];
-    int retval;
-
-    initialize();
-    list_components();
-
-    printf("Counters count: %d\n\n", PAPI_num_counters());
-
-    // Start counting events
-    exec(PAPI_start_counters(Events, NUM_EVENTS));
-
-    // Read the counters
-    exec(PAPI_read_counters(values, NUM_EVENTS));
-    list_values(values, "After read");
-
-    // Add the counters
-    exec(PAPI_accum_counters(values, NUM_EVENTS));
-    list_values(values, "After accum");
-
-    // Stop counting events
-    exec(PAPI_stop_counters(values, NUM_EVENTS));
-    list_values(values, "After stop");}
-
-// gcc -I ~/papi/papi/src/ -c ex2.c
-// gcc ex2.o -L ~/papi/papi/src/libpfm4/lib -lpfm  -L ~/papi/papi/src/ -lpapi -static -o ex2
-
-// gcc ex2.c -I ~/papi/papi/src/ -L ~/papi/papi/src/libpfm4/lib -lpfm  -L ~/papi/papi/src/ -lpapi -static -o ex2
