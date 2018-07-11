@@ -18,7 +18,7 @@ void print_result(int set, long_long* values, double time_spent) {
 int main() {
 
     int set = PAPI_NULL;
-    int event_codes[4] = {PAPI_L1_DCM, PAPI_L1_ICM, PAPI_TOT_INS, PAPI_REF_CYC};
+    int event_codes[EVENT_COUNT] = {PAPI_L1_DCM, PAPI_L1_ICM, PAPI_TOT_INS, PAPI_REF_CYC};
     long_long values[EVENT_COUNT];
 
     initialize();
