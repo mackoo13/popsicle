@@ -24,6 +24,7 @@ int main() {
     initialize();
     exec(PAPI_multiplex_init());
 
+    // I assume the events number and order is deterministic (e.g. we can initialize it each time anew)
     available_event_codes(event_codes, &event_count);
     long_long* values = malloc(event_count * sizeof(long_long));
 
