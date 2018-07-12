@@ -97,7 +97,7 @@ void loop()
     // for(threads=1; threads<=MAX_THREADS;threads++){
     //    omp_set_num_threads(threads);nthreads=threads;
 //    srand(0); N = 10; L=1;S=0;
-    srand(0); N = max%10; L=1;S=0;
+    srand(0); N = max; L=1;S=0;
     sz = malloc(N*sizeof(int));
     A = malloc(N*sizeof(double*));
     Av = malloc(N*sizeof(double*));

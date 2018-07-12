@@ -1,6 +1,6 @@
 #include <time.h>
-#include "kernels/kernel.h"
 #include "papi_utils/papi_events.h"
+#include "kernels_pb/2mm_manual.h"
 
 void print_result(int set, long_long* values, double time_spent) {
     int event_codes[256];
@@ -31,13 +31,11 @@ int main() {
     exec(PAPI_set_multiplex(set));
     exec(PAPI_add_events(set, event_codes, event_count));
 
-    exec(PAPI_start(set));
     clock_t begin = clock();
 
-    loop();
+    loop(set, values);
 
     clock_t end = clock();
-    exec(PAPI_stop(set, values));
 
     double time_spent = (double)(end - begin) * 1000 / CLOCKS_PER_SEC;
     print_result(set, values, time_spent);
