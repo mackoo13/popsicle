@@ -1,6 +1,6 @@
 #include <time.h>
 #include "papi_utils/papi_events.h"
-#include "kernels_pb/2mm_manual.h"
+#include "kernels_pb/kernel.h"
 
 void print_result(int set, long_long* values, double time_spent) {
     int event_codes[256];
