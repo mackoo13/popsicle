@@ -3,16 +3,24 @@
 # PARAMS:
 #   $1 output file name (without extension)
 
-readonly trials=5
+readonly trials=1
 readonly pb_path=~/polybench-c-4.2.1-beta
 readonly papi_path=~/papi/papi/src/
 readonly out_file=papi_output/$1.csv
-id=0
 
 compile() {
     name=$1
+    params=$2
 
     # todo compile pb
+
+    gcc -c \
+        -I ${papi_path} \
+        -I ${pb_path}/utilities/ \
+        kernels_pb/${name}/${name}.c \
+        -D MINI_DATASET \
+        ${params} \
+        -o kernels_pb/${name}/${name}.o
 
     gcc kernels_pb/${name}/${name}.o \
         exec_loop_pb.o \
@@ -28,17 +36,19 @@ echo -n "" > ${out_file}
 
 while read -r path; do
     name=`basename "${path%.*}"`
+    id=0
 
-    compile ${name}
+    while read -r params; do
+        compile ${name} "${params}"
 
-    echo "Running $name ..."
+        echo "Running $name $params ..."
 
-    for trial in `seq ${trials}`
-    do
-        echo -n ${id}, >> ${out_file}
-        ./exec_loop_pb >> ${out_file}
-    done
+        for trial in `seq ${trials}`; do
+            echo -n ${name},${id}, >> ${out_file}
+            ./exec_loop_pb >> ${out_file}
+        done
 
-    ((id++))
+        ((id++))
+    done < kernels_pb/${name}/${name}_params.txt
 
 done <<< `find kernels_pb -iname '*.c'`

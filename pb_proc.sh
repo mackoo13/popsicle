@@ -18,6 +18,8 @@ process_file() {
          s@(polybench_start_instruments;)@exec\(PAPI_start\(set\)\);@g;
          s@(polybench_stop_instruments;)@exec\(PAPI_stop\(set, values\)\);@g;
          s@(polybench_print_instruments;)@/*\1*/@g' ${path} > kernels_pb/${name}/${name}.c
+
+     python3 param_range.py ${name} > kernels_pb/${name}/${name}_params.txt
 }
 
 compile() {
@@ -27,15 +29,10 @@ compile() {
 
     gcc -c \
         -I ${papi_path} \
-        -I ${pb_path}/utilities/ \
-        kernels_pb/${name}/${name}.c \
-        -D MINI_DATASET \
-        -o kernels_pb/${name}/${name}.o
-
-    gcc -c \
-        -I ${papi_path} \
         exec_loop_pb.c
 }
+
+compile ${name}
 
 while read -r path; do
     name=`basename "${path%.*}"`
@@ -43,7 +40,6 @@ while read -r path; do
     cp $(echo ${path/%c/h}) kernels_pb/${name}/
 
     process_file ${path} ${name}
-    compile ${name}
 
 done <<< `find ${pb_path} -iname '*.c' \
     -not -path '*/utilities/*' \
