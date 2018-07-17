@@ -20,7 +20,7 @@ compile() {
         kernels_pb/${name}/${name}.c \
         -D MINI_DATASET \
         ${params} \
-        -o kernels_pb/${name}/${name}.o
+        -O0 -o kernels_pb/${name}/${name}.o
 
     gcc kernels_pb/${name}/${name}.o \
         exec_loop_pb.o \
@@ -29,7 +29,7 @@ compile() {
         -L ~/papi/papi/src/libpfm4/lib -lpfm \
         -L ~/papi/papi/src/ -lpapi \
         -lm \
-        -static -o exec_loop_pb
+        -O0 -static -o exec_loop_pb
 }
 
 echo -n "" > ${out_file}
@@ -37,6 +37,8 @@ echo -n "" > ${out_file}
 while read -r path; do
     name=`basename "${path%.*}"`
     id=0
+
+    cat papi_utils/active_events_header.txt > ${out_file}
 
     while read -r params; do
         compile ${name} "${params}"

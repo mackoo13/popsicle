@@ -29,6 +29,7 @@ compile() {
 
     gcc -c \
         -I ${papi_path} \
+        -O0 \
         exec_loop_pb.c
 }
 
