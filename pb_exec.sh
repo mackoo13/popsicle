@@ -32,13 +32,10 @@ compile() {
         -O0 -static -o exec_loop_pb
 }
 
-echo -n "" > ${out_file}
+cat papi_utils/active_events_header.txt > ${out_file}
 
 while read -r path; do
     name=`basename "${path%.*}"`
-    id=0
-
-    cat papi_utils/active_events_header.txt > ${out_file}
 
     while read -r params; do
         compile ${name} "${params}"
@@ -46,11 +43,10 @@ while read -r path; do
         echo "Running $name $params ..."
 
         for trial in `seq ${trials}`; do
-            echo -n ${name},${id}, >> ${out_file}
+            echo -n ${name},${params}, >> ${out_file}
             ./exec_loop_pb >> ${out_file}
         done
 
-        ((id++))
     done < kernels_pb/${name}/${name}_params.txt
 
 done <<< `find kernels_pb -iname '*.c'`

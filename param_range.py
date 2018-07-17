@@ -28,8 +28,8 @@ def main():
 
     with open('kernels_pb/' + file + '/' + file + '.h', 'r') as fin:
         code = fin.read()
-    mini, names = get_defines(code, 'MEDIUM')
-    med, _ = get_defines(code, 'LARGE')
+    mini, names = get_defines(code, 'SMALL')
+    med, _ = get_defines(code, 'MEDIUM')
 
     for i in range(max_n):
         vals = [scale_vals(imini, imed, i) for imini, imed in zip(mini, med)]
