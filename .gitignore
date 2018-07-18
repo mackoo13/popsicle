@@ -6,4 +6,5 @@ kernels/params.c
 kernels_pb/*/*
 python/.ipynb_checkpoints/*
 .idea/*
+venv
 CMakeLists.txt
