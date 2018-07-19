@@ -4,6 +4,7 @@
 *.o
 kernels/params.c
 kernels_pb/*/*
+kernels_lore
 python/.ipynb_checkpoints/*
 .idea/*
 venv
