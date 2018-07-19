@@ -13,17 +13,21 @@ compile() {
 
     gcc -c \
         -I ${papi_path} \
-        kernels_lore/${name}/${name}.c \
-        -D MINI_DATASET \
+        kernels_lore/proc/${name}/${name}.c \
         ${params} \
-        -O0 -o kernels_lore/${name}/${name}.o
+        -O0 -o kernels_lore/proc/${name}/${name}.o
 
-    gcc kernels_lore/${name}/${name}.o \
-        exec_loop_pb.o \
-        papi_utils/papi_events.o \
-        -L ~/papi/papi/src/libpfm4/lib -lpfm \
-        -L ~/papi/papi/src/ -lpapi \
-        -O0 -static -o exec_loop_pb
+    if [ -e kernels_lore/proc/${name}/${name}.o ]; then
+        gcc kernels_lore/proc/${name}/${name}.o \
+            exec_loop_pb.o \
+            papi_utils/papi_events.o \
+            -L ~/papi/papi/src/libpfm4/lib -lpfm \
+            -L ~/papi/papi/src/ -lpapi \
+            -lm \
+            -O0 -static -o exec_loop_pb
+     else
+        echo "Skipping $name (parse error)"
+     fi
 }
 
 cat papi_utils/active_events_header.txt > ${out_file}
@@ -41,10 +45,6 @@ while read -r path; do
             ./exec_loop_pb >> ${out_file}
         done
 
-    done < kernels_lore/${name}/${name}_params.txt
+    done < kernels_lore/proc/${name}/${name}_params.txt
 
-done <<< `find kernels_lore -iname '*.c' \
-    -not -path '*/k3.c' \
-    -not -path '*/k2.c' \
-    -not -path '*/k1.c' \
-    -not -path '*/k.c'`
+done <<< `find kernels_lore/proc/ -iname '*.c'`

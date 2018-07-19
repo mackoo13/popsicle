@@ -1,5 +1,7 @@
 from pycparser import c_parser, c_ast
 import re
+import os
+import argparse
 
 
 # noinspection PyPep8Naming
@@ -48,6 +50,7 @@ class AssignmentVisitor(c_ast.NodeVisitor):
 class ForVisitor(c_ast.NodeVisitor):
     def __init__(self):
         self.maxs = {}
+        self.bounds = set()
 
     def visit_For(self, node):
         c = node.cond
@@ -64,6 +67,11 @@ class ForVisitor(c_ast.NodeVisitor):
             self.maxs[v.name].add(q(m))
         else:
             self.maxs[v.name] = {q(m)}
+
+        if type(m) is not c_ast.ID:
+            return
+
+        self.bounds.add(m.name)   # todo q
 
         c_ast.NodeVisitor.generic_visit(self, node)
 
@@ -85,23 +93,9 @@ class PtrDeclVisitor(c_ast.NodeVisitor):
         self.dtypes[n] = t
 
 
-# noinspection PyPep8Naming
-class DeclVisitor(c_ast.NodeVisitor):
-    def __init__(self, maxs, dtypes):
-        self.maxs = maxs
-        self.dtypes = dtypes
-        self.bounds = []
-
-    def visit_Decl(self, node):
-        n = node.name
-        t = node.type
-
-        if type(t) is c_ast.TypeDecl and n not in self.maxs and n not in self.dtypes:
-            self.bounds.append(n)
-
-
 def max_set(s):
-    return s.pop() if len(s) == 1 else 'max(' + ','.join(s) + ')'
+    # todo return s.pop() if len(s) == 1 else 'max(' + ','.join(s) + ')'
+    return s.pop() if len(s) > 0 else '42'
 
 
 def q(n, maxs={}):
@@ -123,7 +117,7 @@ def malloc(name, dtype, sizes):
 
     if len(sizes) > 0:
         ind = 'i_' + str(len(sizes))
-        res += 'for(' + ind + '=0;' + ind + '<' + str(size) + ';++' + ind + ') {\n'
+        res += 'for(int ' + ind + '=0;' + ind + '<' + str(size) + ';++' + ind + ') {\n'
         res += malloc(name + '[' + ind + ']', dtype, sizes)
         res += '}\n'
 
@@ -146,13 +140,13 @@ def split_code(code):
 def add_includes(includes):
     res = includes + '\n'
     res += '#include <papi.h>\n'
-    res += '#include "../../papi_utils/papi_events.h"\n'
+    res += '#include "../../../papi_utils/papi_events.h"\n'
     return res
 
 
 def add_papi(code):
     code = re.sub(r'(#pragma scop\n)', r'\1exec(PAPI_start(set));\n', code)
-    code = re.sub(r'(\n#pragma endscop)', r'\nexec(PAPI_stop(set, values));\1', code)
+    code = re.sub(r'(\n#pragma endscop\n)', r'\nexec(PAPI_stop(set, values));\1return 0;\n', code)
     return code
 
 
@@ -162,48 +156,78 @@ def add_mallocs(code, mallocs):
 
 
 def sub_loop_header(code):
-    code = re.sub(r'void loop()', 'int loop(int set, long_long* values)', code)
+    code = re.sub(r'void loop\(\)', 'int loop(int set, long_long* values)', code)
+    code = re.sub(r'return\s*;', 'return 0;', code)
+    return code
+
+
+def add_bounds_init(mallocs, bounds):
+    inits = [n + ' = PARAM_' + n.upper() + ';' for n in bounds]
+    inits = '\n'.join(inits)
+    mallocs = inits + '\n\n' + mallocs
+    return mallocs
+
+
+def del_extern_restrict(code):
+    code = re.sub(r'extern ', '', code)
+    code = re.sub(r'restrict ', '', code)
     return code
 
 
 def main():
-    with open('kernels_lore_OLD/k4/k4.txt', 'r') as fin:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("file_name", help="File name")
+    args = parser.parse_args()
+    file = args.file_name
+    file_name = file.split('.')[0]
+
+    kernels_path = 'kernels_lore/'
+    out_dir = kernels_path + 'proc/' + file_name
+
+    with open(kernels_path + 'orig/' + file, 'r') as fin:
         code = fin.read()
         includes, code = split_code(code)
 
         parser = c_parser.CParser()
         ast = parser.parse(code)
 
-        ast.show()
+        # ast.show()
 
-        cv = ForVisitor()
-        cv.visit(ast)
-        print('maxs: ', cv.maxs)
+        fv = ForVisitor()
+        fv.visit(ast)
+        # print('maxs: ', fv.maxs)
+        # print('bounds: ', fv.bounds)
 
-        av = AssignmentVisitor(cv.maxs)
+        av = AssignmentVisitor(fv.maxs)
         av.visit(ast)
-        print('maxs: ', av.maxs)
+        # print('maxs: ', av.maxs)
 
         cv = ArrayRefVisitor(av.maxs)
         cv.visit(ast)
-        print('refs: ', cv.refs)
+        # print('refs: ', cv.refs)
 
         pdv = PtrDeclVisitor()
         pdv.visit(ast)
-        print('dtypes: ', pdv.dtypes)
-
-        dv = DeclVisitor(av.maxs, pdv.dtypes)
-        dv.visit(ast)
-        print('bounds: ', dv.bounds)
+        # print('dtypes: ', pdv.dtypes)
 
         includes = add_includes(includes)
         mallocs = gen_mallocs(cv.refs, pdv.dtypes)
+        mallocs = add_bounds_init(mallocs, fv.bounds)
+        code = del_extern_restrict(code)
         code = add_papi(code)
         code = add_mallocs(code, mallocs)
         code = sub_loop_header(code)
+        code = includes + code
 
-        print(includes)
-        print(code)
+        if not os.path.isdir(out_dir):
+            os.mkdir(out_dir)
+
+        with open(out_dir + '/' + file, 'w') as fout:
+            fout.write(code)
+
+        with open(out_dir + '/' + file_name + '_params.txt', 'w') as fout:
+            defines = ['-D PARAM_' + b.upper() + '=9' for b in fv.bounds]
+            fout.write(' '.join(defines) + '\n')
 
 
 main()
