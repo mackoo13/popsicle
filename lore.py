@@ -1,34 +1,5 @@
 from pycparser import c_parser, c_ast
-
-
-def max_set(s):
-    return s.pop() if len(s) == 1 else 'max(' + ','.join(s) + ')'
-
-
-def q(n, maxs={}):
-    if type(n) is str:
-        return max_set(maxs[n]) if n in maxs else n
-    if type(n) is c_ast.ID:
-        return max_set(maxs[n.name]) if n.name in maxs else n.name
-    elif type(n) is c_ast.BinaryOp:
-        return q(n.left, maxs) + n.op + q(n.right, maxs)
-    elif type(n) is c_ast.Constant:
-        return n.value
-    else:
-        return '42'
-
-
-def malloc(name, dtype, sizes):
-    size = sizes.pop()
-    res = name + ' = malloc((' + size + ') * sizeof(' + dtype + '*'*len(sizes) + '));\n'
-
-    if len(sizes) > 0:
-        ind = 'i_' + str(len(sizes))
-        res += 'for(' + ind + '=0;' + ind + '<' + str(size) + ';++' + ind + ') {\n'
-        res += malloc(name + '[' + ind + ']', dtype, sizes)
-        res += '}\n'
-
-    return res
+import re
 
 
 # noinspection PyPep8Naming
@@ -114,9 +85,92 @@ class PtrDeclVisitor(c_ast.NodeVisitor):
         self.dtypes[n] = t
 
 
+# noinspection PyPep8Naming
+class DeclVisitor(c_ast.NodeVisitor):
+    def __init__(self, maxs, dtypes):
+        self.maxs = maxs
+        self.dtypes = dtypes
+        self.bounds = []
+
+    def visit_Decl(self, node):
+        n = node.name
+        t = node.type
+
+        if type(t) is c_ast.TypeDecl and n not in self.maxs and n not in self.dtypes:
+            self.bounds.append(n)
+
+
+def max_set(s):
+    return s.pop() if len(s) == 1 else 'max(' + ','.join(s) + ')'
+
+
+def q(n, maxs={}):
+    if type(n) is str:
+        return max_set(maxs[n]) if n in maxs else n
+    if type(n) is c_ast.ID:
+        return max_set(maxs[n.name]) if n.name in maxs else n.name
+    elif type(n) is c_ast.BinaryOp:
+        return q(n.left, maxs) + n.op + q(n.right, maxs)
+    elif type(n) is c_ast.Constant:
+        return n.value
+    else:
+        return '42'
+
+
+def malloc(name, dtype, sizes):
+    size = sizes.pop()
+    res = name + ' = malloc((' + size + ') * sizeof(' + dtype + '*'*len(sizes) + '));\n'
+
+    if len(sizes) > 0:
+        ind = 'i_' + str(len(sizes))
+        res += 'for(' + ind + '=0;' + ind + '<' + str(size) + ';++' + ind + ') {\n'
+        res += malloc(name + '[' + ind + ']', dtype, sizes)
+        res += '}\n'
+
+    return res
+
+
+def gen_mallocs(refs, dtypes):
+    res = ''
+    for arr in refs:
+        if arr in dtypes:
+            res += malloc(arr, dtypes[arr], [max_set(size) for size in refs[arr]])
+
+    return res
+
+
+def split_code(code):
+    return re.split(r'\n(?!#)', code, 1)
+
+
+def add_includes(includes):
+    res = includes + '\n'
+    res += '#include <papi.h>\n'
+    res += '#include "../../papi_utils/papi_events.h"\n'
+    return res
+
+
+def add_papi(code):
+    code = re.sub(r'(#pragma scop\n)', r'\1exec(PAPI_start(set));\n', code)
+    code = re.sub(r'(\n#pragma endscop)', r'\nexec(PAPI_stop(set, values));\1', code)
+    return code
+
+
+def add_mallocs(code, mallocs):
+    code = re.sub(r'(void loop\(\)\s*{)', r'\1\n\n' + mallocs, code)
+    return code
+
+
+def sub_loop_header(code):
+    code = re.sub(r'void loop()', 'int loop(int set, long_long* values)', code)
+    return code
+
+
 def main():
-    with open('kernels_lore/k4/k4.txt', 'r') as fin:
+    with open('kernels_lore_OLD/k4/k4.txt', 'r') as fin:
         code = fin.read()
+        includes, code = split_code(code)
+
         parser = c_parser.CParser()
         ast = parser.parse(code)
 
@@ -126,11 +180,11 @@ def main():
         cv.visit(ast)
         print('maxs: ', cv.maxs)
 
-        cv = AssignmentVisitor(cv.maxs)
-        cv.visit(ast)
-        print('maxs: ', cv.maxs)
+        av = AssignmentVisitor(cv.maxs)
+        av.visit(ast)
+        print('maxs: ', av.maxs)
 
-        cv = ArrayRefVisitor(cv.maxs)
+        cv = ArrayRefVisitor(av.maxs)
         cv.visit(ast)
         print('refs: ', cv.refs)
 
@@ -138,10 +192,18 @@ def main():
         pdv.visit(ast)
         print('dtypes: ', pdv.dtypes)
 
-        for arr in cv.refs:
-            if arr in pdv.dtypes:
-                m = malloc(arr, pdv.dtypes[arr], [max_set(size) for size in cv.refs[arr]])
-                print(m)
+        dv = DeclVisitor(av.maxs, pdv.dtypes)
+        dv.visit(ast)
+        print('bounds: ', dv.bounds)
+
+        includes = add_includes(includes)
+        mallocs = gen_mallocs(cv.refs, pdv.dtypes)
+        code = add_papi(code)
+        code = add_mallocs(code, mallocs)
+        code = sub_loop_header(code)
+
+        print(includes)
+        print(code)
 
 
 main()
