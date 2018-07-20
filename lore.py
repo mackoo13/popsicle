@@ -226,8 +226,9 @@ def main():
             fout.write(code)
 
         with open(out_dir + '/' + file_name + '_params.txt', 'w') as fout:
-            defines = ['-D PARAM_' + b.upper() + '=9' for b in fv.bounds]
-            fout.write(' '.join(defines) + '\n')
+            for k in range(10):
+                defines = ['-D PARAM_' + b.upper() + '=' + str(k*100+50) for b in fv.bounds]
+                fout.write(' '.join(defines) + '\n')
 
 
 main()
