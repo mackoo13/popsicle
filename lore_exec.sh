@@ -3,7 +3,7 @@
 # PARAMS:
 #   $1 output file name (without extension)
 
-readonly trials=1
+readonly trials=3
 readonly papi_path=~/papi/papi/src/
 readonly out_file=papi_output/$1.csv
 
@@ -41,10 +41,13 @@ while read -r path; do
         echo "Running $name $params ..."
 
         for trial in `seq ${trials}`; do
-            echo -n ${name},${params}, >> ${out_file}
-            ./exec_loop_pb >> ${out_file}
+            if res=$(./exec_loop_pb); then
+                echo ${name},${params},${res} >> ${out_file}
+            else
+                echo ":("
+            fi
         done
 
     done < kernels_lore/proc/${name}/${name}_params.txt
 
-done <<< `find kernels_lore/proc/ -iname '*.c'`
+done <<< `find kernels_lore/proc/ -iname '*eba4*.c'`
