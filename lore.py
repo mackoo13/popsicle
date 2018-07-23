@@ -6,6 +6,26 @@ import argparse
 import math
 
 
+class ParseException(Exception):
+    pass
+
+
+# noinspection PyPep8Naming
+class ArrayDeclVisitor(c_ast.NodeVisitor):
+    def __init__(self):
+        self.dims = {}
+
+    def visit_ArrayDecl(self, node):
+        dims_list = [q(node.dim)]
+
+        while type(node.type) is c_ast.ArrayDecl:
+            node = node.type
+            dims_list.append(q(node.dim))
+
+        if type(node.type) is c_ast.TypeDecl:
+            self.dims[node.type.declname] = dims_list
+
+
 # noinspection PyPep8Naming
 class ArrayRefVisitor(c_ast.NodeVisitor):
     def __init__(self, maxs):
@@ -17,17 +37,17 @@ class ArrayRefVisitor(c_ast.NodeVisitor):
         s = node.subscript
 
         # new refs to merge with the old ones
-        refs = [{q(s, self.maxs)}]
+        refs = [{s}]
 
-        if type(node.name) is c_ast.ArrayRef:
-            refs.append({q(node.name.subscript, self.maxs)})
-            n = n.name
+        while type(node.name) is c_ast.ArrayRef:
+            refs.append({q(node.name.subscript)})
+            node = node.name
 
         if n in self.refs:
             for old_ref, new_ref in zip(self.refs[n], refs):
                 old_ref.update(new_ref)
         else:
-            self.refs[n] = refs
+            self.refs[n.name] = refs
 
 
 # noinspection PyPep8Naming
@@ -57,9 +77,17 @@ class ForVisitor(c_ast.NodeVisitor):
 
     def visit_For(self, node):
         self.loop_count += 1
+        n = node.next
         c = node.cond
+
         if type(c) is not c_ast.BinaryOp:
-            return
+            raise ParseException('Unknown format of for loop condition ("i < N" expected)')
+
+        if type(n) is not c_ast.UnaryOp:
+            raise ParseException('Unknown format of for loop increment (UnaryOp expected)')
+
+        if n.op not in ('p++', '++', '+='):
+            raise ParseException('Unknown format of for loop increment ("++" or "+=" expected, "' + n.op + '" found)')
 
         v = c.left
         m = c.right
@@ -109,20 +137,24 @@ class PtrDeclVisitor(c_ast.NodeVisitor):
 
 
 def max_set(s):
-    return reduce( (lambda a, b: 'MAX(' + a + ', ' + b + ')'), s)
+    return reduce((lambda a, b: 'MAX(' + a + ', ' + b + ')'), s)
 
 
 def q(n, maxs={}):
     if type(n) is str:
         return max_set(maxs[n]) if n in maxs else n
     if type(n) is c_ast.ID:
-        return max_set(maxs[n.name]) if n.name in maxs else n.name
+        return q(n.name, maxs)
     elif type(n) is c_ast.BinaryOp:
         return q(n.left, maxs) + n.op + q(n.right, maxs)
     elif type(n) is c_ast.Constant:
         return n.value
     else:
         return '42'
+
+
+def q_arr(a, maxs={}):
+    return [q(n, maxs) for n in a]
 
 
 def malloc(name, dtype, sizes):
@@ -159,6 +191,8 @@ def gen_mallocs(ast, verbose=False):
 
     cv = ArrayRefVisitor(av.maxs)
     cv.visit(ast)
+    for arr in cv.refs:
+        cv.refs[arr] = [q_arr(r, av.maxs) for r in cv.refs[arr]]
     if verbose:
         print('refs: ', cv.refs)
 
@@ -169,8 +203,11 @@ def gen_mallocs(ast, verbose=False):
 
     res = ''
     for arr in cv.refs:
+        refs = cv.refs[arr]
+        sizes = [max_set(size) for size in refs]
+
         if arr in pdv.dtypes:
-            res += malloc(arr, pdv.dtypes[arr], [max_set(size) for size in cv.refs[arr]])
+            res += malloc(arr, pdv.dtypes[arr], sizes)
 
     res = add_bounds_init(res, fv.bounds)
 
@@ -185,6 +222,7 @@ def add_includes(includes):
     res = includes + '\n'
     res += '#include <papi.h>\n'
     res += '#include "../../../papi_utils/papi_events.h"\n'
+    res += '#define MIN(x, y) (((x) < (y)) ? (x) : (y))\n'
     res += '#define MAX(x, y) (((x) > (y)) ? (x) : (y))\n'
     return res
 
@@ -242,38 +280,50 @@ def main():
             ast.show()
 
         includes = add_includes(includes)
-        mallocs, bounds, refs, loop_count = gen_mallocs(ast, verbose)
-        code = del_extern_restrict(code)
-        code = add_papi(code)
-        code = add_mallocs(code, mallocs)
-        code = sub_loop_header(code)
-        code = includes + code
 
-        if not os.path.isdir(out_dir):
-            os.mkdir(out_dir)
+        try:
+            mallocs, bounds, refs, loop_count = gen_mallocs(ast, verbose)
 
-        with open(out_dir + '/' + file, 'w') as fout:
-            fout.write(code)
+            code = del_extern_restrict(code)
+            code = add_papi(code)
+            code = add_mallocs(code, mallocs)
+            code = sub_loop_header(code)
+            code = includes + code
 
-        with open(out_dir + '/' + file_name + '_params.txt', 'w') as fout:
+            if not os.path.isdir(out_dir):
+                os.mkdir(out_dir)
 
-            if len(bounds) > 0:
-                max_arr_dim = max([len(refs) for refs in refs.values()])
-                arr_count = len(refs)
+            with open(out_dir + '/' + file, 'w') as fout:
+                fout.write(code)
 
-                max_param_arr = math.pow(10000000 / arr_count, 1 / max_arr_dim)
-                max_param_loop = math.pow(100000000, 1 / loop_count)
-                max_param = min(max_param_arr, max_param_loop)
+            with open(out_dir + '/' + file_name + '_params.txt', 'w') as fout:
 
-                if verbose:
-                    print('array count: ', arr_count)
-                    print('loop count: ', loop_count)
-                    print('max array dim: ', max_arr_dim)
-                    print('max param: ', max_param)
+                if len(bounds) > 0:
+                    max_arr_dim = max([len(refs) for refs in refs.values()])
+                    arr_count = len(refs)
 
-                for k in range(1, 11):
-                    defines = ['-D PARAM_' + b.upper() + '=' + str(int(k * max_param / 10)) for b in bounds]
-                    fout.write(' '.join(defines) + '\n')
+                    # if array decl is given, make use of it
+                    adv = ArrayDeclVisitor()
+                    adv.visit(ast)
+                    if verbose:
+                        print('dims: ', adv.dims)
+
+                    max_param_arr = math.pow(10000000 / arr_count, 1 / max_arr_dim)
+                    max_param_loop = math.pow(100000000, 1 / loop_count)
+                    max_param = min(max_param_arr, max_param_loop)
+
+                    if verbose:
+                        print('array count: ', arr_count)
+                        print('loop count: ', loop_count)
+                        print('max array dim: ', max_arr_dim)
+                        print('max param: ', max_param)
+
+                    for k in range(1, 11):
+                        defines = ['-D PARAM_' + b.upper() + '=' + str(int(k * max_param / 10)) for b in bounds]
+                        fout.write(' '.join(defines) + '\n')
+
+        except ParseException as e:
+            print('\t', e)
 
 
 main()

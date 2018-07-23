@@ -3,13 +3,13 @@
 while read -r path; do
     name=`basename "${path%.*}"`
 
+    echo "Parsing $name"
+
     if grep -q struct "$path"; then
-        echo "Skipping $name (struct detected)"
+        echo "\tSkipping $name (struct detected)"
         continue
-    else
-        echo "Parsing $name"
     fi
 
     python3 lore.py ${name}.c
 
-done <<< `find kernels_lore/orig/ -iname '*9c5c*.c'`
+done <<< `find kernels_lore/orig/ -iname '*93cf*.c'`
