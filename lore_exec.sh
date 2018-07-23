@@ -50,4 +50,4 @@ while read -r path; do
 
     done < kernels_lore/proc/${name}/${name}_params.txt
 
-done <<< `find kernels_lore/proc/ -iname '*eba4*.c'`
+done <<< `find kernels_lore/proc/ -iname '*9c5c*.c'`

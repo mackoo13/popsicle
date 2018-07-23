@@ -12,18 +12,23 @@ class ParseException(Exception):
 
 # noinspection PyPep8Naming
 class ArrayDeclVisitor(c_ast.NodeVisitor):
-    def __init__(self):
+    def __init__(self, dtypes):
+        self.dtypes = dtypes
         self.dims = {}
 
     def visit_ArrayDecl(self, node):
-        dims_list = [q(node.dim)]
+        dim = 1
 
         while type(node.type) is c_ast.ArrayDecl:
             node = node.type
-            dims_list.append(q(node.dim))
+            dim += 1
+
+        n = node.type.declname
+
+        self.dims[n] = dim
 
         if type(node.type) is c_ast.TypeDecl:
-            self.dims[node.type.declname] = dims_list
+            self.dtypes[n] = ' '.join(node.type.type.names)
 
 
 # noinspection PyPep8Naming
@@ -157,23 +162,21 @@ def q_arr(a, maxs={}):
     return [q(n, maxs) for n in a]
 
 
-def malloc(name, dtype, sizes):
-    max_size = '*'.join(['('+s+')' for s in sizes])
+def malloc(name, dtype, sizes, dim):
+    size = sizes[dim]
+    indices = ['i_' + str(n) for n in range(dim + 1)]
+    indices_in_brackets = ['[' + i + ']' for i in indices]
 
-    res = name + ' = malloc((' + max_size + ') * sizeof(' + dtype + '));\n'
-    res += 'for(int i=0; i<' + max_size + ';++i) '
-    res += name + '[i] = (' + dtype + ')rand();\n'
-
-    """
-    size = sizes.pop()
-    res = name + ' = malloc((' + size + ') * sizeof(' + dtype + '*'*len(sizes) + '));\n'
+    res = name + ''.join(indices_in_brackets[:-1]) + ' = malloc((' + size + ') * sizeof(' + dtype + '*'*(len(sizes) - dim - 1) + '));\n'
+    res += 'for(int ' + indices[-1] + '=0;' + indices[-1] + '<' + str(size) + ';++' + indices[-1] + ') {\n'
     
-    if len(sizes) > 0:
-        ind = 'i_' + str(len(sizes))
-        res += 'for(int ' + ind + '=0;' + ind + '<' + str(size) + ';++' + ind + ') {\n'
-        res += malloc(name + '[' + ind + ']', dtype, sizes)
-        res += '}\n'
-    """
+    if dim < len(sizes) - 1:
+        res += malloc(name, dtype, sizes, dim + 1)
+    else:
+        res += name + ''.join(indices_in_brackets) + ' = (' + dtype + ')rand();\n'
+
+    res += '}\n'
+
     return res
 
 
@@ -198,20 +201,25 @@ def gen_mallocs(ast, verbose=False):
 
     pdv = PtrDeclVisitor()
     pdv.visit(ast)
+
+    # if array decl is given, make use of it
+    adv = ArrayDeclVisitor(pdv.dtypes)
+    adv.visit(ast)
     if verbose:
-        print('dtypes: ', pdv.dtypes)
+        print('dtypes: ', adv.dtypes)
+        print('dims: ', adv.dims)
 
     res = ''
     for arr in cv.refs:
         refs = cv.refs[arr]
         sizes = [max_set(size) for size in refs]
 
-        if arr in pdv.dtypes:
-            res += malloc(arr, pdv.dtypes[arr], sizes)
+        if arr in adv.dtypes:
+            res += malloc(arr, adv.dtypes[arr], sizes, 0)
 
     res = add_bounds_init(res, fv.bounds)
 
-    return res, fv.bounds, cv.refs, fv.loop_count
+    return res, fv.bounds, cv.refs, adv.dtypes, adv.dims, fv.loop_count
 
 
 def split_code(code):
@@ -225,6 +233,13 @@ def add_includes(includes):
     res += '#define MIN(x, y) (((x) < (y)) ? (x) : (y))\n'
     res += '#define MAX(x, y) (((x) > (y)) ? (x) : (y))\n'
     return res
+
+
+def arr_to_ptr_decl(code, dtypes, dims):
+    for arr in dims:
+        print(arr, dtypes[arr], dims[arr])
+        code = re.sub(r'(' + dtypes[arr] + ')\s+(' + arr + ').*;', r'\1' + '*' * dims[arr] + ' ' + arr + ';', code)
+    return code
 
 
 def add_papi(code):
@@ -282,9 +297,10 @@ def main():
         includes = add_includes(includes)
 
         try:
-            mallocs, bounds, refs, loop_count = gen_mallocs(ast, verbose)
+            mallocs, bounds, refs, dtypes, dims, loop_count = gen_mallocs(ast, verbose)
 
             code = del_extern_restrict(code)
+            code = arr_to_ptr_decl(code, dtypes, dims)
             code = add_papi(code)
             code = add_mallocs(code, mallocs)
             code = sub_loop_header(code)
@@ -301,12 +317,6 @@ def main():
                 if len(bounds) > 0:
                     max_arr_dim = max([len(refs) for refs in refs.values()])
                     arr_count = len(refs)
-
-                    # if array decl is given, make use of it
-                    adv = ArrayDeclVisitor()
-                    adv.visit(ast)
-                    if verbose:
-                        print('dims: ', adv.dims)
 
                     max_param_arr = math.pow(10000000 / arr_count, 1 / max_arr_dim)
                     max_param_loop = math.pow(100000000, 1 / loop_count)
