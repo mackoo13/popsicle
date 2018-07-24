@@ -52,4 +52,4 @@ while read -r path; do
 
     done < ../kernels_lore/proc/${name}/${name}_params.txt
 
-done <<< `find ../kernels_lore/proc/ -iname '*1bc_*.c'`
+done <<< `find ../kernels_lore/proc/ -iname '*1bc_61*.c'`

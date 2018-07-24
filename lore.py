@@ -45,7 +45,7 @@ class ArrayRefVisitor(c_ast.NodeVisitor):
         refs = [{s}]    # todo: no q?
 
         while type(node.name) is c_ast.ArrayRef:
-            s_eval = q(node.name.subscript)
+            s_eval = estimate(node.name.subscript)
             if s_eval is not None:
                 refs.append({s_eval})
             node = node.name
@@ -54,7 +54,7 @@ class ArrayRefVisitor(c_ast.NodeVisitor):
             for old_ref, new_ref in zip(self.refs[n], refs):
                 old_ref.update(new_ref)
         else:
-            self.refs[q(n)] = refs  # todo: q?
+            self.refs[estimate(n)] = refs  # todo: q?
 
 
 # noinspection PyPep8Naming
@@ -67,7 +67,7 @@ class AssignmentVisitor(c_ast.NodeVisitor):
         if node.op == '=':
             l = node.lvalue
             r = node.rvalue
-            r_eval = q(r, self.maxs)
+            r_eval = estimate(r, self.maxs)
 
             if type(l) is c_ast.ID and r_eval is not None:
                 if l.name in self.maxs:
@@ -109,7 +109,7 @@ class ForVisitor(c_ast.NodeVisitor):
 
         v = c.left
         m = c.right
-        m_eval = q(m)
+        m_eval = estimate(m)
 
         if type(v) is not c_ast.ID:
             return
@@ -155,25 +155,31 @@ class PtrDeclVisitor(c_ast.NodeVisitor):
         self.dtypes[n] = t
 
 
-def remove_small_numbers(s):
+def remove_non_extreme_numbers(s, leave_min=True):
     max_num = float('-inf')
+    min_num = float('inf')
     s2 = []
 
     for n in s:
         if n.isdecimal():  # todo: do we need to handle negative numbers?
-            if int(n) > max_num:
-                max_num = int(n)
+            n_num = int(n)
+            if n_num > max_num:
+                max_num = n_num
+            if n_num < min_num:
+                min_num = n_num
         else:
             s2.append(n)
 
     if max_num != float('-inf'):
         s2.append(str(max_num))
+    if leave_min and min_num != float('inf') and min_num != max_num:
+        s2.append(str(min_num))
 
     return s2
 
 
 def max_set(s):
-    s2 = remove_small_numbers(s)
+    s2 = remove_non_extreme_numbers(s, leave_min=False)
 
     if len(s2) == 0:
         return None
@@ -184,8 +190,7 @@ def max_set(s):
 
 
 def eval_basic_op(l, op, r):
-    print(l, op, r)
-    try:
+    if l.isdecimal() and r.isdecimal():
         l_num = int(l)
         r_num = int(r)
         if op == '+':
@@ -194,30 +199,39 @@ def eval_basic_op(l, op, r):
             return str(l_num - r_num)
         if op == '*':
             return str(l_num * r_num)
-    finally:
-        pass
 
     return l + op + r
 
 
-def q(n, maxs={}):
+def estimate(n, maxs={}):
+    """
+
+    :param n:
+    :param maxs:
+    :return: iterable
+    """
+    options = estimate_options(n, maxs)
+    options = remove_non_extreme_numbers(options)
+    return max_set(options)
+
+
+def estimate_options(n, maxs={}):
     if type(n) is str:
-        return max_set(maxs[n]) if n in maxs else n
+        return maxs[n] if n in maxs else [n]
     if type(n) is c_ast.ID:
-        return q(n.name, maxs)
+        return estimate_options(n.name, maxs)
     elif type(n) is c_ast.BinaryOp:
-        print('bin', n.left, n.right)
-        l = q(n.left, maxs)
-        r = q(n.right, maxs)
-        return eval_basic_op(l, n.op, r) if l is not None and r is not None else None
+        ls = estimate_options(n.left, maxs)
+        rs = estimate_options(n.right, maxs)
+        return [eval_basic_op(l, n.op, r) for l in ls for r in rs]
     elif type(n) is c_ast.Constant:
-        return n.value
+        return [n.value]
     else:
-        return None
+        return []
 
 
-def q_arr(a, maxs={}):
-    res = [q(n, maxs) for n in a]
+def estimate_arr(a, maxs={}):
+    res = [estimate(n, maxs) for n in a]
     res = [r for r in res if r is not None]
     return res
 
@@ -229,13 +243,17 @@ def malloc(name, dtype, sizes, dim):
     indices_in_brackets = ['[' + i + ']' for i in indices]
     i = indices[-1]
 
-    res = '\t' * dim + name + ''.join(indices_in_brackets[:-1]) + ' = malloc((' + size + '+1) * sizeof(' + dtype + '*'*(len(sizes) - dim - 1) + '));\n'
-    res += '\t' * dim + 'for(int ' + i + '=0;' + i + '<' + str(size) + ';++' + i + ') {\n'
+    inds = ''.join(indices_in_brackets[:-1])
+    ptr_asterisks = '*'*(len(sizes) - dim - 1)
+    res = '\t' * dim
+    res += f'{name}{inds} = malloc(({size}+2) * sizeof({dtype}{ptr_asterisks}));\n'
+    res += '\t' * dim + f'for(int {i}=0; {i}<{size}; ++{i}) ' + '{\n'
     
     if dim < len(sizes) - 1:
         res += malloc(name, dtype, sizes, dim + 1)
     else:
-        res += '\t' * (dim + 1) + name + ''.join(indices_in_brackets) + ' = (' + dtype + ')rand();\n'
+        inds = ''.join(indices_in_brackets)
+        res += '\t' * (dim + 1) + f'{name}{inds} = ({dtype})rand();\n'
 
     res += '\t' * dim + '}\n'
 
@@ -271,14 +289,14 @@ def gen_mallocs(ast, verbose=False):
     maxs = av.maxs
 
     for var in maxs:
-        maxs[var] = set(remove_small_numbers(maxs[var]))
+        maxs[var] = set(remove_non_extreme_numbers(maxs[var]))
 
     arv = ArrayRefVisitor(maxs)
     arv.visit(ast)
     refs = arv.refs
 
     for arr in refs:
-        refs[arr] = [set(q_arr(r, maxs)) for r in refs[arr]]
+        refs[arr] = [set(estimate_arr(r, maxs)) for r in refs[arr]]
 
     pdv = PtrDeclVisitor()
     pdv.visit(ast)
@@ -378,7 +396,7 @@ def find_max_param(refs, ast, verbose=False):
 
 def main():
     verbose = True
-    # verbose = False
+    verbose = False
 
     try:
 
