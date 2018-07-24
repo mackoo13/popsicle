@@ -12,4 +12,4 @@ while read -r path; do
 
     python3 lore.py ${name}.c
 
-done <<< `find kernels_lore/orig/ -iname '*9c5c*.c'`
+done <<< `find ../kernels_lore/orig/ -iname '*1bc_270*.c'`

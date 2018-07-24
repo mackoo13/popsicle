@@ -52,7 +52,7 @@ class ArrayRefVisitor(c_ast.NodeVisitor):
             for old_ref, new_ref in zip(self.refs[n], refs):
                 old_ref.update(new_ref)
         else:
-            self.refs[n.name] = refs
+            self.refs[q(n)] = refs
 
 
 # noinspection PyPep8Naming
@@ -65,12 +65,25 @@ class AssignmentVisitor(c_ast.NodeVisitor):
         if node.op == '=':
             l = node.lvalue
             r = node.rvalue
+            r_eval = q(r, self.maxs)
 
-            if type(l) is c_ast.ID:
+            if type(l) is c_ast.ID and r_eval is not None:
                 if l.name in self.maxs:
-                    self.maxs[l.name].add(q(r, self.maxs))
+                    self.maxs[l.name].add(r_eval)
                 else:
-                    self.maxs[l.name] = {q(r, self.maxs)}
+                    self.maxs[l.name] = {r_eval}
+
+
+# noinspection PyPep8Naming
+class ForDepthCounter(c_ast.NodeVisitor):
+    def __init__(self, count, res):
+        self.count = count
+        self.res = res      # max depth wrapped in an array to make it mutable
+
+    def visit_For(self, node):
+        counter = ForDepthCounter(self.count + 1, self.res)
+        counter.visit(node.stmt)
+        self.res[0] = max(self.count, self.res[0])
 
 
 # noinspection PyPep8Naming
@@ -78,10 +91,8 @@ class ForVisitor(c_ast.NodeVisitor):
     def __init__(self):
         self.maxs = {}
         self.bounds = set()
-        self.loop_count = 0
 
     def visit_For(self, node):
-        self.loop_count += 1
         n = node.next
         c = node.cond
 
@@ -142,7 +153,20 @@ class PtrDeclVisitor(c_ast.NodeVisitor):
 
 
 def max_set(s):
-    return reduce((lambda a, b: 'MAX(' + a + ', ' + b + ')'), s)
+    max_num = float('-inf')
+    s2 = []
+
+    for n in s:
+        if n.isdecimal():  # todo: do we need to handle negative numbers?
+            if int(n) > max_num:
+                max_num = int(n)
+        else:
+            s2.append(n)
+
+    if max_num != float('-inf'):
+        s2.append(str(max_num))
+
+    return reduce((lambda a, b: 'MAX(' + a + ', ' + b + ')'), s2)
 
 
 def q(n, maxs={}):
@@ -151,11 +175,13 @@ def q(n, maxs={}):
     if type(n) is c_ast.ID:
         return q(n.name, maxs)
     elif type(n) is c_ast.BinaryOp:
-        return q(n.left, maxs) + n.op + q(n.right, maxs)
+        l = q(n.left, maxs)
+        r = q(n.right, maxs)
+        return l + n.op + r if l is not None and r is not None else None
     elif type(n) is c_ast.Constant:
         return n.value
     else:
-        return '42'
+        return None
 
 
 def q_arr(a, maxs={}):
@@ -164,62 +190,81 @@ def q_arr(a, maxs={}):
 
 def malloc(name, dtype, sizes, dim):
     size = sizes[dim]
+
     indices = ['i_' + str(n) for n in range(dim + 1)]
     indices_in_brackets = ['[' + i + ']' for i in indices]
+    i = indices[-1]
 
-    res = name + ''.join(indices_in_brackets[:-1]) + ' = malloc((' + size + ') * sizeof(' + dtype + '*'*(len(sizes) - dim - 1) + '));\n'
-    res += 'for(int ' + indices[-1] + '=0;' + indices[-1] + '<' + str(size) + ';++' + indices[-1] + ') {\n'
+    res = '\t' * dim + name + ''.join(indices_in_brackets[:-1]) + ' = malloc((' + size + '+1) * sizeof(' + dtype + '*'*(len(sizes) - dim - 1) + '));\n'
+    res += '\t' * dim + 'for(int ' + i + '=0;' + i + '<' + str(size) + ';++' + i + ') {\n'
     
     if dim < len(sizes) - 1:
         res += malloc(name, dtype, sizes, dim + 1)
     else:
-        res += name + ''.join(indices_in_brackets) + ' = (' + dtype + ')rand();\n'
+        res += '\t' * (dim + 1) + name + ''.join(indices_in_brackets) + ' = (' + dtype + ')rand();\n'
 
-    res += '}\n'
+    res += '\t' * dim + '}\n'
 
     return res
 
 
+def print_debug_info(bounds, refs, dtypes, dims, maxs):
+    print('maxs: ', maxs)
+    print('bounds: ', bounds)
+    print('refs: ', refs)
+    print('dtypes: ', dtypes)
+    print('dims: ', dims)
+
+
 def gen_mallocs(ast, verbose=False):
+    """
+    :param ast:
+    :param verbose:
+    :return:
+        res (string) - malloc instructions and array initialization)
+        bounds () -
+        refs () -
+        dtypes (map: array_name: str -> data type: str)
+        dims (map: array_name: str -> dimensions: int[])
+    """
+
     fv = ForVisitor()
     fv.visit(ast)
-    if verbose:
-        print('maxs: ', fv.maxs)
-        print('bounds: ', fv.bounds)
+    bounds = fv.bounds
 
     av = AssignmentVisitor(fv.maxs)
     av.visit(ast)
-    if verbose:
-        print('maxs: ', av.maxs)
+    maxs = av.maxs
 
-    cv = ArrayRefVisitor(av.maxs)
-    cv.visit(ast)
-    for arr in cv.refs:
-        cv.refs[arr] = [q_arr(r, av.maxs) for r in cv.refs[arr]]
-    if verbose:
-        print('refs: ', cv.refs)
+    arv = ArrayRefVisitor(maxs)
+    arv.visit(ast)
+    refs = arv.refs
+
+    for arr in refs:
+        refs[arr] = [set(q_arr(r, maxs)) for r in refs[arr]]
 
     pdv = PtrDeclVisitor()
     pdv.visit(ast)
 
-    # if array decl is given, make use of it
     adv = ArrayDeclVisitor(pdv.dtypes)
     adv.visit(ast)
-    if verbose:
-        print('dtypes: ', adv.dtypes)
-        print('dims: ', adv.dims)
+    dtypes = adv.dtypes
+    dims = adv.dims
 
     res = ''
-    for arr in cv.refs:
-        refs = cv.refs[arr]
-        sizes = [max_set(size) for size in refs]
+    for arr in refs:
+        ref = refs[arr]
+        sizes = [max_set(size) for size in ref]
 
-        if arr in adv.dtypes:
-            res += malloc(arr, adv.dtypes[arr], sizes, 0)
+        if arr in dtypes:
+            res += malloc(arr, dtypes[arr], sizes, 0)
 
-    res = add_bounds_init(res, fv.bounds)
+    res = add_bounds_init(res, bounds)
 
-    return res, fv.bounds, cv.refs, adv.dtypes, adv.dims, fv.loop_count
+    if verbose:
+        print_debug_info(bounds, refs, dtypes, dims, maxs)
+
+    return res, bounds, refs, dtypes, dims
 
 
 def split_code(code):
@@ -229,15 +274,13 @@ def split_code(code):
 def add_includes(includes):
     res = includes + '\n'
     res += '#include <papi.h>\n'
-    res += '#include "../../../papi_utils/papi_events.h"\n'
-    res += '#define MIN(x, y) (((x) < (y)) ? (x) : (y))\n'
+    res += '#include "../../../wombat/papi_utils/papi_events.h"\n'
     res += '#define MAX(x, y) (((x) > (y)) ? (x) : (y))\n'
     return res
 
 
 def arr_to_ptr_decl(code, dtypes, dims):
     for arr in dims:
-        print(arr, dtypes[arr], dims[arr])
         code = re.sub(r'(' + dtypes[arr] + ')\s+(' + arr + ').*;', r'\1' + '*' * dims[arr] + ' ' + arr + ';', code)
     return code
 
@@ -272,32 +315,55 @@ def del_extern_restrict(code):
     return code
 
 
+def find_for_depth(ast):
+    res = [0]
+    counter = ForDepthCounter(1, res)
+    counter.visit(ast)
+    return res[0]
+
+
+def find_max_param(refs, ast, verbose=False):
+    max_arr_dim = max([len(refs) for refs in refs.values()])
+    arr_count = len(refs)
+    loop_depth = find_for_depth(ast)
+
+    max_param_arr = math.pow(1000000 / arr_count, 1 / max_arr_dim)
+    max_param_loop = math.pow(10000000, 1 / loop_depth)
+    max_param = min(max_param_arr, max_param_loop)
+
+    if verbose:
+        print('Max param: ', max_param)
+
+    return max_param
+
+
 def main():
     verbose = True
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("file_name", help="File name")
-    args = parser.parse_args()
-    file = args.file_name
-    file_name = file.split('.')[0]
+    try:
 
-    kernels_path = 'kernels_lore/'
-    out_dir = kernels_path + 'proc/' + file_name
+        parser = argparse.ArgumentParser()
+        parser.add_argument("file_name", help="File name")
+        args = parser.parse_args()
+        file = args.file_name
+        file_name = file.split('.')[0]
 
-    with open(kernels_path + 'orig/' + file, 'r') as fin:
-        code = fin.read()
-        includes, code = split_code(code)
+        kernels_path = '../kernels_lore/'
+        out_dir = kernels_path + 'proc/' + file_name
 
-        parser = c_parser.CParser()
-        ast = parser.parse(code)
+        with open(kernels_path + 'orig/' + file, 'r') as fin:
+            code = fin.read()
+            includes, code = split_code(code)
 
-        if verbose:
-            ast.show()
+            parser = c_parser.CParser()
+            ast = parser.parse(code)
 
-        includes = add_includes(includes)
+            if verbose:
+                ast.show()
 
-        try:
-            mallocs, bounds, refs, dtypes, dims, loop_count = gen_mallocs(ast, verbose)
+            includes = add_includes(includes)
+
+            mallocs, bounds, refs, dtypes, dims = gen_mallocs(ast, verbose)
 
             code = del_extern_restrict(code)
             code = arr_to_ptr_decl(code, dtypes, dims)
@@ -309,31 +375,26 @@ def main():
             if not os.path.isdir(out_dir):
                 os.mkdir(out_dir)
 
+            if len(refs) == 0:
+                raise ParseException('No refs found - cannot determine max_arr_dim')
+
             with open(out_dir + '/' + file, 'w') as fout:
                 fout.write(code)
 
             with open(out_dir + '/' + file_name + '_params.txt', 'w') as fout:
 
                 if len(bounds) > 0:
-                    max_arr_dim = max([len(refs) for refs in refs.values()])
-                    arr_count = len(refs)
-
-                    max_param_arr = math.pow(10000000 / arr_count, 1 / max_arr_dim)
-                    max_param_loop = math.pow(100000000, 1 / loop_count)
-                    max_param = min(max_param_arr, max_param_loop)
-
-                    if verbose:
-                        print('array count: ', arr_count)
-                        print('loop count: ', loop_count)
-                        print('max array dim: ', max_arr_dim)
-                        print('max param: ', max_param)
+                    max_param = find_max_param(refs, ast, verbose)
+                    print(max_param)
 
                     for k in range(1, 11):
                         defines = ['-D PARAM_' + b.upper() + '=' + str(int(k * max_param / 10)) for b in bounds]
                         fout.write(' '.join(defines) + '\n')
+                else:
+                    fout.write('\n')
 
-        except ParseException as e:
-            print('\t', e)
+    except Exception as e:
+        print('\t', e)
 
 
 main()

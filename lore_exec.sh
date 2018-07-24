@@ -3,7 +3,7 @@
 # PARAMS:
 #   $1 output file name (without extension)
 
-readonly trials=3
+readonly trials=1
 readonly papi_path=~/papi/papi/src/
 readonly out_file=papi_output/$1.csv
 
@@ -13,12 +13,12 @@ compile() {
 
     gcc -c \
         -I ${papi_path} \
-        kernels_lore/proc/${name}/${name}.c \
+        ../kernels_lore/proc/${name}/${name}.c \
         ${params} \
-        -O0 -o kernels_lore/proc/${name}/${name}.o
+        -O0 -o ../kernels_lore/proc/${name}/${name}.o
 
-    if [ -e kernels_lore/proc/${name}/${name}.o ]; then
-        gcc kernels_lore/proc/${name}/${name}.o \
+    if [ -e ../kernels_lore/proc/${name}/${name}.o ]; then
+        gcc ../kernels_lore/proc/${name}/${name}.o \
             exec_loop_pb.o \
             papi_utils/papi_events.o \
             -L ~/papi/papi/src/libpfm4/lib -lpfm \
@@ -36,18 +36,21 @@ while read -r path; do
     name=`basename "${path%.*}"`
 
     while read -r params; do
+        echo 5
         compile ${name} "${params}"
 
         echo "Running $name $params ..."
 
         for trial in `seq ${trials}`; do
             if res=$(./exec_loop_pb); then
-                echo ${name},${params},${res} >> ${out_file}
+                echo -n ${name},${params},${res}, >> ${out_file}
+                { command time -v ./exec_loop_pb; } 2>&1 | grep "Maximum resident" | grep -oE "[^ ]+$" >> ${out_file}
             else
                 echo ":("
+                break
             fi
         done
 
-    done < kernels_lore/proc/${name}/${name}_params.txt
+    done < ../kernels_lore/proc/${name}/${name}_params.txt
 
-done <<< `find kernels_lore/proc/ -iname '*9c5c*.c'`
+done <<< `find ../kernels_lore/proc/ -iname '*1bc_270*.c'`
