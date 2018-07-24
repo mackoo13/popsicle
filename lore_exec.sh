@@ -36,7 +36,6 @@ while read -r path; do
     name=`basename "${path%.*}"`
 
     while read -r params; do
-        echo 5
         compile ${name} "${params}"
 
         echo "Running $name $params ..."
@@ -47,10 +46,10 @@ while read -r path; do
                 { command time -v ./exec_loop_pb; } 2>&1 | grep "Maximum resident" | grep -oE "[^ ]+$" >> ${out_file}
             else
                 echo ":("
-                break
+                break 2
             fi
         done
 
     done < ../kernels_lore/proc/${name}/${name}_params.txt
 
-done <<< `find ../kernels_lore/proc/ -iname '*1bc_270*.c'`
+done <<< `find ../kernels_lore/proc/ -iname '*1bc_*.c'`

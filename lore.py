@@ -42,17 +42,19 @@ class ArrayRefVisitor(c_ast.NodeVisitor):
         s = node.subscript
 
         # new refs to merge with the old ones
-        refs = [{s}]
+        refs = [{s}]    # todo: no q?
 
         while type(node.name) is c_ast.ArrayRef:
-            refs.append({q(node.name.subscript)})
+            s_eval = q(node.name.subscript)
+            if s_eval is not None:
+                refs.append({s_eval})
             node = node.name
 
         if n in self.refs:
             for old_ref, new_ref in zip(self.refs[n], refs):
                 old_ref.update(new_ref)
         else:
-            self.refs[q(n)] = refs
+            self.refs[q(n)] = refs  # todo: q?
 
 
 # noinspection PyPep8Naming
@@ -107,14 +109,15 @@ class ForVisitor(c_ast.NodeVisitor):
 
         v = c.left
         m = c.right
+        m_eval = q(m)
 
         if type(v) is not c_ast.ID:
             return
 
-        if v.name in self.maxs:
-            self.maxs[v.name].add(q(m))
+        if v.name in self.maxs and m_eval is not None:
+            self.maxs[v.name].add(m_eval)
         else:
-            self.maxs[v.name] = {q(m)}
+            self.maxs[v.name] = {m_eval}
 
         id_visitor = IDVisitor()
         id_visitor.visit(m)
@@ -152,7 +155,7 @@ class PtrDeclVisitor(c_ast.NodeVisitor):
         self.dtypes[n] = t
 
 
-def max_set(s):
+def remove_small_numbers(s):
     max_num = float('-inf')
     s2 = []
 
@@ -166,7 +169,35 @@ def max_set(s):
     if max_num != float('-inf'):
         s2.append(str(max_num))
 
-    return reduce((lambda a, b: 'MAX(' + a + ', ' + b + ')'), s2)
+    return s2
+
+
+def max_set(s):
+    s2 = remove_small_numbers(s)
+
+    if len(s2) == 0:
+        return None
+    if len(s2) == 1:
+        return s2[0]
+    else:
+        return reduce((lambda a, b: 'MAX(' + a + ', ' + b + ')'), s2)
+
+
+def eval_basic_op(l, op, r):
+    print(l, op, r)
+    try:
+        l_num = int(l)
+        r_num = int(r)
+        if op == '+':
+            return str(l_num + r_num)
+        if op == '-':
+            return str(l_num - r_num)
+        if op == '*':
+            return str(l_num * r_num)
+    finally:
+        pass
+
+    return l + op + r
 
 
 def q(n, maxs={}):
@@ -175,9 +206,10 @@ def q(n, maxs={}):
     if type(n) is c_ast.ID:
         return q(n.name, maxs)
     elif type(n) is c_ast.BinaryOp:
+        print('bin', n.left, n.right)
         l = q(n.left, maxs)
         r = q(n.right, maxs)
-        return l + n.op + r if l is not None and r is not None else None
+        return eval_basic_op(l, n.op, r) if l is not None and r is not None else None
     elif type(n) is c_ast.Constant:
         return n.value
     else:
@@ -185,7 +217,9 @@ def q(n, maxs={}):
 
 
 def q_arr(a, maxs={}):
-    return [q(n, maxs) for n in a]
+    res = [q(n, maxs) for n in a]
+    res = [r for r in res if r is not None]
+    return res
 
 
 def malloc(name, dtype, sizes, dim):
@@ -236,6 +270,9 @@ def gen_mallocs(ast, verbose=False):
     av.visit(ast)
     maxs = av.maxs
 
+    for var in maxs:
+        maxs[var] = set(remove_small_numbers(maxs[var]))
+
     arv = ArrayRefVisitor(maxs)
     arv.visit(ast)
     refs = arv.refs
@@ -254,10 +291,12 @@ def gen_mallocs(ast, verbose=False):
     res = ''
     for arr in refs:
         ref = refs[arr]
-        sizes = [max_set(size) for size in ref]
 
         if arr in dtypes:
-            res += malloc(arr, dtypes[arr], sizes, 0)
+            sizes = [max_set(size) for size in ref]
+            sizes = [s for s in sizes if s is not None]
+            if len(sizes) > 0:
+                res += malloc(arr, dtypes[arr], sizes, 0)
 
     res = add_bounds_init(res, bounds)
 
@@ -339,6 +378,7 @@ def find_max_param(refs, ast, verbose=False):
 
 def main():
     verbose = True
+    # verbose = False
 
     try:
 
@@ -385,7 +425,6 @@ def main():
 
                 if len(bounds) > 0:
                     max_param = find_max_param(refs, ast, verbose)
-                    print(max_param)
 
                     for k in range(1, 11):
                         defines = ['-D PARAM_' + b.upper() + '=' + str(int(k * max_param / 10)) for b in bounds]
