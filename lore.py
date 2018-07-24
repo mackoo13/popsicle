@@ -102,9 +102,10 @@ class ForVisitor(c_ast.NodeVisitor):
             raise ParseException('Unknown format of for loop condition ("i < N" expected)')
 
         if type(n) is not c_ast.UnaryOp:
+            print(type(n))
             raise ParseException('Unknown format of for loop increment (UnaryOp expected)')
 
-        if n.op not in ('p++', '++', '+='):
+        if n.op not in ('p++', '++', '+=', 'p--', '--', '-='):
             raise ParseException('Unknown format of for loop increment ("++" or "+=" expected, "' + n.op + '" found)')
 
         v = c.left
@@ -156,12 +157,22 @@ class PtrDeclVisitor(c_ast.NodeVisitor):
 
 
 def remove_non_extreme_numbers(s, leave_min=True):
+    """
+    Remove from an iterable all numbers which are neither minimal or maximal.
+    The function leaves all non-numeric elements in the iterable untouched.
+    The order of elements might be different in the output.
+
+    Example: ['3', '6', 'N', '7'] -> ['N', '3', '7']
+    :param s: Iterable of expressions as strings
+    :param leave_min: If set to True, preserve minimal and maximum value from s. Otherwise, only maximum is preserved.
+    :return: Transformed iterable
+    """
     max_num = float('-inf')
-    min_num = float('inf')
+    min_num = 0
     s2 = []
 
     for n in s:
-        if n.isdecimal():  # todo: do we need to handle negative numbers?
+        if n.isdecimal():
             n_num = int(n)
             if n_num > max_num:
                 max_num = n_num
@@ -170,15 +181,25 @@ def remove_non_extreme_numbers(s, leave_min=True):
         else:
             s2.append(n)
 
-    if max_num != float('-inf'):
+    if max_num > 0:
         s2.append(str(max_num))
-    if leave_min and min_num != float('inf') and min_num != max_num:
+    if leave_min and min_num > 0 and min_num != max_num:
         s2.append(str(min_num))
 
     return s2
 
 
 def max_set(s):
+    """
+    Transforms an iterable of expressions into a C expression which will evalueate to its maximum.
+    MAX(x, y) macro must be included to the C program.
+    If there are multiple integer values in the iterable, only the greatest one is preserved
+    (see remove_non_extreme_numbers)
+
+    Example: ['3', '6', '7', 'N', 'K'] -> 'MAX(MAX(7, N), 'K')'
+    :param s: An iterable of expressions as strings
+    :return: Output string
+    """
     s2 = remove_non_extreme_numbers(s, leave_min=False)
 
     if len(s2) == 0:
@@ -190,6 +211,13 @@ def max_set(s):
 
 
 def eval_basic_op(l, op, r):
+    """
+    Evaluate a basic arithmetic operation
+    :param l: Left operand
+    :param op: Operator
+    :param r: Right operand
+    :return: Result or a string representing the operation if it cannot be calculated
+    """
     if l.isdecimal() and r.isdecimal():
         l_num = int(l)
         r_num = int(r)
@@ -205,10 +233,13 @@ def eval_basic_op(l, op, r):
 
 def estimate(n, maxs={}):
     """
-
-    :param n:
-    :param maxs:
-    :return: iterable
+    Attempts to find the greatest value that an expression might have. The primary use of this function is determining
+    the minimal size of an array based on the source code.
+    If there is more than one expression that might be the maximum (e.g. variable-dependent or too complicated to be
+    calculated here), all possible options are enclosed in MAX macro and left to be determined by C compiler.
+    :param n: An expression given as a c_ast object or a string
+    :param maxs: A map containing possible upper bound of variables
+    :return: C expression that will evaluate to the maximal possible value of the input expression.
     """
     options = estimate_options(n, maxs)
     options = remove_non_extreme_numbers(options)
@@ -216,6 +247,12 @@ def estimate(n, maxs={}):
 
 
 def estimate_options(n, maxs={}):
+    """
+    Given an expression, this function attempts to find a list of possible expressions representing its upper bound.
+    :param n: An expression given as a c_ast object or a string
+    :param maxs: maxs: A map containing possible upper bound of variables
+    :return: List of expressions that might evaluate to the maximal possible value of the input expression.
+    """
     if type(n) is str:
         return maxs[n] if n in maxs else [n]
     if type(n) is c_ast.ID:
@@ -230,13 +267,19 @@ def estimate_options(n, maxs={}):
         return []
 
 
-def estimate_arr(a, maxs={}):
-    res = [estimate(n, maxs) for n in a]
-    res = [r for r in res if r is not None]
-    return res
-
-
 def malloc(name, dtype, sizes, dim):
+    """
+    Generates C code for array memory allocation and random initialization.
+    For multidimensional arrays, the function is called recursively for each dimension.
+    A constant of 2 is added to the size for safety.
+
+    Example: malloc('A', 'int', ['N+42'], 0) -> A = malloc((N+42+2)*sizeof(int));
+    :param name: Array name
+    :param dtype: Array data type
+    :param sizes: List of dimensions sizes (as strings)
+    :param dim: Index of currently processed dimension
+    :return: C code (as string)
+    """
     size = sizes[dim]
 
     indices = ['i_' + str(n) for n in range(dim + 1)]
@@ -268,10 +311,11 @@ def print_debug_info(bounds, refs, dtypes, dims, maxs):
     print('dims: ', dims)
 
 
-def gen_mallocs(ast, verbose=False):
+def analyze(ast, verbose=False):
     """
-    :param ast:
-    :param verbose:
+    Extract useful information from AST tree
+    :param ast: AST tree object
+    :param verbose: If True, the output will be printed
     :return:
         res (string) - malloc instructions and array initialization)
         bounds () -
@@ -296,7 +340,7 @@ def gen_mallocs(ast, verbose=False):
     refs = arv.refs
 
     for arr in refs:
-        refs[arr] = [set(estimate_arr(r, maxs)) for r in refs[arr]]
+        refs[arr] = [set([estimate(r, maxs) for r in ref]) for ref in refs[arr]]
 
     pdv = PtrDeclVisitor()
     pdv.visit(ast)
@@ -306,6 +350,20 @@ def gen_mallocs(ast, verbose=False):
     dtypes = adv.dtypes
     dims = adv.dims
 
+    if verbose:
+        print_debug_info(bounds, refs, dtypes, dims, maxs)
+
+    return bounds, refs, dtypes, dims
+
+
+def gen_mallocs(bounds, refs, dtypes):
+    """
+    Generates a C code section containing all arrays' memory allocation and initialization.
+    :param bounds:
+    :param refs:
+    :param dtypes: (map: array_name: str -> data type: str)
+    :return:
+    """
     res = ''
     for arr in refs:
         ref = refs[arr]
@@ -318,17 +376,24 @@ def gen_mallocs(ast, verbose=False):
 
     res = add_bounds_init(res, bounds)
 
-    if verbose:
-        print_debug_info(bounds, refs, dtypes, dims, maxs)
-
-    return res, bounds, refs, dtypes, dims
+    return res
 
 
 def split_code(code):
+    """
+    Splits code into the section containing macros and the rest of the code.
+    :param code: C code (as string)
+    :return: Transformed code
+    """
     return re.split(r'\n(?!#)', code, 1)
 
 
 def add_includes(includes):
+    """
+    Adds all necessary #include instructions to the code.
+    :param includes: C code section containing #include's (as string)
+    :return: Transformed code
+    """
     res = includes + '\n'
     res += '#include <papi.h>\n'
     res += '#include "../../../wombat/papi_utils/papi_events.h"\n'
@@ -337,29 +402,61 @@ def add_includes(includes):
 
 
 def arr_to_ptr_decl(code, dtypes, dims):
+    """
+    Replaces all fixed-size array declarations with pointer declarations.
+
+    Example; 'int A[42][42];' -> 'int** A;'
+    :param code: C code (as string)
+    :param dtypes: (map: array_name: str -> data type: str)
+    :param dims: A map from fixed-length arrays to their dimensions (map: array_name: str -> data type: str[])
+    :return: Transformed code
+    """
     for arr in dims:
         code = re.sub(r'(' + dtypes[arr] + ')\s+(' + arr + ').*;', r'\1' + '*' * dims[arr] + ' ' + arr + ';', code)
     return code
 
 
 def add_papi(code):
+    """
+    Adds PAPI instructions in the places indicated by #pragma.
+    :param code: C code (as string)
+    :return: Transformed code
+    """
     code = re.sub(r'(#pragma scop\n)', r'\1exec(PAPI_start(set));\n', code)
     code = re.sub(r'(\n#pragma endscop\n)', r'\nexec(PAPI_stop(set, values));\1return 0;\n', code)
     return code
 
 
 def add_mallocs(code, mallocs):
+    """
+    Inserts generated arrays allocation and initialization section.
+    :param code: C code (as string)
+    :param mallocs: Generated C code (as string)
+    :return: Transformed code
+    """
     code = re.sub(r'(void loop\(\)\s*{)', r'\1\n\n' + mallocs, code)
     return code
 
 
 def sub_loop_header(code):
+    """
+    Transforms the loop function header.
+    :param code: C code (as string)
+    :return: Transformed code
+    """
     code = re.sub(r'void loop\(\)', 'int loop(int set, long_long* values)', code)
     code = re.sub(r'return\s*;', 'return 0;', code)
     return code
 
 
 def add_bounds_init(mallocs, bounds):
+    """
+    Inserts a fragment initializing program parameters into the code.
+    The actual values should be injected at compilation time (-D option in gcc)
+    :param mallocs: C code (as string)
+    :param bounds:
+    :return: Transformed code
+    """
     inits = [n + ' = PARAM_' + n.upper() + ';' for n in bounds]
     inits = '\n'.join(inits)
     mallocs = inits + '\n\n' + mallocs
@@ -367,12 +464,22 @@ def add_bounds_init(mallocs, bounds):
 
 
 def del_extern_restrict(code):
+    """
+    Remove 'extern' and 'restrict' keywords
+    :param code: C code (as string)
+    :return: Transformed code
+    """
     code = re.sub(r'extern ', '', code)
     code = re.sub(r'restrict ', '', code)
     return code
 
 
 def find_for_depth(ast):
+    """
+    Finds the maximal depth of nested for loops.
+    :param ast: AST tree
+    :return: Max depth
+    """
     res = [0]
     counter = ForDepthCounter(1, res)
     counter.visit(ast)
@@ -380,6 +487,16 @@ def find_for_depth(ast):
 
 
 def find_max_param(refs, ast, verbose=False):
+    """
+    Attempts to find the maximal value of program parameters. The upper bound is either imposed by limited memory
+    (based on arrays dimensionality and their number) or loop count (based on for loop depth)
+
+    if multiple parameters are present, all are assumed to be equal.
+    :param refs:
+    :param ast: AST tree
+    :param verbose: True to print the output
+    :return: The maximal parameter
+    """
     max_arr_dim = max([len(refs) for refs in refs.values()])
     arr_count = len(refs)
     loop_depth = find_for_depth(ast)
@@ -395,7 +512,6 @@ def find_max_param(refs, ast, verbose=False):
 
 
 def main():
-    verbose = True
     verbose = False
 
     try:
@@ -421,7 +537,8 @@ def main():
 
             includes = add_includes(includes)
 
-            mallocs, bounds, refs, dtypes, dims = gen_mallocs(ast, verbose)
+            bounds, refs, dtypes, dims = analyze(ast, verbose)
+            mallocs = gen_mallocs(bounds, refs, dtypes)
 
             code = del_extern_restrict(code)
             code = arr_to_ptr_decl(code, dtypes, dims)
