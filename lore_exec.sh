@@ -59,4 +59,4 @@ while read -r path; do
         done < ${file_prefix}_params.txt
     fi
 
-done <<< `find ${kernel_path}/ -iname '*03*.c'`
+done <<< `find ${kernel_path}/ -iname '*04*.c'`

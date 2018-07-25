@@ -306,7 +306,7 @@ def malloc(name, dtype, sizes, dim):
     ptr_asterisks = '*'*(len(sizes) - dim - 1)
     res = '\t' * dim
     res += f'{name}{inds} = malloc(({size}+2) * sizeof({dtype}{ptr_asterisks}));\n'
-    res += '\t' * dim + f'for(int {i}=0; {i}<{size}; ++{i}) ' + '{\n'
+    res += '\t' * dim + f'for(int {i}=0; {i}<{size}+2; ++{i}) ' + '{\n'
     
     if dim < len(sizes) - 1:
         res += malloc(name, dtype, sizes, dim + 1)
@@ -539,7 +539,7 @@ def main():
         file_name = file.split('.')[0]
 
         kernels_path = '../kernels_lore/'
-        out_dir = kernels_path + 'proc_t1/' + file_name
+        out_dir = kernels_path + 'proc/' + file_name
 
         with open(kernels_path + 'orig/' + file, 'r') as fin:
             code = fin.read()
