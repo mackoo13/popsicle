@@ -5,7 +5,8 @@
 
 readonly trials=1
 readonly papi_path=~/papi/papi/src/
-readonly out_file=papi_output/$1.csv
+readonly out_file=../papi_output/$1.csv
+readonly kernel_path=../kernels_lore/proc
 
 compile() {
     name=$1
@@ -13,12 +14,12 @@ compile() {
 
     gcc -c \
         -I ${papi_path} \
-        ../kernels_lore/proc/${name}/${name}.c \
+        ${kernel_path}/${name}/${name}.c \
         ${params} \
-        -O0 -o ../kernels_lore/proc/${name}/${name}.o
+        -O0 -o ${kernel_path}/${name}/${name}.o
 
-    if [ -e ../kernels_lore/proc/${name}/${name}.o ]; then
-        gcc ../kernels_lore/proc/${name}/${name}.o \
+    if [ -e ${kernel_path}/${name}/${name}.o ]; then
+        gcc ${kernel_path}/${name}/${name}.o \
             exec_loop_pb.o \
             papi_utils/papi_events.o \
             -L ~/papi/papi/src/libpfm4/lib -lpfm \
@@ -41,15 +42,16 @@ while read -r path; do
         echo "Running $name $params ..."
 
         for trial in `seq ${trials}`; do
-            if res=$(./exec_loop_pb); then
-                echo -n ${name},${params},${res}, >> ${out_file}
-                { command time -v ./exec_loop_pb; } 2>&1 | grep "Maximum resident" | grep -oE "[^ ]+$" >> ${out_file}
+            if res=$(timeout 10 ./exec_loop_pb); then
+                echo ${name},${params},${res} >> ${out_file}
+#                echo -n ${name},${params},${res}, >> ${out_file}
+#                { command time -v ./exec_loop_pb; } 2>&1 | grep "Maximum resident" | grep -oE "[^ ]+$" >> ${out_file}
             else
                 echo ":("
                 break 2
             fi
         done
 
-    done < ../kernels_lore/proc/${name}/${name}_params.txt
+    done < ${kernel_path}/${name}/${name}_params.txt
 
-done <<< `find ../kernels_lore/proc/ -iname '*1bc_61*.c'`
+done <<< `find $kernel_path/ -iname '*01*.c'`

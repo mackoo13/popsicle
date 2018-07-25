@@ -501,8 +501,8 @@ def find_max_param(refs, ast, verbose=False):
     arr_count = len(refs)
     loop_depth = find_for_depth(ast)
 
-    max_param_arr = math.pow(1000000 / arr_count, 1 / max_arr_dim)
-    max_param_loop = math.pow(10000000, 1 / loop_depth)
+    max_param_arr = math.pow(100000000 / arr_count, 1 / max_arr_dim)
+    max_param_loop = math.pow(1000000000, 1 / loop_depth)
     max_param = min(max_param_arr, max_param_loop)
 
     if verbose:
@@ -515,7 +515,6 @@ def main():
     verbose = False
 
     try:
-
         parser = argparse.ArgumentParser()
         parser.add_argument("file_name", help="File name")
         args = parser.parse_args()
@@ -556,16 +555,12 @@ def main():
             with open(out_dir + '/' + file, 'w') as fout:
                 fout.write(code)
 
-            with open(out_dir + '/' + file_name + '_params.txt', 'w') as fout:
+            max_param = find_max_param(refs, ast, verbose)
+            with open(out_dir + '/' + file_name + '_max_param.txt', 'w') as fout:
+                fout.write(str(int(max_param)))
 
-                if len(bounds) > 0:
-                    max_param = find_max_param(refs, ast, verbose)
-
-                    for k in range(1, 11):
-                        defines = ['-D PARAM_' + b.upper() + '=' + str(int(k * max_param / 10)) for b in bounds]
-                        fout.write(' '.join(defines) + '\n')
-                else:
-                    fout.write('\n')
+            with open(out_dir + '/' + file_name + '_params_names.txt', 'w') as fout:
+                fout.write(','.join(['PARAM_' + b.upper() for b in bounds]))
 
     except Exception as e:
         print('\t', e)
