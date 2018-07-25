@@ -7,4 +7,4 @@ while read -r path; do
 
     python3 lore_params.py ${name}
 
-done <<< `find ../kernels_lore/proc/ -iname '*01*.c'`
+done <<< `find ../kernels_lore/proc/ -iname '*02*.c'`

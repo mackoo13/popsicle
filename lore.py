@@ -42,7 +42,7 @@ class ArrayRefVisitor(c_ast.NodeVisitor):
         s = node.subscript
 
         # new refs to merge with the old ones
-        refs = [{s}]    # todo: no q?
+        refs = [{s}]
 
         while type(node.name) is c_ast.ArrayRef:
             s_eval = estimate(node.name.subscript)
@@ -54,7 +54,7 @@ class ArrayRefVisitor(c_ast.NodeVisitor):
             for old_ref, new_ref in zip(self.refs[n], refs):
                 old_ref.update(new_ref)
         else:
-            self.refs[estimate(n)] = refs  # todo: q?
+            self.refs[estimate(n)] = refs
 
 
 # noinspection PyPep8Naming
@@ -172,14 +172,15 @@ def remove_non_extreme_numbers(s, leave_min=True):
     s2 = []
 
     for n in s:
-        if n.isdecimal():
-            n_num = int(n)
-            if n_num > max_num:
-                max_num = n_num
-            if n_num < min_num:
-                min_num = n_num
-        else:
-            s2.append(n)
+        if n is not None:
+            if n.isdecimal():
+                n_num = int(n)
+                if n_num > max_num:
+                    max_num = n_num
+                if n_num < min_num:
+                    min_num = n_num
+            else:
+                s2.append(n)
 
     if max_num > 0:
         s2.append(str(max_num))
@@ -231,24 +232,33 @@ def eval_basic_op(l, op, r):
     return l + op + r
 
 
-def estimate(n, maxs={}):
+def estimate(n, maxs={}, var=None, deps={}):
     """
     Attempts to find the greatest value that an expression might have. The primary use of this function is determining
     the minimal size of an array based on the source code.
     If there is more than one expression that might be the maximum (e.g. variable-dependent or too complicated to be
     calculated here), all possible options are enclosed in MAX macro and left to be determined by C compiler.
+    :param var:
+    :param deps:
     :param n: An expression given as a c_ast object or a string
     :param maxs: A map containing possible upper bound of variables
     :return: C expression that will evaluate to the maximal possible value of the input expression.
     """
-    options = estimate_options(n, maxs)
+    options = estimate_options(n, maxs, var, deps)
+
+    if len(deps) > 0:
+        deps_values = reduce(lambda a, b: a | b, deps.values())
+        raise ParseException('Variable-dependent array size detected: ' + ','.join(deps_values))
+
     options = remove_non_extreme_numbers(options)
     return max_set(options)
 
 
-def estimate_options(n, maxs={}):
+def estimate_options(n, maxs={}, var=None, deps={}):
     """
     Given an expression, this function attempts to find a list of possible expressions representing its upper bound.
+    :param var: Name of the variable being estimated
+    :param deps:
     :param n: An expression given as a c_ast object or a string
     :param maxs: maxs: A map containing possible upper bound of variables
     :return: List of expressions that might evaluate to the maximal possible value of the input expression.
@@ -256,10 +266,16 @@ def estimate_options(n, maxs={}):
     if type(n) is str:
         return maxs[n] if n in maxs else [n]
     if type(n) is c_ast.ID:
-        return estimate_options(n.name, maxs)
+        if var is not None and n.name not in maxs:
+            if var in deps:
+                deps[var].add(n.name)
+            else:
+                deps[var] = {n.name}
+
+        return estimate_options(n.name, maxs, var, deps)
     elif type(n) is c_ast.BinaryOp:
-        ls = estimate_options(n.left, maxs)
-        rs = estimate_options(n.right, maxs)
+        ls = estimate_options(n.left, maxs, var, deps)
+        rs = estimate_options(n.right, maxs, var, deps)
         return [eval_basic_op(l, n.op, r) for l in ls for r in rs]
     elif type(n) is c_ast.Constant:
         return [n.value]
@@ -339,8 +355,9 @@ def analyze(ast, verbose=False):
     arv.visit(ast)
     refs = arv.refs
 
+    deps = {}
     for arr in refs:
-        refs[arr] = [set([estimate(r, maxs) for r in ref]) for ref in refs[arr]]
+        refs[arr] = [set([estimate(r, maxs, arr, deps) for r in ref]) for ref in refs[arr]]
 
     pdv = PtrDeclVisitor()
     pdv.visit(ast)
@@ -501,7 +518,7 @@ def find_max_param(refs, ast, verbose=False):
     arr_count = len(refs)
     loop_depth = find_for_depth(ast)
 
-    max_param_arr = math.pow(100000000 / arr_count, 1 / max_arr_dim)
+    max_param_arr = math.pow(10000000 / arr_count, 1 / max_arr_dim)
     max_param_loop = math.pow(1000000000, 1 / loop_depth)
     max_param = min(max_param_arr, max_param_loop)
 
@@ -522,7 +539,7 @@ def main():
         file_name = file.split('.')[0]
 
         kernels_path = '../kernels_lore/'
-        out_dir = kernels_path + 'proc/' + file_name
+        out_dir = kernels_path + 'proc_t1/' + file_name
 
         with open(kernels_path + 'orig/' + file, 'r') as fin:
             code = fin.read()

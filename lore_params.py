@@ -16,13 +16,13 @@ def main():
     out_dir = kernels_path + 'proc/' + file_name
 
     with open(out_dir + '/' + file_name + '_params.txt', 'w') as fout, \
-        open(out_dir + '/' + file_name + '_params_names.txt', 'r') as fin_names, \
-        open(out_dir + '/' + file_name + '_max_param.txt', 'r') as fin_max:
+            open(out_dir + '/' + file_name + '_params_names.txt', 'r') as fin_names, \
+            open(out_dir + '/' + file_name + '_max_param.txt', 'r') as fin_max:
 
         max_param = int(fin_max.read())
         param_names = fin_names.read().strip().split(',')
 
-        if len(param_names) > 0:
+        if len(param_names) > 0 and len(param_names[0]) > 0:
 
             for k in range(1, 31):
                 defines = [f'-D {p}={str(intermediate_value(k, len(param_names), max_param))}' for p in param_names]

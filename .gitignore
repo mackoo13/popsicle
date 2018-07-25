@@ -7,5 +7,6 @@ kernels_pb/*/*
 kernels_lore
 python/.ipynb_checkpoints/*
 .idea/*
+logs
 venv
 CMakeLists.txt
