@@ -550,13 +550,14 @@ def find_max_param(refs, ast, verbose=False):
 
 
 def main():
-    verbose = False
 
     try:
         parser = argparse.ArgumentParser()
+        parser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
         parser.add_argument("file_path", help="File path")
         parser.add_argument("proc_path", help="Proc path")
         args = parser.parse_args()
+        verbose = args.verbose
         file_path = args.file_path
         file_name = file_path.split('/')[-1]
         file_name = file_name.split('.')[0]
