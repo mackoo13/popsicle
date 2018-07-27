@@ -17,11 +17,6 @@ while read -r path; do
 
     echo "Parsing $name"
 
-    if grep -q struct "$path"; then
-        echo -e "\tSkipping $name (struct detected)"
-        continue
-    fi
-
     if res=`python3 lore_proc.py ${path} ${LORE_PROC_PATH}`; then
         ((parsed++))
     else

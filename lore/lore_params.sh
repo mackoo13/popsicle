@@ -15,7 +15,7 @@ while read -r path; do
     if res=`python3 lore_params.py ${path}`; then
         ((parsed++))
     else
-        ((filaed++))
+        ((failed++))
     fi
 
 done <<< `ls -d ${LORE_PROC_PATH}*/`

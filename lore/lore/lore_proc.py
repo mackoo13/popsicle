@@ -1,3 +1,4 @@
+from __future__ import print_function
 from pycparser import c_parser, c_ast
 from functools import reduce
 import re
@@ -156,6 +157,15 @@ class PtrDeclVisitor(c_ast.NodeVisitor):
         self.dtypes[n] = t
 
 
+# noinspection PyPep8Naming
+class StructVisitor(c_ast.NodeVisitor):
+    def __init__(self):
+        self.contains_struct = False
+
+    def visit_Struct(self, node):
+        self.contains_struct = True
+
+
 def remove_non_extreme_numbers(s, leave_min=True):
     """
     Remove from an iterable all numbers which are neither minimal or maximal.
@@ -305,14 +315,18 @@ def malloc(name, dtype, sizes, dim):
     inds = ''.join(indices_in_brackets[:-1])
     ptr_asterisks = '*'*(len(sizes) - dim - 1)
     res = '\t' * dim
-    res += f'{name}{inds} = malloc(({size}+2) * sizeof({dtype}{ptr_asterisks}));\n'
-    res += '\t' * dim + f'for(int {i}=0; {i}<{size}+2; ++{i}) ' + '{\n'
+    res += '{%s}{%s} = malloc((%s+2) * sizeof(%s%s));\n' % \
+           (name, inds, size, dtype, ptr_asterisks)
+    res += '\t' * dim
+    res += 'for(int %s=0; %s<%s+2; ++%s) {\n' % \
+           (i, i, size, i)
     
     if dim < len(sizes) - 1:
         res += malloc(name, dtype, sizes, dim + 1)
     else:
         inds = ''.join(indices_in_brackets)
-        res += '\t' * (dim + 1) + f'{name}{inds} = ({dtype})rand();\n'
+        res += '\t' * (dim + 1)
+        res += '%s%s = (%s)rand();\n' % (name, inds, dtype)
 
     res += '\t' * dim + '}\n'
 
@@ -403,6 +417,12 @@ def split_code(code):
     :return: Transformed code
     """
     return re.split(r'\n(?!#)', code, 1)
+
+
+def contains_struct(ast):
+    sv = StructVisitor()
+    sv.visit(ast)
+    return sv.contains_struct
 
 
 def add_includes(includes):
@@ -547,6 +567,9 @@ def main():
         with open(file_path, 'r') as fin:
             code = fin.read()
             includes, code = split_code(code)
+
+            if contains_struct(code):
+                raise ParseException('Code contains struct declaration.')
 
             parser = c_parser.CParser()
             ast = parser.parse(code)
