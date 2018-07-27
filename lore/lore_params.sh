@@ -2,12 +2,22 @@
 
 . lore.cfg
 
+if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!"; exit 1; fi
+
+parsed=0
+failed=0
+
 while read -r path; do
-    echo $path
     name=`basename "${path%.*}"`
 
     echo "Generating params for $name"
 
-    python3 lore_params.py ${path}
+    if res=`python3 lore_params.py ${path}`; then
+        ((parsed++))
+    else
+        ((filaed++))
+    fi
 
 done <<< `ls -d ${LORE_PROC_PATH}*/`
+
+echo ${parsed} parsed, ${failed} skipped.

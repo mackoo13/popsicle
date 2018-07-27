@@ -10,3 +10,4 @@ python/.ipynb_checkpoints/*
 logs
 venv
 CMakeLists.txt
+lore/models

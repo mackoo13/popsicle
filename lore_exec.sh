@@ -3,14 +3,21 @@
 # PARAMS:
 #   $1 output file name (without extension)
 
+# todo slashes in paths
+
+. lore.cfg
+
+if [ -z "$LORE_ORIG_PATH" ]; then echo "Invalid config (LORE_ORIG_PATH) missing!"; exit 1; fi
+if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!"; exit 1; fi
+if [ -z "$PAPI_PATH" ]; then echo "Invalid config (PAPI_PATH) missing!"; exit 1; fi
+if [ -z "$PAPI_UTILS_PATH" ]; then echo "Invalid config (PAPI_UTILS_PATH) missing!"; exit 1; fi
+
 readonly trials=1
-readonly papi_path=~/papi/papi/src/
-readonly out_file=../papi_output/$1.csv
-readonly kernel_path=../kernels_lore/proc
+readonly out_file=${PAPI_OUT_DIR}$1.csv
 
 compile_exec_loop() {
     gcc -c \
-        -I ${papi_path} \
+        -I ${PAPI_PATH} \
         exec_loop_lore.c \
         -o exec_loop_lore.o
 }
@@ -20,7 +27,7 @@ compile() {
     params=$2
 
     gcc -c \
-        -I ${papi_path} \
+        -I ${PAPI_PATH} \
         ${file_prefix}.c \
         ${params} \
         -O0 -o ${file_prefix}.o
@@ -28,9 +35,9 @@ compile() {
     if [ -e ${file_prefix}.o ]; then
         gcc ${file_prefix}.o \
             exec_loop_lore.o \
-            papi_utils/papi_events.o \
-            -L ~/papi/papi/src/libpfm4/lib -lpfm \
-            -L ~/papi/papi/src/ -lpapi \
+            ${PAPI_UTILS_PATH}papi_events.o \
+            -L ${PAPI_PATH}libpfm4/lib -lpfm \
+            -L ${PAPI_PATH} -lpapi \
             -lm \
             -O0 -static -o exec_loop_lore
     else
@@ -39,14 +46,14 @@ compile() {
     fi
 }
 
-cat papi_utils/active_events_header.txt > ${out_file}
+cat ${PAPI_UTILS_PATH}active_events_header.txt > ${out_file}
 
 compile_exec_loop
 
 while read -r path; do
     name=`basename "${path%.*}"`
 
-    file_prefix=${kernel_path}/${name}/${name}
+    file_prefix=${LORE_PROC_PATH}/${name}/${name}
 
     if [ -e ${file_prefix}_params.txt ]; then
         while read -r params; do
@@ -68,4 +75,4 @@ while read -r path; do
         done < ${file_prefix}_params.txt
     fi
 
-done <<< `find ${kernel_path}/ -iname '*.c'`
+done <<< `find ${LORE_PROC_PATH} -iname '*.c'`
