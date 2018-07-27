@@ -413,6 +413,7 @@ def add_includes(includes):
     """
     res = includes + '\n'
     res += '#include <papi.h>\n'
+    res += '#include <time.h>\n'
     res += '#include "../../../wombat/papi_utils/papi_events.h"\n'
     res += '#define MAX(x, y) (((x) > (y)) ? (x) : (y))\n'
     return res
@@ -439,8 +440,8 @@ def add_papi(code):
     :param code: C code (as string)
     :return: Transformed code
     """
-    code = re.sub(r'(#pragma scop\n)', r'\1exec(PAPI_start(set));\n', code)
-    code = re.sub(r'(\n#pragma endscop\n)', r'\nexec(PAPI_stop(set, values));\1return 0;\n', code)
+    code = re.sub(r'(#pragma scop\n)', r'\1exec(PAPI_start(set));\n*begin = clock();', code)
+    code = re.sub(r'(\n#pragma endscop\n)', r'\n*end = clock();\nexec(PAPI_stop(set, values));\1return 0;\n', code)
     return code
 
 
@@ -461,7 +462,7 @@ def sub_loop_header(code):
     :param code: C code (as string)
     :return: Transformed code
     """
-    code = re.sub(r'void loop\(\)', 'int loop(int set, long_long* values)', code)
+    code = re.sub(r'void loop\(\)', 'int loop(int set, long_long* values, clock_t* begin, clock_t* end)', code)
     code = re.sub(r'return\s*;', 'return 0;', code)
     return code
 
@@ -533,15 +534,17 @@ def main():
 
     try:
         parser = argparse.ArgumentParser()
-        parser.add_argument("file_name", help="File name")
+        parser.add_argument("file_path", help="File path")
+        parser.add_argument("proc_path", help="Proc path")
         args = parser.parse_args()
-        file = args.file_name
-        file_name = file.split('.')[0]
+        file_path = args.file_path
+        file_name = file_path.split('/')[-1]
+        file_name = file_name.split('.')[0]
+        proc_path = args.proc_path
 
-        kernels_path = '../kernels_lore/'
-        out_dir = kernels_path + 'proc/' + file_name
+        out_dir = proc_path + file_name
 
-        with open(kernels_path + 'orig/' + file, 'r') as fin:
+        with open(file_path, 'r') as fin:
             code = fin.read()
             includes, code = split_code(code)
 
@@ -569,7 +572,7 @@ def main():
             if len(refs) == 0:
                 raise ParseException('No refs found - cannot determine max_arr_dim')
 
-            with open(out_dir + '/' + file, 'w') as fout:
+            with open(out_dir + '/' + file_name + '.c', 'w') as fout:
                 fout.write(code)
 
             max_param = find_max_param(refs, ast, verbose)

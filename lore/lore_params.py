@@ -8,16 +8,14 @@ def intermediate_value(k, n_params, max_param):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("file_name", help="File name")
+    parser.add_argument("dir", help="Dir path")
     args = parser.parse_args()
-    file_name = args.file_name
+    dir = args.dir
+    file_name = dir.split('/')[-2]
 
-    kernels_path = '../kernels_lore/'
-    out_dir = kernels_path + 'proc/' + file_name
-
-    with open(out_dir + '/' + file_name + '_params.txt', 'w') as fout, \
-            open(out_dir + '/' + file_name + '_params_names.txt', 'r') as fin_names, \
-            open(out_dir + '/' + file_name + '_max_param.txt', 'r') as fin_max:
+    with open(dir + file_name + '_params.txt', 'w') as fout, \
+            open(dir + file_name + '_params_names.txt', 'r') as fin_names, \
+            open(dir + file_name + '_max_param.txt', 'r') as fin_max:
 
         max_param = int(fin_max.read())
         param_names = fin_names.read().strip().split(',')
