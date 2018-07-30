@@ -13,6 +13,8 @@ setup(name='lore',
           'sklearn',
       ],
       entry_points={
-          'console_scripts': ['lore-train = lore.lore_train:main']
+          'console_scripts': ['lore-proc = lore.lore_proc:main',
+                              'lore-train = lore.lore_train:main',
+                              'lore-predict = lore.lore_precict:main']
       },
       zip_safe=False)

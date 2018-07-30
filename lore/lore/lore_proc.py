@@ -1,6 +1,6 @@
 from __future__ import print_function
 from pycparser import c_parser
-from lore.lore import lore_parser
+from lore import lore_parser
 import re
 import os
 import argparse

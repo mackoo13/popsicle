@@ -17,7 +17,7 @@ while read -r path; do
 
     echo "Parsing $name"
 
-    if res=`python3 lore_proc.py ${path} ${LORE_PROC_PATH}`; then
+    if res=`python3 lore/lore_proc.py ${path} ${LORE_PROC_PATH}`; then
         ((parsed++))
     else
         ((failed++))

@@ -1,7 +1,7 @@
-#include "exec_loop_lore.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include "exec_loop.h"
 #include "papi_utils.h"
-#include <papi.h>
-#include <time.h>
 
 void print_result(int set, long_long* values, double time_spent) {
     int event_codes[256];
