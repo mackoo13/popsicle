@@ -3,14 +3,11 @@
 # PARAMS:
 #   $1 output file name (without extension)
 
-# todo slashes in paths
-
-. lore.cfg
+. config/lore.cfg
 
 if [ -z "$LORE_ORIG_PATH" ]; then echo "Invalid config (LORE_ORIG_PATH) missing!"; exit 1; fi
 if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!"; exit 1; fi
 if [ -z "$PAPI_PATH" ]; then echo "Invalid config (PAPI_PATH) missing!"; exit 1; fi
-if [ -z "$PAPI_UTILS_PATH" ]; then echo "Invalid config (PAPI_UTILS_PATH) missing!"; exit 1; fi
 
 readonly trials=1
 readonly out_file=${PAPI_OUT_DIR}$1.csv
@@ -18,8 +15,15 @@ readonly out_file=${PAPI_OUT_DIR}$1.csv
 compile_exec_loop() {
     gcc -c \
         -I ${PAPI_PATH} \
-        exec_loop_lore.c \
-        -o exec_loop_lore.o
+        papi/exec_loop.c \
+        -o papi/exec_loop.o
+}
+
+compile_papi_utils() {
+    gcc -c \
+        -I ${PAPI_PATH} \
+        papi/papi_utils.c \
+        -o papi/papi_utils.o
 }
 
 compile() {
@@ -34,21 +38,22 @@ compile() {
 
     if [ -e ${file_prefix}.o ]; then
         gcc ${file_prefix}.o \
-            exec_loop_lore.o \
-            ${PAPI_UTILS_PATH}papi_events.o \
+            papi/exec_loop.o \
+            papi/papi_events.o \
             -L ${PAPI_PATH}libpfm4/lib -lpfm \
             -L ${PAPI_PATH} -lpapi \
             -lm \
-            -O0 -static -o exec_loop_lore
+            -O0 -static -o exec_loop
     else
         echo "Skipping $name (compilation error)"
         return 1
     fi
 }
 
-cat ${PAPI_UTILS_PATH}active_events_header.txt > ${out_file}
+cat papi/active_events_header.txt > ${out_file}
 
 compile_exec_loop
+compile_papi_utils
 
 while read -r path; do
     name=`basename "${path%.*}"`
@@ -64,7 +69,7 @@ while read -r path; do
             echo "Running $name $params ..."
 
             for trial in `seq ${trials}`; do
-                if res=$(timeout 10 ./exec_loop_lore); then
+                if res=$(timeout 10 ./exec_loop); then
                     echo ${name},${params},${res} >> ${out_file}
                 else
                     echo ":("
