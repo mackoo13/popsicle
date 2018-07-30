@@ -23,6 +23,6 @@ while read -r path; do
         ((failed++))
     fi
 
-done <<< `find ${LORE_ORIG_PATH} -iname '*51_34*.c'`
+done <<< `find ${LORE_ORIG_PATH} -iname '*.c'`
 
 echo ${parsed} parsed, ${failed} skipped.

@@ -1,296 +1,10 @@
 from __future__ import print_function
-from pycparser import c_parser, c_ast
-from functools import reduce
+from pycparser import c_parser
+from lore.lore import lore_parser
 import re
 import os
 import argparse
 import math
-
-
-class ParseException(Exception):
-    pass
-
-
-# noinspection PyPep8Naming
-class ArrayDeclVisitor(c_ast.NodeVisitor):
-    def __init__(self, dtypes):
-        self.dtypes = dtypes
-        self.dims = {}
-
-    def visit_ArrayDecl(self, node):
-        dim = 1
-
-        while type(node.type) is c_ast.ArrayDecl:
-            node = node.type
-            dim += 1
-
-        n = node.type.declname
-
-        self.dims[n] = dim
-
-        if type(node.type) is c_ast.TypeDecl:
-            self.dtypes[n] = ' '.join(node.type.type.names)
-
-
-# noinspection PyPep8Naming
-class ArrayRefVisitor(c_ast.NodeVisitor):
-    def __init__(self, maxs):
-        self.refs = {}
-        self.maxs = maxs
-
-    def visit_ArrayRef(self, node):
-        n = node.name.name
-        s = node.subscript
-
-        # new refs to merge with the old ones
-        refs = [{s}]
-
-        while type(node.name) is c_ast.ArrayRef:
-            s_eval = estimate(node.name.subscript)
-            if s_eval is not None:
-                refs.append({s_eval})
-            node = node.name
-
-        if n in self.refs:
-            for old_ref, new_ref in zip(self.refs[n], refs):
-                old_ref.update(new_ref)
-        else:
-            self.refs[estimate(n)] = refs
-
-
-# noinspection PyPep8Naming
-class AssignmentVisitor(c_ast.NodeVisitor):
-    def __init__(self, maxs):
-        self.refs = {}
-        self.maxs = maxs
-
-    def visit_Assignment(self, node):
-        if node.op == '=':
-            l = node.lvalue
-            r = node.rvalue
-            r_eval = estimate(r, self.maxs)
-
-            if type(l) is c_ast.ID and r_eval is not None:
-                if l.name in self.maxs:
-                    self.maxs[l.name].add(r_eval)
-                else:
-                    self.maxs[l.name] = {r_eval}
-
-
-# noinspection PyPep8Naming
-class ForDepthCounter(c_ast.NodeVisitor):
-    def __init__(self, count, res):
-        self.count = count
-        self.res = res      # max depth wrapped in an array to make it mutable
-
-    def visit_For(self, node):
-        counter = ForDepthCounter(self.count + 1, self.res)
-        counter.visit(node.stmt)
-        self.res[0] = max(self.count, self.res[0])
-
-
-# noinspection PyPep8Naming
-class ForVisitor(c_ast.NodeVisitor):
-    def __init__(self):
-        self.maxs = {}
-        self.bounds = set()
-
-    def visit_For(self, node):
-        n = node.next
-        c = node.cond
-
-        if type(c) is not c_ast.BinaryOp:
-            raise ParseException('Unknown format of for loop condition ("i < N" expected)')
-
-        if type(n) is not c_ast.UnaryOp:
-            print(type(n))
-            raise ParseException('Unknown format of for loop increment (UnaryOp expected)')
-
-        if n.op not in ('p++', '++', '+=', 'p--', '--', '-='):
-            raise ParseException('Unknown format of for loop increment ("++" or "+=" expected, "' + n.op + '" found)')
-
-        v = c.left
-        m = c.right
-        m_eval = estimate(m)
-
-        if type(v) is not c_ast.ID:
-            return
-
-        if v.name in self.maxs and m_eval is not None:
-            self.maxs[v.name].add(m_eval)
-        else:
-            self.maxs[v.name] = {m_eval}
-
-        id_visitor = IDVisitor()
-        id_visitor.visit(m)
-        for n in id_visitor.names:
-            self.bounds.add(n)
-
-        c_ast.NodeVisitor.generic_visit(self, node)
-
-
-# noinspection PyPep8Naming
-class IDVisitor(c_ast.NodeVisitor):
-    def __init__(self):
-        self.names = set()
-
-    def visit_ID(self, node):
-        self.names.add(node.name)
-
-        c_ast.NodeVisitor.generic_visit(self, node)
-
-
-# noinspection PyPep8Naming
-class PtrDeclVisitor(c_ast.NodeVisitor):
-    def __init__(self):
-        self.dtypes = {}
-
-    def visit_PtrDecl(self, node):
-        type_node = node.type
-
-        while type(type_node) is c_ast.PtrDecl:
-            type_node = type_node.type
-
-        n = type_node.declname
-        t = ' '.join(type_node.type.names)
-
-        self.dtypes[n] = t
-
-
-# noinspection PyPep8Naming
-class StructVisitor(c_ast.NodeVisitor):
-    def __init__(self):
-        self.contains_struct = False
-
-    def visit_Struct(self, node):
-        self.contains_struct = True
-
-
-def remove_non_extreme_numbers(s, leave_min=True):
-    """
-    Remove from an iterable all numbers which are neither minimal or maximal.
-    The function leaves all non-numeric elements in the iterable untouched.
-    The order of elements might be different in the output.
-
-    Example: ['3', '6', 'N', '7'] -> ['N', '3', '7']
-    :param s: Iterable of expressions as strings
-    :param leave_min: If set to True, preserve minimal and maximum value from s. Otherwise, only maximum is preserved.
-    :return: Transformed iterable
-    """
-    max_num = float('-inf')
-    min_num = 0
-    s2 = []
-
-    for n in s:
-        if n is not None:
-            if n.isdecimal():
-                n_num = int(n)
-                if n_num > max_num:
-                    max_num = n_num
-                if n_num < min_num:
-                    min_num = n_num
-            else:
-                s2.append(n)
-
-    if max_num > 0:
-        s2.append(str(max_num))
-    if leave_min and min_num > 0 and min_num != max_num:
-        s2.append(str(min_num))
-
-    return s2
-
-
-def max_set(s):
-    """
-    Transforms an iterable of expressions into a C expression which will evalueate to its maximum.
-    MAX(x, y) macro must be included to the C program.
-    If there are multiple integer values in the iterable, only the greatest one is preserved
-    (see remove_non_extreme_numbers)
-
-    Example: ['3', '6', '7', 'N', 'K'] -> 'MAX(MAX(7, N), 'K')'
-    :param s: An iterable of expressions as strings
-    :return: Output string
-    """
-    s2 = remove_non_extreme_numbers(s, leave_min=False)
-
-    if len(s2) == 0:
-        return None
-    if len(s2) == 1:
-        return s2[0]
-    else:
-        return reduce((lambda a, b: 'MAX(' + a + ', ' + b + ')'), s2)
-
-
-def eval_basic_op(l, op, r):
-    """
-    Evaluate a basic arithmetic operation
-    :param l: Left operand
-    :param op: Operator
-    :param r: Right operand
-    :return: Result or a string representing the operation if it cannot be calculated
-    """
-    if l.isdecimal() and r.isdecimal():
-        l_num = int(l)
-        r_num = int(r)
-        if op == '+':
-            return str(l_num + r_num)
-        if op == '-':
-            return str(l_num - r_num)
-        if op == '*':
-            return str(l_num * r_num)
-
-    return l + op + r
-
-
-def estimate(n, maxs={}, var=None, deps={}):
-    """
-    Attempts to find the greatest value that an expression might have. The primary use of this function is determining
-    the minimal size of an array based on the source code.
-    If there is more than one expression that might be the maximum (e.g. variable-dependent or too complicated to be
-    calculated here), all possible options are enclosed in MAX macro and left to be determined by C compiler.
-    :param var:
-    :param deps:
-    :param n: An expression given as a c_ast object or a string
-    :param maxs: A map containing possible upper bound of variables
-    :return: C expression that will evaluate to the maximal possible value of the input expression.
-    """
-    options = estimate_options(n, maxs, var, deps)
-
-    if len(deps) > 0:
-        deps_values = reduce(lambda a, b: a | b, deps.values())
-        raise ParseException('Variable-dependent array size detected: ' + ','.join(deps_values))
-
-    options = remove_non_extreme_numbers(options)
-    return max_set(options)
-
-
-def estimate_options(n, maxs={}, var=None, deps={}):
-    """
-    Given an expression, this function attempts to find a list of possible expressions representing its upper bound.
-    :param var: Name of the variable being estimated
-    :param deps:
-    :param n: An expression given as a c_ast object or a string
-    :param maxs: maxs: A map containing possible upper bound of variables
-    :return: List of expressions that might evaluate to the maximal possible value of the input expression.
-    """
-    if type(n) is str:
-        return maxs[n] if n in maxs else [n]
-    if type(n) is c_ast.ID:
-        if var is not None and n.name not in maxs:
-            if var in deps:
-                deps[var].add(n.name)
-            else:
-                deps[var] = {n.name}
-
-        return estimate_options(n.name, maxs, var, deps)
-    elif type(n) is c_ast.BinaryOp:
-        ls = estimate_options(n.left, maxs, var, deps)
-        rs = estimate_options(n.right, maxs, var, deps)
-        return [eval_basic_op(l, n.op, r) for l in ls for r in rs]
-    elif type(n) is c_ast.Constant:
-        return [n.value]
-    else:
-        return []
 
 
 def malloc(name, dtype, sizes, dim):
@@ -333,60 +47,6 @@ def malloc(name, dtype, sizes, dim):
     return res
 
 
-def print_debug_info(bounds, refs, dtypes, dims, maxs):
-    print('maxs: ', maxs)
-    print('bounds: ', bounds)
-    print('refs: ', refs)
-    print('dtypes: ', dtypes)
-    print('dims: ', dims)
-
-
-def analyze(ast, verbose=False):
-    """
-    Extract useful information from AST tree
-    :param ast: AST tree object
-    :param verbose: If True, the output will be printed
-    :return:
-        res (string) - malloc instructions and array initialization)
-        bounds () -
-        refs () -
-        dtypes (map: array_name: str -> data type: str)
-        dims (map: array_name: str -> dimensions: int[])
-    """
-
-    fv = ForVisitor()
-    fv.visit(ast)
-    bounds = fv.bounds
-
-    av = AssignmentVisitor(fv.maxs)
-    av.visit(ast)
-    maxs = av.maxs
-
-    for var in maxs:
-        maxs[var] = set(remove_non_extreme_numbers(maxs[var]))
-
-    arv = ArrayRefVisitor(maxs)
-    arv.visit(ast)
-    refs = arv.refs
-
-    deps = {}
-    for arr in refs:
-        refs[arr] = [set([estimate(r, maxs, arr, deps) for r in ref]) for ref in refs[arr]]
-
-    pdv = PtrDeclVisitor()
-    pdv.visit(ast)
-
-    adv = ArrayDeclVisitor(pdv.dtypes)
-    adv.visit(ast)
-    dtypes = adv.dtypes
-    dims = adv.dims
-
-    if verbose:
-        print_debug_info(bounds, refs, dtypes, dims, maxs)
-
-    return bounds, refs, dtypes, dims
-
-
 def gen_mallocs(bounds, refs, dtypes):
     """
     Generates a C code section containing all arrays' memory allocation and initialization.
@@ -400,7 +60,7 @@ def gen_mallocs(bounds, refs, dtypes):
         ref = refs[arr]
 
         if arr in dtypes:
-            sizes = [max_set(size) for size in ref]
+            sizes = [lore_parser.max_set(size) for size in ref]
             sizes = [s for s in sizes if s is not None]
             if len(sizes) > 0:
                 res += malloc(arr, dtypes[arr], sizes, 0)
@@ -417,12 +77,6 @@ def split_code(code):
     :return: Transformed code
     """
     return re.split(r'\n(?!#)', code, 1)
-
-
-def contains_struct(ast):
-    sv = StructVisitor()
-    sv.visit(ast)
-    return sv.contains_struct
 
 
 def add_includes(includes):
@@ -512,18 +166,6 @@ def del_extern_restrict(code):
     return code
 
 
-def find_for_depth(ast):
-    """
-    Finds the maximal depth of nested for loops.
-    :param ast: AST tree
-    :return: Max depth
-    """
-    res = [0]
-    counter = ForDepthCounter(1, res)
-    counter.visit(ast)
-    return res[0]
-
-
 def find_max_param(refs, ast, verbose=False):
     """
     Attempts to find the maximal value of program parameters. The upper bound is either imposed by limited memory
@@ -537,7 +179,7 @@ def find_max_param(refs, ast, verbose=False):
     """
     max_arr_dim = max([len(refs) for refs in refs.values()])
     arr_count = len(refs)
-    loop_depth = find_for_depth(ast)
+    loop_depth = lore_parser.find_for_depth(ast)
 
     max_param_arr = math.pow(10000000 / arr_count, 1 / max_arr_dim)
     max_param_loop = math.pow(1000000000, 1 / loop_depth)
@@ -569,8 +211,8 @@ def main():
             code = fin.read()
             includes, code = split_code(code)
 
-            if contains_struct(code):
-                raise ParseException('Code contains struct declaration.')
+            if lore_parser.contains_struct(code):
+                raise lore_parser.ParseException('Code contains struct declaration.')
 
             parser = c_parser.CParser()
             ast = parser.parse(code)
@@ -580,7 +222,7 @@ def main():
 
             includes = add_includes(includes)
 
-            bounds, refs, dtypes, dims = analyze(ast, verbose)
+            bounds, refs, dtypes, dims = lore_parser.analyze(ast, verbose)
             mallocs = gen_mallocs(bounds, refs, dtypes)
 
             code = del_extern_restrict(code)
@@ -594,7 +236,7 @@ def main():
                 os.mkdir(out_dir)
 
             if len(refs) == 0:
-                raise ParseException('No refs found - cannot determine max_arr_dim')
+                raise lore_parser.ParseException('No refs found - cannot determine max_arr_dim')
 
             with open(out_dir + '/' + file_name + '.c', 'w') as fout:
                 fout.write(code)
