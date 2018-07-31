@@ -88,7 +88,7 @@ def add_includes(includes):
     res = includes + '\n'
     res += '#include <papi.h>\n'
     res += '#include <time.h>\n'
-    res += '#include "../../../wombat/papi_utils/papi_events.h"\n'
+    res += '#include "' + os.path.abspath(os.path.dirname(sys.argv[0])) + '/../papi_utils/papi_events.h"\n'
     res += '#define MAX(x, y) (((x) > (y)) ? (x) : (y))\n'
     return res
 

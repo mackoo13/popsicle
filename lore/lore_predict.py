@@ -29,12 +29,12 @@ def main():
     cols = sorted(list(df.columns.values))
     df = df[cols]
 
-    x = df.values
+    x = df.drop('time', axis=1).values
     x = scaler.transform(x)
     x = pca.transform(x)
     y = clf.predict(x)
 
-    print(y)
+    print('Predicted time:', y[0])
 
 
 if __name__ == "__main__":

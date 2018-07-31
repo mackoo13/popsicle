@@ -1,6 +1,27 @@
 # Wombat
 
-## Bash scripts
+## Prerequisites
+
+* python 3
+* gcc
+
+## Installation
+
+```
+cd wombat
+pip install .
+```
+
+If you don't have `pip` installed, you can try using the following command instead:
+
+```
+python3 -m pip install .
+```
+
+## Training the model
+
+The following scripts can be used to prepare data from LORE, train the model and persist it for future use.
+
 
 ### `lore_proc`
 
@@ -33,13 +54,20 @@ Please be aware that for large number of programs and distinct parameters, it ma
 
 ### `lore_train`
 
-Usage: `lore_train.sh -i <input_file_path_1> -i <input_file_path_2> ...`
+Usage: `python3 lore_train.py -i <input_file_path_1> -i <input_file_path_2> ...`
 
-The input can be one or more `.csv` files obtained from `lore_exec`. The script will train a ML model to predict execution time and save it to `... todo ...` directory.
+The input can be one or more `.csv` files obtained from `lore_exec`. The script will train a ML model to predict execution time and save it to `models` directory.
+
+
+## Prediction
+
+Use these scripts to predict the execution time for new programs.
+
+The code should conform to this (todo: link to description) format.
 
 
 ### `lore_predict`
 
-Usage: `lore_predict.sh <input_C_file_path>`
+Usage: `./lore_predict.sh <input_C_file_path>`
 
-Compiles `<input_C_file_path>`, runs it, collects PAPI events and attempts to predict the execution time.
+Compiles a C program, runs it, collects PAPI events and attempts to predict the execution time.

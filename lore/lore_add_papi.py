@@ -1,6 +1,7 @@
 from __future__ import print_function
 import re
 import os
+import sys
 import argparse
 
 
@@ -22,7 +23,7 @@ def add_includes(includes):
     res = includes + '\n'
     res += '#include <papi.h>\n'
     res += '#include <time.h>\n'
-    res += '#include "../../../wombat/papi_utils/papi_events.h"\n'
+    res += '#include "' + os.path.abspath(os.path.dirname(sys.argv[0])) + '/../papi_utils/papi_events.h"\n'
     return res
 
 
@@ -69,15 +70,12 @@ def main():
     try:
         parser = argparse.ArgumentParser()
         parser.add_argument("file_path", help="File path")
-        parser.add_argument("proc_path", help="Proc path")
         args = parser.parse_args()
         file_path = args.file_path
 
         with open(file_path, 'r') as fin:
             code = fin.read()
             code = transform(code)
-
-            os.rename(file_path, file_path + '.bkp')
 
             with open(file_path, 'w') as fout:
                 fout.write(code)

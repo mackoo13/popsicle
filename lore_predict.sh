@@ -61,17 +61,31 @@ compile() {
     fi
 }
 
+path=$1
+name=${path%.*}
+bkp_path=${path}.bkp
+
 compile_exec_loop
 compile_papi_utils
 
-path=$1
-name=${path%.*}
+echo "Creating a copy of the original file: ${bkp_path}"
+if [ -e ${bkp_path} ]; then
+    cp ${bkp_path} ${path}
+else
+    cp ${path} ${bkp_path}
+fi
+
+echo "Adding PAPI instructions to ${path}"
+python3 lore/lore_add_papi.py $1
+
+echo "Compiling..."
 compile ${name}
 
 out_file=$name.csv
 csv_header > ${out_file}
-echo -e \n >> ${out_file}
+echo ",time" >> ${out_file}
 
+echo "Executing..."
 if res=$(timeout 10 ./exec_loop); then
     echo ${res} >> ${out_file}
     python3 lore/lore_predict.py -i ${out_file}
