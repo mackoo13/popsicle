@@ -117,6 +117,6 @@ while read -r path; do
         done < ${file_prefix}_params.txt
     fi
 
-done <<< `find ${LORE_PROC_PATH} -iname '*05*.c'`
+done <<< `find ${LORE_PROC_PATH} -iname '*.c'`
 
 echo ${executed} executed, ${failed} skipped.

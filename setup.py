@@ -10,6 +10,7 @@ setup(name='lore',
       packages=['lore'],
       install_requires=[
           'pandas',
+          'scipy',
           'sklearn',
       ],
       entry_points={

@@ -3,7 +3,7 @@ import argparse
 
 
 def intermediate_value(k, n_params, max_param):
-    return int(math.pow(k/10, 1/n_params) * max_param)
+    return int(math.pow(k/4, 1/n_params) * max_param)   # todo 4
 
 
 def main():
