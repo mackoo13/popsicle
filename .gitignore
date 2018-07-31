@@ -5,7 +5,7 @@
 kernels/params.c
 kernels_pb/*/*
 kernels_lore
-python/.ipynb_checkpoints/*
+notebooks/.ipynb_checkpoints/*
 .idea/*
 logs
 venv
