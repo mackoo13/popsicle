@@ -12,7 +12,7 @@ while read -r path; do
 
     echo "Generating params for $name"
 
-    if res=`python3 lore_params.py ${path}`; then
+    if res=`python3 lore/lore_params.py ${path}`; then
         ((parsed++))
     else
         ((failed++))
