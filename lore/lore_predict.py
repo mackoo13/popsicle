@@ -5,7 +5,7 @@ from sklearn.externals import joblib
 
 
 out_dir = '/home/maciej/ftb/papi_output/'
-model_dir = '/home/maciej/ftb/wombat/lore/models/'
+model_dir = '/home/maciej/ftb/wombat/models/'
 n_components = 2
 n_neighbors = 10
 
@@ -28,6 +28,7 @@ def main():
     df = pd.read_csv(file)
     cols = sorted(list(df.columns.values))
     df = df[cols]
+    df = df.astype('float64')
 
     x = df.drop('time', axis=1).values
     x = scaler.transform(x)

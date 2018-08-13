@@ -7,6 +7,7 @@
 
 if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!"; exit 1; fi
 if [ -z "$PAPI_PATH" ]; then echo "Invalid config (PAPI_PATH) missing!"; exit 1; fi
+if [ -z "$PAPI_OUT_DIR" ]; then echo "Invalid config (PAPI_OUT_DIR) missing!"; exit 1; fi
 
 readonly trials=1
 readonly out_file=${PAPI_OUT_DIR}$1.csv
@@ -43,4 +44,4 @@ while read -r path; do
         done < ${file_prefix}_params.txt
     fi
 
-done <<< `find ${LORE_PROC_PATH} -iname '*.c'`
+done <<< `find ${LORE_PROC_PATH} -iname '*000*.c'`

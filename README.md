@@ -69,9 +69,11 @@ The input can be one or more `.csv` files obtained from `lore_exec`. The script 
 
 ### `lore_train_opt`
 
-Usage: `python3 lore/lore_train_opt.py -i <input_file_path_1> -i <input_file_path_2> ...`
+Usage: `python3 lore/lore_train_opt.py -i <input_file_prefix_1> -i <input_file_prefix_2> ...`
 
-The input can be one or more `.csv` files obtained from `lore_exec_opt`. The script will train a ML model to predict speedup between `-O3` and `-O0` and save it to `models` directory.
+Files `<input_file_prefix>_O0.csv` and `<input_file_prefix>_O3.csv` obtained from `lore_exec_opt` will be used as the input.
+
+The script will train a ML model to predict speedup between `-O3` and `-O0` and save it to `models` directory.
 
 
 ## Prediction

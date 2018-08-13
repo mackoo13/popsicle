@@ -14,7 +14,8 @@ void print_result(int set, long_long* values, double time_spent) {
     printf("%lf\n", time_spent);
 }
 
-int main() {
+
+int main(int argc, char * argv []) {
 
     int set = PAPI_NULL;
     int event_codes[256];
@@ -26,8 +27,10 @@ int main() {
     available_event_codes(event_codes, &event_count);
     long_long* values = malloc(event_count * sizeof(long_long));
 
+    cmp_id();
+
     exec(PAPI_create_eventset(&set));
-    exec(PAPI_assign_eventset_component(set, 0));   // todo get cmp
+    exec(PAPI_assign_eventset_component(set, 0));
     exec(PAPI_set_multiplex(set));
     exec(PAPI_add_events(set, event_codes, event_count));
 

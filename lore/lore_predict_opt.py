@@ -5,7 +5,7 @@ from sklearn.externals import joblib
 
 
 out_dir = '/home/maciej/ftb/papi_output/'
-model_dir = '/home/maciej/ftb/wombat/lore/models/'
+model_dir = '/home/maciej/ftb/wombat/models/'
 n_components = 2
 n_neighbors = 10
 
