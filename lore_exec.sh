@@ -11,67 +11,12 @@ if [ -z "$PAPI_PATH" ]; then echo "Invalid config (PAPI_PATH) missing!"; exit 1;
 readonly trials=1
 readonly out_file=${PAPI_OUT_DIR}$1.csv
 
-csv_header() {
-    gcc -c \
-        -I ${PAPI_PATH} \
-        papi/papi_events.c \
-        -o papi/papi_events.o
-
-    if [ -e papi/papi_events.o ]; then
-        gcc papi/papi_events.o \
-            papi/papi_utils.o \
-            -L ${PAPI_PATH}libpfm4/lib -lpfm \
-            -L ${PAPI_PATH} -lpapi \
-            -static -o papi/papi_events
-    fi
-
-    ./papi/papi_events
-}
-
-compile_exec_loop() {
-    gcc -c \
-        -I ${PAPI_PATH} \
-        papi/exec_loop.c \
-        -o papi/exec_loop.o
-}
-
-compile_papi_utils() {
-    gcc -c \
-        -I ${PAPI_PATH} \
-        papi/papi_utils.c \
-        -o papi/papi_utils.o
-}
-
-compile() {
-    file_prefix=$1
-    params=$2
-
-    gcc -c \
-        -I ${PAPI_PATH} \
-        ${file_prefix}.c \
-        ${params} \
-        -O0 -o ${file_prefix}.o
-
-    if [ -e ${file_prefix}.o ]; then
-        gcc ${file_prefix}.o \
-            papi/exec_loop.o \
-            papi/papi_utils.o \
-            -L ${PAPI_PATH}libpfm4/lib -lpfm \
-            -L ${PAPI_PATH} -lpapi \
-            -lm \
-            -static -o exec_loop
-    else
-        echo "Skipping $name (compilation error)"
-        return 1
-    fi
-}
 
 echo -n "alg,run," > ${out_file}
-csv_header >> ${out_file}
+./lore_papi_events.sh >> ${out_file}
 echo ",time" >> ${out_file}
 
-compile_exec_loop
-compile_papi_utils
+./lore_exec_init.sh
 
 while read -r path; do
     name=`basename "${path%.*}"`
@@ -80,7 +25,7 @@ while read -r path; do
 
     if [ -e ${file_prefix}_params.txt ]; then
         while read -r params; do
-            if ! compile ${file_prefix} "${params}"; then
+            if ! ./lore_exec_compile.sh ${file_prefix} "${params}"; then
                 break
             fi
 

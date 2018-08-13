@@ -11,9 +11,9 @@ n_neighbors = 10
 
 
 def load_models(path):
-    scaler = joblib.load(path + 'scaler.pkl')
-    pca = joblib.load(path + 'pca.pkl')
-    clf = joblib.load(path + 'clf.pkl')
+    scaler = joblib.load(path + 'scaler_opt.pkl')
+    pca = joblib.load(path + 'pca_opt.pkl')
+    clf = joblib.load(path + 'clf_opt.pkl')
     return scaler, pca, clf
 
 
@@ -34,7 +34,7 @@ def main():
     x = pca.transform(x)
     y = clf.predict(x)
 
-    print('Predicted time:', y[0], 'ms')
+    print('Predicted speedup:', y[0])
 
 
 if __name__ == "__main__":

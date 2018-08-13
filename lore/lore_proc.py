@@ -1,4 +1,7 @@
 from __future__ import print_function
+
+import sys
+
 from pycparser import c_parser
 from lore import lore_parser
 import re
@@ -114,9 +117,15 @@ def add_papi(code):
     :param code: C code (as string)
     :return: Transformed code
     """
-    code = re.sub(r'(#pragma scop\n)', r'\1exec(PAPI_start(set));\n*begin = clock();', code)
-    code = re.sub(r'(\n#pragma endscop\n)', r'\n*end = clock();\nexec(PAPI_stop(set, values));\1return 0;\n', code)
-    return code
+    code, scop_count = re.subn(r'(#pragma scop\n)', r'\1exec(PAPI_start(set));\n*begin = clock();', code)
+    code, endscop_count = \
+        re.subn(r'(\n#pragma endscop\n)', r'\n*end = clock();\nexec(PAPI_stop(set, values));\1return 0;\n', code)
+
+    if scop_count != 1 and endscop_count != 1:
+        return code
+    else:
+        raise Exception('Exactly one "#pragma scop" and one "#pragma endscop" expected - found ' +
+                        str(scop_count) + ' and ' + str(endscop_count) + ' correspondingly.')
 
 
 def add_mallocs(code, mallocs):
@@ -136,9 +145,13 @@ def sub_loop_header(code):
     :param code: C code (as string)
     :return: Transformed code
     """
-    code = re.sub(r'void loop\(\)', 'int loop(int set, long_long* values, clock_t* begin, clock_t* end)', code)
+    code, count = re.subn(r'void loop\(\)', 'int loop(int set, long_long* values, clock_t* begin, clock_t* end)', code)
     code = re.sub(r'return\s*;', 'return 0;', code)
-    return code
+
+    if count > 0:
+        return code
+    else:
+        raise Exception('No "void loop()" function found')
 
 
 def add_bounds_init(mallocs, bounds):

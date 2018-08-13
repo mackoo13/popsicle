@@ -33,7 +33,7 @@ echo ",time" >> ${out_file}
 echo "Executing..."
 if res=$(timeout 10 ./exec_loop); then
     echo ${res} >> ${out_file}
-    python3 lore/lore_predict.py -i ${out_file}
+    python3 lore/lore_predict_opt.py -i ${out_file}
 else
-    echo ":("
+    echo "Runtime error."
 fi
