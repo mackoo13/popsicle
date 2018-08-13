@@ -1,99 +1,57 @@
-from __future__ import print_function
 import argparse
 import pandas as pd
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import cross_val_score, GroupKFold
-from sklearn.externals import joblib
+# noinspection PyCompatibility
+import urllib.parse
+# noinspection PyCompatibility
+import urllib.request
+import os
 
 
-out_dir = '/home/maciej/ftb/papi_output/'
-model_dir = '/home/maciej/ftb/wombat/models/'
-n_components = 2
-n_neighbors = 10
-
-
-def aggregate(df):
-    return df.groupby(['alg', 'run'])[df.columns[2:55]].min()
-
-
-def load_data(files, scaler=None):
-    print('Loading files: ', files)
-    paths = [out_dir + p for p in files]
-
-    dfs = [pd.read_csv(path, error_bad_lines=False) for path in paths]
-    df = pd.concat(dfs)
-    df['run'] = df['run'].astype(str)
-    df = aggregate(df)
-
-    df = df.loc[df['time'] > 0]
-
-    cols = sorted(list(df.columns.values))
-    df = df[cols]
-    df = df.astype('float64')
-
-    x = df.drop(['time'], axis=1).values
-    y = df['time'].values
-
-    if scaler is None:
-        scaler = StandardScaler()
-        x = scaler.fit_transform(x)
-    else:
-        x = scaler.transform(x)
-
-    print('Samples:', df.shape[0])
-    print('Features:', df.shape[1]-1)
-
-    return x, y, df, scaler
-
-
-def score(x, y, df, clf):
-    groups = list(df.index.get_level_values(0))
-    cv = GroupKFold(n_splits=3).split(x, y, groups)
-
-    scores = cross_val_score(clf, x, y, cv=list(cv))
-    return scores.mean()
-
-
-def do_pca(x):
-    print('Performing PCA dimensionality reduction (n_components=' + str(n_components) + ')...')
-    pca = PCA(n_components=n_components)
-    x = pca.fit_transform(x)
-    print('PCA explained variance: %.2f' % pca.explained_variance_ratio_.sum())
-
-    return x, pca
-
-
-def do_neigh_regr(x, y):
-    print('Training KNeighborsRegressor (n_neighbors=' + str(n_neighbors) + ')...')
-    neigh = KNeighborsRegressor(n_neighbors=n_neighbors, weights='distance')
-    neigh.fit(x, y)
-    return neigh
-
-
-def save_models(scaler, pca, clf):
-    print('Finished training. Saving the models to ' + model_dir + '...')
-    joblib.dump(scaler, model_dir + 'scaler.pkl')
-    joblib.dump(pca, model_dir + 'pca.pkl')
-    joblib.dump(clf, model_dir + 'clf.pkl')
+lore_url = 'https://vectorization.computer/AJAX/get_src.php'
+out_dir = os.environ["LORE_ORIG_PATH"]
 
 
 def main():
+    """
+    The input file can be obtained from LORE repository online by running the query:
+        SELECT id, application, benchmark, file, line, function, version FROM loops
+    at https://vectorization.computer/query.html
+
+    (valid as of Aug 2018)
+    """
+
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--input', action='append', required=True, help='<Required> input files in CSV format. '
-                                                                              'You can provide multiple files '
-                                                                              '(-i file1.csv -i file2.csv...).')
+    parser.add_argument("file_name", help="Path to CSV file obtained from LORE query.")
     args = parser.parse_args()
-    files = args.input
+    input_file = args.file_name
 
-    x, y, df, scaler = load_data(files)
-    x, pca = do_pca(x)
-    clf = do_neigh_regr(x, y)
+    if not os.path.isdir(out_dir):
+        os.mkdir(out_dir)
 
-    save_models(scaler, pca, clf)
+    x = pd.read_csv(input_file)
+    x.rename({'function': 'func'}, axis='columns', inplace=True)
 
-    print('R2 score: %.2f' % score(x, y, df, clf))
+    rows = x.to_dict(orient='records')
+
+    for row in rows:
+        fname = out_dir + 'lore_' + row['id'] + '_' + str(row['line']) + '.c'
+
+        if os.path.isfile(fname):
+            print('Skipping ' + fname.split('/')[-1] + ' (already exists)')
+            continue
+        else:
+            print('Downloading ' + fname.split('/')[-1])
+
+        data = urllib.parse.urlencode(row)
+
+        res = urllib.request.urlopen(lore_url + '?' + data)
+        code = res.read()
+
+        if len(code) > 1:
+            with open(fname, 'w') as fout:
+                fout.write(code.decode('utf-8'))
+        else:
+            print('\t(Empty file)')
 
 
 if __name__ == "__main__":
