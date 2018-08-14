@@ -8,7 +8,7 @@ from sklearn.model_selection import cross_val_score, GroupKFold
 from sklearn.externals import joblib
 
 
-out_dir = '/home/maciej/ftb/papi_output_opt/'
+out_dir = '/home/maciej/ftb/papi_output/speedup/'
 model_dir = '/home/maciej/ftb/wombat/models/'
 n_components = 2
 n_neighbors = 10
@@ -76,20 +76,38 @@ def score(x, y, df, clf):
     return scores.mean()
 
 
-def do_pca(x):
-    print('Performing PCA dimensionality reduction (n_components=' + str(n_components) + ')...')
-    pca = PCA(n_components=n_components)
-    x = pca.fit_transform(x)
-    print('PCA explained variance: %.2f' % pca.explained_variance_ratio_.sum())
-    return x, pca
+def best_pca_neigh(x, y, df, pca_range, neigh_range):
+    print('Finding best hyperparameters...')
 
+    best = float('-inf')
+    best_pca = None
+    best_n_comp = None
+    best_neigh = None
+    best_n_neigh = None
 
-def do_neigh_regr(x, y):
-    safe_n_neighbors = min(n_neighbors, len(x))
-    print('Training KNeighborsRegressor (n_neighbors=' + str(safe_n_neighbors) + ')...')
-    neigh = KNeighborsRegressor(n_neighbors=safe_n_neighbors, weights='distance')
-    neigh.fit(x, y)
-    return neigh
+    for n_comp in pca_range:
+        for n_neigh in neigh_range:
+            pca = PCA(n_components=n_comp)
+            pca.fit(x)
+            x2 = pca.transform(x)
+
+            neigh = KNeighborsRegressor(n_neighbors=n_neigh, weights='distance')
+            neigh.fit(x2, y)
+
+            curr_score = score(x2, y, df, neigh).mean()
+
+            if curr_score > best:
+                best = curr_score
+                best_pca = pca
+                best_n_comp = n_comp
+                best_neigh = neigh
+                best_n_neigh = n_neigh
+
+    print('Performing PCA dimensionality reduction (n_components=' + str(best_n_comp) + ')...')
+    print('PCA explained variance: %.2f' % best_pca.explained_variance_ratio_.sum())
+    print('Training KNeighborsRegressor (n_neighbors=' + str(best_n_neigh) + ')...')
+    print('R2 score: %.12f' % best)
+    return (best_pca, best_n_comp), (best_neigh, best_n_neigh)
 
 
 def save_models(scaler, pca, clf):
@@ -108,16 +126,9 @@ def main():
     files = args.input
 
     x, y, df, scaler = load_data(files)
-    x, pca = do_pca(x)
-    clf = do_neigh_regr(x, y)
+    (pca, _), (clf, _) = best_pca_neigh(x, y, df, range(2, 12, 1), range(4, 20, 2))
 
     save_models(scaler, pca, clf)
-
-    try:
-        print('R2 score: %.2f' % score(x, y, df, clf))
-    except ValueError as e:
-        print('Cannot calculate score (probable reason: not enough samples)')
-        print(e)
 
 
 if __name__ == "__main__":
