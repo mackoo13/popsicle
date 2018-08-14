@@ -17,13 +17,13 @@ while read -r path; do
 
     echo "Parsing $name"
 
-    if res=`python3 ../../lore/lore_proc.py ${path} ${LORE_PROC_PATH}`; then
+    if res=`python3 ../../lore/lore_proc_clang.py ${path} ${LORE_PROC_PATH}`; then
         ((parsed++))
         echo $res
     else
         ((failed++))
     fi
 
-done <<< `find ${LORE_ORIG_PATH} -iname '*.c'`
+done <<< `find ${LORE_ORIG_PATH} -iname '*37_2000*.c'`
 
 echo ${parsed} parsed, ${failed} skipped.

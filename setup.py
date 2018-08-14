@@ -10,6 +10,7 @@ setup(name='lore',
       packages=['lore'],
       install_requires=[
           'pandas',
+          'pycparser',
           'scipy',
           'sklearn',
       ],

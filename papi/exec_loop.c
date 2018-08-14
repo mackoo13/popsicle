@@ -27,8 +27,6 @@ int main(int argc, char * argv []) {
     available_event_codes(event_codes, &event_count);
     long_long* values = malloc(event_count * sizeof(long_long));
 
-    cmp_id();
-
     exec(PAPI_create_eventset(&set));
     exec(PAPI_assign_eventset_component(set, 0));
     exec(PAPI_set_multiplex(set));
