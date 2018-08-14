@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. config/lore.cfg
+. ../../config/lore.cfg
 
 if [ -z "$LORE_ORIG_PATH" ]; then echo "Invalid config (LORE_ORIG_PATH) missing!"; exit 1; fi
 if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!"; exit 1; fi

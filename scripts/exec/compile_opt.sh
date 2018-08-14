@@ -4,7 +4,7 @@
 #   $1 input file path (without extension)
 #   $2 compilation params (e.g. -D N=42), optional
 
-. config/lore.cfg
+. ../../config/lore.cfg
 
 if [ -z "$PAPI_PATH" ]; then echo "Invalid config (PAPI_PATH) missing!"; exit 1; fi
 

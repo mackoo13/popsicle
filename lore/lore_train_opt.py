@@ -1,5 +1,6 @@
 from __future__ import print_function
 import argparse
+import itertools
 import pandas as pd
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.decomposition import PCA
@@ -84,29 +85,31 @@ def best_pca_neigh(x, y, df, pca_range, neigh_range):
     best_n_comp = None
     best_neigh = None
     best_n_neigh = None
+    best_weights = None
 
-    for n_comp in pca_range:
-        for n_neigh in neigh_range:
-            pca = PCA(n_components=n_comp)
-            pca.fit(x)
-            x2 = pca.transform(x)
+    for n_comp, n_neigh, weights in itertools.product(pca_range, neigh_range, ['uniform', 'distance']):
+        pca = PCA(n_components=n_comp)
+        pca.fit(x)
+        x2 = pca.transform(x)
 
-            neigh = KNeighborsRegressor(n_neighbors=n_neigh, weights='distance')
-            neigh.fit(x2, y)
+        neigh = KNeighborsRegressor(n_neighbors=n_neigh, weights='distance')
+        neigh.fit(x2, y)
 
-            curr_score = score(x2, y, df, neigh).mean()
+        curr_score = score(x2, y, df, neigh).mean()
 
-            if curr_score > best:
-                best = curr_score
-                best_pca = pca
-                best_n_comp = n_comp
-                best_neigh = neigh
-                best_n_neigh = n_neigh
+        if curr_score > best:
+            best = curr_score
+            best_pca = pca
+            best_n_comp = n_comp
+            best_neigh = neigh
+            best_n_neigh = n_neigh
+            best_weights = weights
 
-    print('Performing PCA dimensionality reduction (n_components=' + str(best_n_comp) + ')...')
+    print('Performing PCA dimensionality reduction (n_components=' + str(best_n_comp) +
+          ', weights=' + best_weights + ')...')
     print('PCA explained variance: %.2f' % best_pca.explained_variance_ratio_.sum())
     print('Training KNeighborsRegressor (n_neighbors=' + str(best_n_neigh) + ')...')
-    print('R2 score: %.12f' % best)
+    print('R2 score: %.2f' % best)
     return (best_pca, best_n_comp), (best_neigh, best_n_neigh)
 
 
@@ -126,7 +129,7 @@ def main():
     files = args.input
 
     x, y, df, scaler = load_data(files)
-    (pca, _), (clf, _) = best_pca_neigh(x, y, df, range(2, 12, 1), range(4, 20, 2))
+    (pca, _), (clf, _) = best_pca_neigh(x, y, df, range(2, 15, 1), range(4, 20, 1))
 
     save_models(scaler, pca, clf)
 

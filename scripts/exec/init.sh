@@ -2,7 +2,7 @@
 
 # PARAMS: none
 
-. config/lore.cfg
+. ../../config/lore.cfg
 
 if [ -z "$PAPI_PATH" ]; then echo "Invalid config (PAPI_PATH) missing!"; exit 1; fi
 

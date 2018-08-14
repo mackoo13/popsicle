@@ -3,7 +3,7 @@
 # PARAMS:
 #   $1 output file name (without extension)
 
-. config/lore.cfg
+. ../../config/lore.cfg
 
 if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!"; exit 1; fi
 if [ -z "$PAPI_PATH" ]; then echo "Invalid config (PAPI_PATH) missing!"; exit 1; fi
@@ -18,13 +18,13 @@ failed=0
 
 echo -n "alg,run," > ${out_file_O0}
 echo -n "alg,run," > ${out_file_O3}
-./lore_papi_events.sh >> ${out_file_O0}
-./lore_papi_events.sh >> ${out_file_O3}
+../papi/papi_events.sh >> ${out_file_O0}
+../papi/papi_events.sh >> ${out_file_O3}
 echo ",time_O0" >> ${out_file_O0}
 echo ",time_O3" >> ${out_file_O3}
 
 echo "Compiling..."
-./lore_exec_init.sh
+init.sh
 
 while read -r path; do
     name=`basename "${path%.*}"`
@@ -33,8 +33,8 @@ while read -r path; do
 
     if [ -e ${file_prefix}_params.txt ]; then
         while read -r params; do
-            if ! ./lore_exec_compile_opt.sh ${file_prefix} "${params}" 0; then break; fi
-            if ! ./lore_exec_compile_opt.sh ${file_prefix} "${params}" 3; then break; fi
+            if ! compile_opt.sh ${file_prefix} "${params}" 0; then break; fi
+            if ! compile_opt.sh ${file_prefix} "${params}" 3; then break; fi
 
             echo "Running $name $params ..."
 
