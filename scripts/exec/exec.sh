@@ -4,7 +4,8 @@
 #   $1 output file name (without extension)
 
 current_dir=$(dirname $(readlink -f $0))
-root_dir=${current_dir}/../../
+scripts_dir=${current_dir}/../
+root_dir=${scripts_dir}/../
 . ${root_dir}/config/lore.cfg
 
 if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!"; exit 1; fi
@@ -16,7 +17,7 @@ readonly out_file=${PAPI_OUT_DIR}$1.csv
 
 
 echo -n "alg,run," > ${out_file}
-${root_dir}/papi/papi_events.sh >> ${out_file}
+${scripts_dir}/papi/papi_events.sh >> ${out_file}
 echo ",time" >> ${out_file}
 
 ${current_dir}/init.sh

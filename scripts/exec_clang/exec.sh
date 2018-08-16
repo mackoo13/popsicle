@@ -21,8 +21,8 @@ failed=0
 
 echo -n "alg,run," > ${out_file_ur}
 echo -n "alg,run," > ${out_file_nour}
-${root_dir}/papi/papi_events.sh >> ${out_file_ur}
-${root_dir}/papi/papi_events.sh >> ${out_file_nour}
+${scripts_dir}/papi/papi_events.sh >> ${out_file_ur}
+${scripts_dir}/papi/papi_events.sh >> ${out_file_nour}
 echo ",time_O0" >> ${out_file_ur}
 echo ",time_O3" >> ${out_file_nour}
 

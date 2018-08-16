@@ -32,5 +32,5 @@ if [ -e ${file_prefix}_O${optimization}.o ]; then
         -static -o ${root_dir}/exec_loop_O${optimization}
 else
     echo "Skipping $file_prefix (compilation error)"
-    return 1
+    exit 1
 fi

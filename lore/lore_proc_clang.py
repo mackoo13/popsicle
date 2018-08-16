@@ -13,16 +13,19 @@ from lore_parser_clang import add_pragma_unroll
 
 def add_pragma_macro(includes):
     """
-    TODO
     :param includes: C code section containing #include's (as string)
     :return: Transformed code
     """
-    res = includes + '\n'
-    res += '#define PRAGMA(p) _Pragma(p)\n'
-    return res
+    includes += '#define PRAGMA(p) _Pragma(p)\n'
+    return includes
 
 
 def remove_pragma_semicolon(code):
+    """
+    Removes the semicolon after PRAGMA macro (added unintentionally by pycparser)
+    :param code: C code
+    :return: Transformed code
+    """
     code = re.sub(r'(PRAGMA\(.*\));', r'\1', code)
     return code
 

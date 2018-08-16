@@ -4,7 +4,8 @@
 #   $1 output file name (without extension)
 
 current_dir=$(dirname $(readlink -f $0))
-root_dir=${current_dir}/../../
+scripts_dir=${current_dir}/../
+root_dir=${scripts_dir}/../
 . ${root_dir}/config/lore.cfg
 
 if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!"; exit 1; fi
@@ -20,8 +21,8 @@ failed=0
 
 echo -n "alg,run," > ${out_file_O0}
 echo -n "alg,run," > ${out_file_O3}
-${root_dir}/papi/papi_events.sh >> ${out_file_O0}
-${root_dir}/papi/papi_events.sh >> ${out_file_O3}
+${scripts_dir}/papi/papi_events.sh >> ${out_file_O0}
+${scripts_dir}/papi/papi_events.sh >> ${out_file_O3}
 echo ",time_O0" >> ${out_file_O0}
 echo ",time_O3" >> ${out_file_O3}
 
