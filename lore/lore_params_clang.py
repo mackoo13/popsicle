@@ -17,10 +17,8 @@ def main():
 
         if len(param_names) > 0 and len(param_names[0]) > 0:
 
-            for unroll in ('unroll', 'nounroll'):
-                defines = ['-D %s=%s -D PRAGMA_UNROLL="%s"'
-                           % (p, max_param, unroll) for p in param_names]
-                fout.write(' '.join(defines) + '\n')
+            defines = ['-D %s=%s' % (p, max_param) for p in param_names]
+            fout.write(' '.join(defines) + '\n')
         else:
             fout.write('\n')
 
