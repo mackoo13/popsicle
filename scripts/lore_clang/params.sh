@@ -1,6 +1,8 @@
 #!/bin/bash
 
-. ../../config/lore.cfg
+current_dir=$(dirname $(readlink -f $0))
+root_dir=${current_dir}/../../
+. ${root_dir}/config/lore.cfg
 
 if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!"; exit 1; fi
 
@@ -12,7 +14,7 @@ while read -r path; do
 
     echo "Generating params for $name"
 
-    if res=`python3 lore/lore_params.py ${path}`; then
+    if res=`python3 ${root_dir}/lore/lore_params_clang.py ${path}`; then
         ((parsed++))
     else
         ((failed++))
