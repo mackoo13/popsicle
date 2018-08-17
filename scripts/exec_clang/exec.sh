@@ -13,8 +13,8 @@ if [ -z "$PAPI_PATH" ]; then echo "Invalid config (PAPI_PATH) missing!"; exit 1;
 if [ -z "$PAPI_OUT_DIR" ]; then echo "Invalid config (PAPI_OUT_DIR) missing!"; exit 1; fi
 
 readonly trials=1
-readonly out_file_ur=${PAPI_OUT_DIR}$1_ur.csv
-readonly out_file_nour=${PAPI_OUT_DIR}$1_nour.csv
+readonly out_file_ur=${PAPI_OUT_DIR}/unroll/$1_ur.csv
+readonly out_file_nour=${PAPI_OUT_DIR}/unroll/$1_nour.csv
 
 executed=0
 failed=0

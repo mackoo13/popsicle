@@ -1,17 +1,9 @@
 from __future__ import print_function
-import re
 import os
 import sys
 import argparse
 
-
-def split_code(code):
-    """
-    Splits code into the section containing macros and the rest of the code.
-    :param code: C code (as string)
-    :return: Transformed code
-    """
-    return re.split(r'\n(?!#)', code, 1)
+from lore_proc_utils import split_code, sub_loop_header, add_papi
 
 
 def add_includes(includes):
@@ -25,28 +17,6 @@ def add_includes(includes):
     res += '#include <time.h>\n'
     res += '#include "' + os.path.abspath(os.path.dirname(sys.argv[0])) + '/../papi_utils/papi_events.h"\n'
     return res
-
-
-def add_papi(code):
-    """
-    Adds PAPI instructions in the places indicated by #pragma.
-    :param code: C code (as string)
-    :return: Transformed code
-    """
-    code = re.sub(r'(#pragma scop\n)', r'\1exec(PAPI_start(set));\n*begin = clock();', code)
-    code = re.sub(r'(\n#pragma endscop\n)', r'\n*end = clock();\nexec(PAPI_stop(set, values));\1return 0;\n', code)
-    return code
-
-
-def sub_loop_header(code):
-    """
-    Transforms the loop function header.
-    :param code: C code (as string)
-    :return: Transformed code
-    """
-    code = re.sub(r'void loop\(\)', 'int loop(int set, long_long* values, clock_t* begin, clock_t* end)', code)
-    code = re.sub(r'return\s*;', 'return 0;', code)
-    return code
 
 
 def transform(code):

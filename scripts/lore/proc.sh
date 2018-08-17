@@ -11,21 +11,4 @@ if [ ! -d "$LORE_PROC_PATH" ]; then
     mkdir ${LORE_PROC_PATH}
 fi
 
-parsed=0
-failed=0
-
-while read -r path; do
-    name=`basename "${path%.*}"`
-
-    echo "Parsing $name"
-
-    if res=`python3 ${root_dir}/lore/lore_proc.py ${path} ${LORE_PROC_PATH}`; then
-        ((parsed++))
-        echo $res
-    else
-        ((failed++))
-    fi
-
-done <<< `find ${LORE_ORIG_PATH} -iname '*.c'`
-
-echo ${parsed} parsed, ${failed} skipped.
+python3 ${root_dir}/lore/lore_proc.py ${LORE_ORIG_PATH} ${LORE_PROC_PATH}

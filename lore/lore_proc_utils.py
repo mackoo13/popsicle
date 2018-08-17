@@ -198,4 +198,17 @@ def find_max_param(refs, ast, verbose=False):
     if verbose:
         print('Max param: ', max_param)
 
-    return max_param
+    return max_param, max_arr_dim
+
+
+def save_max_dims(proc_path, max_arr_dims):
+    """
+    todo
+    :param proc_path:
+    :param max_arr_dims:
+    :return:
+    """
+    with open(proc_path + '/metadata.csv', 'w') as fout:
+        fout.write('alg,max_dim\n')
+        for alg, dim in max_arr_dims.items():
+            fout.write(alg + ',' + str(dim) + '\n')

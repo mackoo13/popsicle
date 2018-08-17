@@ -2,12 +2,18 @@
 
 ## Prerequisites
 
-* python 3
-* gcc
+* [Python 3](https://www.python.org/)
+* [GCC](https://gcc.gnu.org/)
+* [PAPI](http://icl.utk.edu/papi/software/)
+
+Note: if you encounter `perf_event support disabled by Linux with paranoid=3` using PAPI, run the following command to change the settings:
+ 
+`sudo sh -c 'echo kernel.perf_event_paranoid=1 > /etc/sysctl.d/local.conf'`
 
 ## Installation
 
 ```
+git clone https://github.com/mackoo13/wombat.git
 cd wombat
 pip install .
 ```
@@ -18,6 +24,14 @@ If you don't have `pip` installed, you can try using the following command inste
 python3 -m pip install .
 ```
 
+## LORE download
+
+To obtain the set of programs from LORE repository, you must first download a CSV file with a list of currently available loops. Use [LOOP website](https://vectorization.computer/query.html) and the following query:
+
+`SELECT id, application, benchmark, file, line, function, version FROM loops`
+
+Usage: `python3 lore/lore_download.py <path_to_csv_file>`
+
 ## Preprocessing
 
 The following scripts can be used to prepare data from LORE, train the model and persist it for future use.
@@ -25,7 +39,7 @@ The following scripts can be used to prepare data from LORE, train the model and
 
 ### `proc`
 
-Usage: `./proc.sh`
+Usage: `./scripts/lore/proc.sh`
 
 Transforms the source code of files from LORE repository to a runnable form, inserts PAPI instructions and execution time measurement.
 
@@ -34,7 +48,7 @@ The input files are taken from `LORE_ORIG_PATH` specified in config. Output will
 
 ### `params`
 
-Usage: `./params.sh`
+Usage: `./scripts/lore/params.sh`
 
 Generates a range of parameters for LORE programs. This step needs to be applied after `proc`.
 
@@ -45,7 +59,7 @@ The directory containing files to process is specified in `LORE_PROC_PATH`. Resu
 
 ### `exec`
 
-Usage: `./exec.sh <output_file_name>`
+Usage: `./scripts/exec/exec.sh <output_file_name>`
 
 This script executes all programs from `LORE_PROC_PATH` for all sets of parameters specified in `<program_name>_params.txt`.
 
@@ -87,12 +101,12 @@ The code should conform to [this format](docs/file_format.md).
 
 ### `predict`
 
-Usage: `./predict.sh <input_C_file_path>`
+Usage: `./scripts/ml/predict.sh <input_C_file_path>`
 
 Compiles a C program, runs it, collects PAPI events and attempts to predict the execution time.
 
 ### `predict_opt`
 
-Usage: `./predict_opt.sh <input_C_file_path>`
+Usage: `./scripts/ml/predict_opt.sh <input_C_file_path>`
 
 Compiles a C program, runs it, collects PAPI events and attempts to predict the speedup between `-O3` and `-O0`.

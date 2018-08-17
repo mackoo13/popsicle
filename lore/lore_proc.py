@@ -1,73 +1,83 @@
 from __future__ import print_function
 
-
-from pycparser import c_parser
-from lore import lore_parser
 import os
 import argparse
-
+from pycparser import c_parser
+from lore import lore_parser
 from lore_proc_utils import add_includes, add_papi, split_code, sub_loop_header, del_extern_restrict, gen_mallocs, \
-    arr_to_ptr_decl, add_mallocs, find_max_param
+    arr_to_ptr_decl, add_mallocs, find_max_param, save_max_dims
 
 
 def main():
-    try:
-        parser = argparse.ArgumentParser()
-        parser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
-        parser.add_argument("file_path", help="File path")
-        parser.add_argument("proc_path", help="Proc path")
-        args = parser.parse_args()
-        verbose = args.verbose
-        file_path = args.file_path
-        file_name = file_path.split('/')[-1]
-        file_name = file_name.split('.')[0]
-        proc_path = args.proc_path
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
+    parser.add_argument("orig_path", help="Orig path")
+    parser.add_argument("proc_path", help="Proc path")
+    args = parser.parse_args()
+    verbose = args.verbose
+    orig_path = args.orig_path
+    proc_path = args.proc_path
 
-        out_dir = proc_path + file_name
+    max_arr_dims = {}
 
-        with open(file_path, 'r') as fin:
-            code = fin.read()
-            includes, code = split_code(code)
+    for file_name in os.listdir(orig_path):
+        try:
+            if not file_name.endswith(".c"):
+                continue
 
-            if lore_parser.contains_struct(code):
-                raise lore_parser.ParseException('Code contains struct declaration.')
+            print('Parsing %s' % file_name)
 
-            parser = c_parser.CParser()
-            ast = parser.parse(code)
+            file_path = os.path.join(orig_path, file_name)
+            file_name = str(file_name[:-2])
+            out_dir = proc_path + file_name
 
-            if verbose:
-                ast.show()
+            with open(file_path, 'r') as fin:
+                code = fin.read()
+                includes, code = split_code(code)
 
-            includes = add_includes(includes)
+                # if lore_parser.contains_struct(code):
+                #     raise lore_parser.ParseException('Code contains struct declaration.')
 
-            bounds, refs, dtypes, dims = lore_parser.analyze(ast, verbose)
-            mallocs = gen_mallocs(bounds, refs, dtypes)
+                parser = c_parser.CParser()
+                ast = parser.parse(code)
 
-            code = del_extern_restrict(code)
-            code = arr_to_ptr_decl(code, dtypes, dims)
-            code = add_papi(code)
-            code = add_mallocs(code, mallocs)
-            code = sub_loop_header(code)
-            code = includes + code
+                if verbose:
+                    ast.show()
 
-            if not os.path.isdir(out_dir):
-                os.mkdir(out_dir)
+                includes = add_includes(includes)
 
-            if len(refs) == 0:
-                raise lore_parser.ParseException('No refs found - cannot determine max_arr_dim')
+                bounds, refs, dtypes, dims = lore_parser.analyze(ast, verbose)
+                mallocs = gen_mallocs(bounds, refs, dtypes)
 
-            with open(out_dir + '/' + file_name + '.c', 'w') as fout:
-                fout.write(code)
+                code = del_extern_restrict(code)
+                code = arr_to_ptr_decl(code, dtypes, dims)
+                code = add_papi(code)
+                code = add_mallocs(code, mallocs)
+                code = sub_loop_header(code)
+                code = includes + code
 
-            max_param = find_max_param(refs, ast, verbose)
-            with open(out_dir + '/' + file_name + '_max_param.txt', 'w') as fout:
-                fout.write(str(int(max_param)))
+                if not os.path.isdir(out_dir):
+                    os.mkdir(out_dir)
 
-            with open(out_dir + '/' + file_name + '_params_names.txt', 'w') as fout:
-                fout.write(','.join(['PARAM_' + b.upper() for b in bounds]))
+                if len(refs) == 0:
+                    raise lore_parser.ParseException('No refs found - cannot determine max_arr_dim')
 
-    except Exception as e:
-        print('\t', e)
+                with open(out_dir + '/' + file_name + '.c', 'w') as fout:
+                    fout.write(code)
+
+                max_param, max_arr_dim = find_max_param(refs, ast, verbose)
+                with open(out_dir + '/' + file_name + '_max_param.txt', 'w') as fout:
+                    fout.write(str(int(max_param)))
+
+                with open(out_dir + '/' + file_name + '_params_names.txt', 'w') as fout:
+                    fout.write(','.join(['PARAM_' + b.upper() for b in bounds]))
+
+                max_arr_dims[file_name] = max_arr_dim
+
+        except Exception as e:
+            print('\t', e)
+
+    save_max_dims(proc_path, max_arr_dims)
 
 
 if __name__ == "__main__":

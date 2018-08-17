@@ -15,7 +15,7 @@ file_prefix=$1
 params=$2
 unroll=$3
 
-clang -c \
+clang -c -O3 \
     -I ${PAPI_PATH} \
     ${file_prefix}.c \
     ${params} \

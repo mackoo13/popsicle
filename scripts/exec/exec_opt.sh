@@ -13,8 +13,8 @@ if [ -z "$PAPI_PATH" ]; then echo "Invalid config (PAPI_PATH) missing!"; exit 1;
 if [ ! $# -eq 1 ]; then echo "Usage: ./lore_exec_opt.sh <output file name>"; exit 1; fi
 
 readonly trials=1
-readonly out_file_O0=${PAPI_OUT_DIR}$1_O0.csv
-readonly out_file_O3=${PAPI_OUT_DIR}$1_O3.csv
+readonly out_file_O0=${PAPI_OUT_DIR}/speedup/$1_O0.csv
+readonly out_file_O3=${PAPI_OUT_DIR}/speedup/$1_O3.csv
 
 executed=0
 failed=0
