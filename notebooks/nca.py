@@ -102,7 +102,9 @@ def nca_cost(A, xx, yy, reg):
     np.fill_diagonal(kk, 0)
     Z_p = np.sum(kk, 0)  # N,
     p_mn = kk / Z_p[np.newaxis, :]  # P(z_m | z_n), NxN
-    mask = yy[:, np.newaxis] == yy[np.newaxis, :]
+    #mask = yy[:, np.newaxis] == yy[np.newaxis, :]
+    mask = square_dist(yy[:, np.newaxis])
+    mask = np.exp(-mask)
     p_n = np.sum(p_mn * mask, 0)  # 1xN
     ff = - np.sum(p_n)
 
@@ -178,7 +180,7 @@ class NCA(BaseEstimator, TransformerMixin):
         # Gradient descent.
         self.learning_rate = 0.001
         self.error_tol = 0.001
-        self.max_iter = 1000
+        self.max_iter = 100
 
         curr_error = None
 
