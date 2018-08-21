@@ -12,7 +12,6 @@ def dim_sign(x, y, df):
     regr.fit(x, y)
     res = [(i, col, imp) for i, (col, imp) in enumerate(zip(df.columns, regr.feature_importances_))]
     res = sorted(res, key=lambda q: q[2], reverse=True)
-
     return np.array(res)
 
 
@@ -82,34 +81,33 @@ def remove_feats(x, y, df, feats):
 class FeatureSelector:
     def __init__(self, how):
         self.feats = None
+        self.pca = None
+        self.nca = None
 
         if how == 'pca': 
-            self.select = self.select_pca
+            self.fit = self.fit_pca
+            self.transform = self.transform_pca
         elif how == 'nca':
-            self.select = self.select_nca
+            self.fit = self.fit_nca
+            self.transform = self.transform_nca
         elif how == 'step':
-            self.select = self.select_step
+            self.fit = self.fit_step
+            self.transform = self.transform_step
         else:
             raise Exception('Unknown feature selection mode')
 
-    def select_pca(self, x, _y, _df, pca_comp=14):
+    def fit_pca(self, x, _y, _df, pca_comp=14):
         pca = PCA(n_components=pca_comp)
         pca.fit(x)
-        x2 = pca.transform(x)
-
         print('Explained variance:', pca.explained_variance_ratio_.sum())
+        self.pca = pca
 
-        self.feats = None
-        return x2
-
-    def select_nca(self, x, y, _df, nca_dim=6, nca_optimizer='gd'):
+    def fit_nca(self, x, y, _df, nca_dim=6, nca_optimizer='gd'):
         nca = NCA(dim=nca_dim, optimizer=nca_optimizer)
-        x2 = nca.fit_transform(x, y)
+        nca.fit(x, y)
+        self.nca = nca
 
-        self.feats = None
-        return x2
-
-    def select_step(self, x, y, df):
+    def fit_step(self, x, y, df):
         n_iter = 5
         step = 5
         best = float('-infinity')
@@ -127,10 +125,18 @@ class FeatureSelector:
         best, _ = remove_feats(x, y, df, best_feats)
 
         feats_list = sorted(best_feats)
-        self.feats = feats_list
 
-        print('Best score:', round(best, 2))
+        print('Best score in training set:', round(best, 2))
         print('Selected %d features:' % len(feats_list))
         print('\n'.join(['\t' + df.columns[f] for f in feats_list]))
 
-        return x[:, feats_list]
+        self.feats = feats_list
+
+    def transform_pca(self, x):
+        return self.pca.transform(x)
+
+    def transform_nca(self, x):
+        return self.nca.transform(x)
+
+    def transform_step(self, x):
+        return x[:, self.feats]

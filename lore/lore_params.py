@@ -22,7 +22,7 @@ def main():
 
         if len(param_names) > 0 and len(param_names[0]) > 0:
 
-            for k in range(1, 11):
+            for k in range(1, 31):
                 defines = [f'-D {p}={str(intermediate_value(k, len(param_names), max_param))}' for p in param_names]
                 fout.write(' '.join(defines) + '\n')
         else:
