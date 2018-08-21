@@ -12,7 +12,7 @@ setup(name='lore',
           'pandas',
           'pycparser',
           'scipy',
-          'sklearn',
+          'sklearn', 'numpy'
       ],
       entry_points={
           'console_scripts': ['lore-proc = lore.lore_proc:main',

@@ -180,7 +180,7 @@ class NCA(BaseEstimator, TransformerMixin):
         # Gradient descent.
         self.learning_rate = 0.001
         self.error_tol = 0.001
-        self.max_iter = 100
+        self.max_iter = 1000
 
         curr_error = None
 
