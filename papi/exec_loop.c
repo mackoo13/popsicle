@@ -25,7 +25,7 @@ int main(int argc, char * argv []) {
     exec(PAPI_multiplex_init());
 
 //    available_event_codes(event_codes, &event_count);
-    load_event_names("/home/maciej/ftb/wombat/config/papi_events.csv", event_codes, &event_count);
+    load_event_names("/home/maciej/ftb/wombat/config/papi_events.txt", event_codes, &event_count);
     long_long* values = malloc(event_count * sizeof(long_long));
 
     exec(PAPI_create_eventset(&set));
