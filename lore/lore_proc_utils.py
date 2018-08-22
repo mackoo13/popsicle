@@ -88,7 +88,7 @@ def add_includes(includes):
     res = includes + '\n'
     res += '#include <papi.h>\n'
     res += '#include <time.h>\n'
-    res += '#include "' + os.path.abspath(os.path.dirname(sys.argv[0])) + '/../papi_utils/papi_events.h"\n'
+    res += '#include "' + os.path.abspath(os.path.dirname(sys.argv[0])) + '/../papi/papi_utils.h"\n'
     res += '#define MAX(x, y) (((x) > (y)) ? (x) : (y))\n'
     return res
 
@@ -114,7 +114,7 @@ def add_papi(code):
     :param code: C code (as string)
     :return: Transformed code
     """
-    code, scop_count = re.subn(r'(#pragma scop\s+)', r'\1exec(PAPI_start(set));\n*begin = clock();', code)
+    code, scop_count = re.subn(r'(#pragma scop\s+)', r'\1exec(PAPI_start(set));\n*begin = clock();\n', code)
     code, endscop_count = \
         re.subn(r'(\s+#pragma endscop\s+)', r'\n*end = clock();\nexec(PAPI_stop(set, values));\1return 0;\n', code)
 

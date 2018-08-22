@@ -9,22 +9,20 @@ root_dir=${scripts_dir}/../
 . ${root_dir}/config/lore.cfg
 
 if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!"; exit 1; fi
-if [ -z "$PAPI_PATH" ]; then echo "Invalid config (PAPI_PATH) missing!"; exit 1; fi
 if [ -z "$PAPI_OUT_DIR" ]; then echo "Invalid config (PAPI_OUT_DIR) missing!"; exit 1; fi
 
 readonly trials=1
 readonly out_file=${PAPI_OUT_DIR}$1.csv
 
+${current_dir}/init.sh
 
 echo -n "alg,run," > ${out_file}
 ${scripts_dir}/papi/papi_events.sh >> ${out_file}
 echo ",time" >> ${out_file}
 
-${current_dir}/init.sh
-
-while read -r path; do
+for path in `find ${LORE_PROC_PATH} -iname '*.c'`; do
     name=`basename "${path%.*}"`
-
+N
     file_prefix=${LORE_PROC_PATH}/${name}/${name}
 
     if [ -e ${file_prefix}_params.txt ]; then
@@ -47,4 +45,4 @@ while read -r path; do
         done < ${file_prefix}_params.txt
     fi
 
-done <<< `find ${LORE_PROC_PATH} -iname '*000*.c'`
+done

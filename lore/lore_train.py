@@ -1,5 +1,6 @@
 from __future__ import print_function
 import argparse
+import os
 import pandas as pd
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.decomposition import PCA
@@ -8,8 +9,8 @@ from sklearn.model_selection import cross_val_score, GroupKFold
 from sklearn.externals import joblib
 
 
-out_dir = '/home/maciej/ftb/papi_output/'
-model_dir = '/home/maciej/ftb/wombat/models/'
+out_dir = os.environ["LORE_PAPI_OUT_DIR"]
+model_dir = os.environ["LORE_MODELS_DIR"]
 n_components = 2
 n_neighbors = 10
 

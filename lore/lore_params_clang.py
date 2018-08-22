@@ -5,12 +5,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("dir", help="Dir path")
     args = parser.parse_args()
-    dir = args.dir
-    file_name = dir.split('/')[-2]
+    proc_dir = args.dir
+    file_name = proc_dir.split('/')[-2]
 
-    with open(dir + file_name + '_params.txt', 'w') as fout, \
-            open(dir + file_name + '_params_names.txt', 'r') as fin_names, \
-            open(dir + file_name + '_max_param.txt', 'r') as fin_max:
+    with open(proc_dir + file_name + '_params.txt', 'w') as fout, \
+            open(proc_dir + file_name + '_params_names.txt', 'r') as fin_names, \
+            open(proc_dir + file_name + '_max_param.txt', 'r') as fin_max:
 
         max_param = int(fin_max.read())
         param_names = fin_names.read().strip().split(',')

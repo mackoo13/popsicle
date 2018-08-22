@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <papi.h>
+#include <string.h>
 
 void handle_error (int retval) {
     printf("PAPI error %d: %s\n", retval, PAPI_strerror(retval));
@@ -32,4 +33,16 @@ void available_event_codes(int* res, int* number) {
     } while (PAPI_enum_event(&i, PAPI_ENUM_ALL) == PAPI_OK);
 
     *number = event_count;
+}
+
+void load_event_names(char* file_path, int* res, int* number) {
+    FILE* stream = fopen(file_path, "r");
+    *number = 0;
+
+    char line[PAPI_MAX_STR_LEN];
+    while(fgets(line, PAPI_MAX_STR_LEN, stream)) {
+        line[strcspn(line, "\n")] = 0;  // get rid of newline
+        exec(PAPI_event_name_to_code(line, &res[*number]));
+        *number = *number + 1;
+    }
 }

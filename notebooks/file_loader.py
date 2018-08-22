@@ -23,7 +23,6 @@ def df_train_test_split(df, test_split=0.3):
     shuffle(algs)
     split_point = int(test_split * len(algs))
     algs_test = algs[:split_point]
-    algs_train = algs[split_point:]
 
     test_mask = [a in algs_test for a in df.index.get_level_values(0)]
     train_mask = [not q for q in test_mask]

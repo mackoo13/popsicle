@@ -26,7 +26,7 @@ def main():
     input_file = args.file_name
 
     if not os.path.isdir(out_dir):
-        os.mkdir(out_dir)
+        os.makedirs(out_dir)
 
     x = pd.read_csv(input_file)
     x.rename({'function': 'func'}, axis='columns', inplace=True)

@@ -1,22 +1,7 @@
 from __future__ import print_function
-import os
-import sys
 import argparse
 
-from lore_proc_utils import split_code, sub_loop_header, add_papi
-
-
-def add_includes(includes):
-    """
-    Adds all necessary #include instructions to the code.
-    :param includes: C code section containing #include's (as string)
-    :return: Transformed code
-    """
-    res = includes + '\n'
-    res += '#include <papi.h>\n'
-    res += '#include <time.h>\n'
-    res += '#include "' + os.path.abspath(os.path.dirname(sys.argv[0])) + '/../papi_utils/papi_events.h"\n'
-    return res
+from lore_proc_utils import split_code, sub_loop_header, add_papi, add_includes
 
 
 def transform(code):

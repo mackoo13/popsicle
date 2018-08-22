@@ -1,0 +1,1596 @@
+PAPI_LD_INS 	 88 	 ========================================================================================
+PAPI_FDV_INS 	 84 	 ====================================================================================
+PAPI_L2_STM 	 69 	 =====================================================================
+PAPI_RES_STL 	 60 	 ============================================================
+PAPI_L2_DCM 	 55 	 =======================================================
+PAPI_BR_NTK 	 48 	 ================================================
+PAPI_VEC_INS 	 46 	 ==============================================
+PAPI_L2_TCM 	 45 	 =============================================
+PAPI_FML_INS 	 41 	 =========================================
+PAPI_L2_TCH 	 41 	 =========================================
+PAPI_TLB_DM 	 39 	 =======================================
+PAPI_FP_INS 	 38 	 ======================================
+PAPI_FP_OPS 	 37 	 =====================================
+PAPI_L1_TCM 	 35 	 ===================================
+PAPI_SP_OPS 	 32 	 ================================
+PAPI_HW_INT 	 27 	 ===========================
+PAPI_L2_LDM 	 24 	 ========================
+PAPI_CA_SHR 	 21 	 =====================
+PAPI_TOT_IIS 	 20 	 ====================
+PAPI_L2_DCR 	 19 	 ===================
+PAPI_DP_OPS 	 16 	 ================
+PAPI_L1_LDM 	 16 	 ================
+PAPI_L2_TCR 	 16 	 ================
+PAPI_L2_DCW 	 14 	 ==============
+PAPI_TOT_CYC 	 14 	 ==============
+PAPI_BR_INS 	 12 	 ============
+PAPI_L1_DCM 	 12 	 ============
+PAPI_L1_STM 	 12 	 ============
+PAPI_TLB_IM 	 12 	 ============
+PAPI_L1_ICM 	 11 	 ===========
+PAPI_L2_DCA 	 11 	 ===========
+PAPI_L2_ICM 	 11 	 ===========
+PAPI_L2_TCA 	 11 	 ===========
+PAPI_L1_DCH 	 10 	 ==========
+PAPI_L2_ICH 	 10 	 ==========
+PAPI_CA_CLN 	 9 	     =========
+PAPI_L1_DCA 	 8 	     ========
+PAPI_L1_ICH 	 8 	     ========
+PAPI_L1_TCA 	 8 	     ========
+PAPI_SR_INS 	 8 	     ========
+PAPI_L2_ICA 	 7 	     =======
+PAPI_L2_TCW 	 7 	     =======
+PAPI_REF_CYC 	 7 	     =======
+PAPI_L1_ICA 	 6 	     ======
+PAPI_BR_TKN 	 4 	     ====
+PAPI_BR_PRC 	 3 	     ===
+PAPI_BR_CN 	     2 	     ==
+PAPI_VEC_SP 	 1 	     =
+PAPI_BR_MSP 	 0
+PAPI_CA_ITV 	 0
+PAPI_TOT_INS 	 0
+PAPI_VEC_DP 	 0
+
+
+
+
+
+
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.58
+Selected 8 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_L1_TCM
+	PAPI_L2_DCM
+	PAPI_L2_STM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TLB_DM
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.6
+Selected 17 features:
+	PAPI_BR_INS
+	PAPI_DP_OPS
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_FP_OPS
+	PAPI_HW_INT
+	PAPI_L1_STM
+	PAPI_L2_DCM
+	PAPI_L2_DCW
+	PAPI_L2_LDM
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TLB_DM
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.54
+Selected 10 features:
+	PAPI_FDV_INS
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_SP_OPS
+	PAPI_TLB_DM
+	PAPI_TOT_CYC
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.5
+Selected 15 features:
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_INS
+	PAPI_FP_OPS
+	PAPI_L1_DCH
+	PAPI_L1_DCM
+	PAPI_L2_DCM
+	PAPI_L2_ICA
+	PAPI_L2_ICH
+	PAPI_L2_ICM
+	PAPI_L2_TCA
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_TLB_DM
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.49
+Selected 8 features:
+	PAPI_FDV_INS
+	PAPI_FP_OPS
+	PAPI_L1_DCA
+	PAPI_L2_TCH
+	PAPI_LD_INS
+	PAPI_SP_OPS
+	PAPI_TLB_DM
+	PAPI_TOT_IIS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.61
+Selected 11 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_OPS
+	PAPI_L1_TCM
+	PAPI_L2_DCM
+	PAPI_L2_LDM
+	PAPI_L2_STM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TLB_IM
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.54
+Selected 12 features:
+	PAPI_CA_SHR
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_L2_DCM
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_SP_OPS
+	PAPI_TLB_DM
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.52
+Selected 9 features:
+	PAPI_FDV_INS
+	PAPI_FP_OPS
+	PAPI_L1_TCA
+	PAPI_L1_TCM
+	PAPI_L2_DCM
+	PAPI_L2_STM
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.59
+Selected 17 features:
+	PAPI_BR_NTK
+	PAPI_DP_OPS
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_INS
+	PAPI_FP_OPS
+	PAPI_HW_INT
+	PAPI_L1_TCM
+	PAPI_L2_DCM
+	PAPI_L2_ICA
+	PAPI_L2_ICM
+	PAPI_L2_LDM
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_SP_OPS
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.61
+Selected 14 features:
+	PAPI_BR_NTK
+	PAPI_CA_SHR
+	PAPI_FML_INS
+	PAPI_FP_OPS
+	PAPI_HW_INT
+	PAPI_L1_ICA
+	PAPI_L1_TCM
+	PAPI_L2_DCM
+	PAPI_L2_DCR
+	PAPI_L2_ICM
+	PAPI_L2_LDM
+	PAPI_L2_STM
+	PAPI_LD_INS
+	PAPI_RES_STL
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.58
+Selected 14 features:
+	PAPI_BR_INS
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_HW_INT
+	PAPI_L1_TCM
+	PAPI_L2_DCM
+	PAPI_L2_DCW
+	PAPI_L2_LDM
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_SP_OPS
+	PAPI_TLB_DM
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.57
+Selected 14 features:
+	PAPI_BR_INS
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_FP_OPS
+	PAPI_HW_INT
+	PAPI_L1_TCM
+	PAPI_L2_DCM
+	PAPI_L2_LDM
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TLB_DM
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.56
+Selected 12 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_INS
+	PAPI_FP_OPS
+	PAPI_L1_LDM
+	PAPI_L2_DCM
+	PAPI_L2_ICM
+	PAPI_L2_STM
+	PAPI_L2_TCR
+	PAPI_LD_INS
+	PAPI_RES_STL
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.53
+Selected 10 features:
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_L1_ICM
+	PAPI_L1_LDM
+	PAPI_L2_STM
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_SP_OPS
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.61
+Selected 11 features:
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_INS
+	PAPI_HW_INT
+	PAPI_L2_DCM
+	PAPI_L2_LDM
+	PAPI_L2_STM
+	PAPI_L2_TCW
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TLB_IM
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.59
+Selected 17 features:
+	PAPI_BR_INS
+	PAPI_DP_OPS
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_FP_OPS
+	PAPI_HW_INT
+	PAPI_L1_STM
+	PAPI_L1_TCM
+	PAPI_L2_DCW
+	PAPI_L2_LDM
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TLB_DM
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.49
+Selected 10 features:
+	PAPI_BR_NTK
+	PAPI_CA_SHR
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_L1_TCM
+	PAPI_L2_ICH
+	PAPI_LD_INS
+	PAPI_SP_OPS
+	PAPI_TLB_DM
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.62
+Selected 14 features:
+	PAPI_CA_SHR
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_OPS
+	PAPI_HW_INT
+	PAPI_L2_DCA
+	PAPI_L2_DCM
+	PAPI_L2_DCR
+	PAPI_L2_STM
+	PAPI_L2_TCA
+	PAPI_L2_TCH
+	PAPI_L2_TCR
+	PAPI_LD_INS
+	PAPI_RES_STL
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.49
+Selected 6 features:
+	PAPI_L1_TCM
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_TLB_DM
+	PAPI_TOT_IIS
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.49
+Selected 10 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_L1_TCM
+	PAPI_L2_DCW
+	PAPI_L2_STM
+	PAPI_L2_TCA
+	PAPI_L2_TCH
+	PAPI_LD_INS
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.52
+Selected 10 features:
+	PAPI_BR_INS
+	PAPI_BR_NTK
+	PAPI_CA_SHR
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_L1_TCM
+	PAPI_L2_TCH
+	PAPI_LD_INS
+	PAPI_TOT_CYC
+	PAPI_TOT_IIS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.55
+Selected 9 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_L2_STM
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_SP_OPS
+	PAPI_TLB_DM
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.61
+Selected 11 features:
+	PAPI_BR_INS
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_HW_INT
+	PAPI_L1_ICH
+	PAPI_L2_DCA
+	PAPI_L2_DCR
+	PAPI_L2_LDM
+	PAPI_RES_STL
+	PAPI_TOT_CYC
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.49
+Selected 16 features:
+	PAPI_FDV_INS
+	PAPI_HW_INT
+	PAPI_L1_DCA
+	PAPI_L1_DCH
+	PAPI_L1_DCM
+	PAPI_L2_DCM
+	PAPI_L2_LDM
+	PAPI_L2_STM
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_SR_INS
+	PAPI_TLB_DM
+	PAPI_TLB_IM
+	PAPI_TOT_CYC
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.51
+Selected 8 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_L1_LDM
+	PAPI_L2_DCW
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_LD_INS
+	PAPI_SP_OPS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.49
+Selected 9 features:
+	PAPI_FP_INS
+	PAPI_L1_DCH
+	PAPI_L2_DCM
+	PAPI_L2_ICH
+	PAPI_L2_TCH
+	PAPI_LD_INS
+	PAPI_TOT_CYC
+	PAPI_TOT_IIS
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.62
+Selected 14 features:
+	PAPI_CA_SHR
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_OPS
+	PAPI_HW_INT
+	PAPI_L1_DCM
+	PAPI_L2_DCA
+	PAPI_L2_DCM
+	PAPI_L2_DCR
+	PAPI_L2_STM
+	PAPI_L2_TCA
+	PAPI_L2_TCR
+	PAPI_LD_INS
+	PAPI_RES_STL
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.51
+Selected 7 features:
+	PAPI_BR_NTK
+	PAPI_DP_OPS
+	PAPI_FDV_INS
+	PAPI_L1_LDM
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_LD_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.61
+Selected 18 features:
+	PAPI_CA_SHR
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_INS
+	PAPI_L1_DCM
+	PAPI_L1_ICA
+	PAPI_L1_LDM
+	PAPI_L2_DCA
+	PAPI_L2_DCR
+	PAPI_L2_TCH
+	PAPI_L2_TCR
+	PAPI_L2_TCW
+	PAPI_LD_INS
+	PAPI_REF_CYC
+	PAPI_RES_STL
+	PAPI_SP_OPS
+	PAPI_TLB_DM
+	PAPI_TOT_IIS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.57
+Selected 15 features:
+	PAPI_BR_TKN
+	PAPI_FML_INS
+	PAPI_HW_INT
+	PAPI_L1_DCH
+	PAPI_L1_DCM
+	PAPI_L1_STM
+	PAPI_L1_TCM
+	PAPI_L2_DCA
+	PAPI_L2_DCR
+	PAPI_L2_LDM
+	PAPI_L2_TCM
+	PAPI_L2_TCR
+	PAPI_RES_STL
+	PAPI_TLB_IM
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+
+Best score in training set: 0.6
+Selected 7 features:
+	PAPI_DP_OPS
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_FP_OPS
+	PAPI_L2_DCW
+	PAPI_TLB_DM
+	PAPI_TOT_IIS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.57
+Selected 10 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_L2_DCM
+	PAPI_L2_STM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TLB_DM
+	PAPI_TLB_IM
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.57
+Selected 11 features:
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_FP_OPS
+	PAPI_L2_DCM
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TLB_DM
+	PAPI_TOT_IIS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.51
+Selected 8 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_L2_DCR
+	PAPI_L2_DCW
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_LD_INS
+	PAPI_SP_OPS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.49
+Selected 11 features:
+	PAPI_CA_SHR
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_INS
+	PAPI_L1_DCA
+	PAPI_L2_DCM
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_SR_INS
+	PAPI_TLB_DM
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.51
+Selected 5 features:
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_FP_OPS
+	PAPI_TLB_DM
+	PAPI_TOT_IIS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.56
+Selected 14 features:
+	PAPI_CA_CLN
+	PAPI_DP_OPS
+	PAPI_FDV_INS
+	PAPI_FP_OPS
+	PAPI_HW_INT
+	PAPI_L1_ICM
+	PAPI_L1_STM
+	PAPI_L2_DCM
+	PAPI_L2_LDM
+	PAPI_L2_STM
+	PAPI_L2_TCW
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.51
+Selected 8 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_L1_LDM
+	PAPI_L1_STM
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_LD_INS
+	PAPI_SP_OPS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.6
+Selected 14 features:
+	PAPI_BR_NTK
+	PAPI_CA_SHR
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_OPS
+	PAPI_L1_DCM
+	PAPI_L2_DCM
+	PAPI_L2_DCR
+	PAPI_L2_STM
+	PAPI_L2_TCA
+	PAPI_L2_TCR
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.53
+Selected 17 features:
+	PAPI_BR_CN
+	PAPI_BR_INS
+	PAPI_BR_NTK
+	PAPI_CA_CLN
+	PAPI_FML_INS
+	PAPI_HW_INT
+	PAPI_L1_DCM
+	PAPI_L1_ICM
+	PAPI_L1_LDM
+	PAPI_L2_DCA
+	PAPI_L2_DCM
+	PAPI_L2_DCR
+	PAPI_L2_STM
+	PAPI_L2_TCA
+	PAPI_L2_TCM
+	PAPI_SR_INS
+	PAPI_TLB_IM
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.5
+Selected 8 features:
+	PAPI_BR_NTK
+	PAPI_CA_SHR
+	PAPI_L1_TCM
+	PAPI_L2_STM
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TLB_DM
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.52
+Selected 10 features:
+	PAPI_BR_NTK
+	PAPI_CA_SHR
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_L1_TCM
+	PAPI_L2_DCM
+	PAPI_L2_TCA
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_SP_OPS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.62
+Selected 15 features:
+	PAPI_BR_NTK
+	PAPI_BR_TKN
+	PAPI_CA_CLN
+	PAPI_DP_OPS
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_OPS
+	PAPI_HW_INT
+	PAPI_L1_TCA
+	PAPI_L1_TCM
+	PAPI_L2_DCA
+	PAPI_L2_DCM
+	PAPI_L2_LDM
+	PAPI_L2_TCM
+	PAPI_RES_STL
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.51
+Selected 8 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_L2_TCR
+	PAPI_L2_TCW
+	PAPI_LD_INS
+	PAPI_SP_OPS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.58
+Selected 8 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_L1_TCM
+	PAPI_L2_DCM
+	PAPI_L2_STM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TLB_DM
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.49
+Selected 13 features:
+	PAPI_DP_OPS
+	PAPI_FP_OPS
+	PAPI_L1_ICA
+	PAPI_L1_TCA
+	PAPI_L1_TCM
+	PAPI_L2_ICH
+	PAPI_L2_STM
+	PAPI_L2_TCM
+	PAPI_L2_TCR
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_SP_OPS
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.57
+Selected 10 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_OPS
+	PAPI_L2_DCM
+	PAPI_L2_DCR
+	PAPI_L2_ICA
+	PAPI_L2_STM
+	PAPI_LD_INS
+	PAPI_RES_STL
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.58
+Selected 14 features:
+	PAPI_BR_NTK
+	PAPI_CA_SHR
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_L1_ICH
+	PAPI_L2_DCR
+	PAPI_L2_ICM
+	PAPI_L2_STM
+	PAPI_L2_TCM
+	PAPI_L2_TCR
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_SP_OPS
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.49
+Selected 9 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_L1_DCH
+	PAPI_L2_DCM
+	PAPI_L2_DCW
+	PAPI_L2_TCH
+	PAPI_LD_INS
+	PAPI_TOT_IIS
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.58
+Selected 8 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_L1_TCM
+	PAPI_L2_DCM
+	PAPI_L2_STM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TLB_DM
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.51
+Selected 7 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_L1_LDM
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_LD_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.62
+Selected 14 features:
+	PAPI_CA_CLN
+	PAPI_CA_SHR
+	PAPI_DP_OPS
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_HW_INT
+	PAPI_L2_DCR
+	PAPI_L2_ICM
+	PAPI_L2_LDM
+	PAPI_L2_STM
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.57
+Selected 15 features:
+	PAPI_BR_INS
+	PAPI_DP_OPS
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_FP_OPS
+	PAPI_L1_TCM
+	PAPI_L2_DCM
+	PAPI_L2_LDM
+	PAPI_L2_STM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_SP_OPS
+	PAPI_TLB_DM
+	PAPI_TOT_CYC
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.57
+Selected 11 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_L2_DCM
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TOT_CYC
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.54
+Selected 10 features:
+	PAPI_FDV_INS
+	PAPI_FP_OPS
+	PAPI_L1_ICH
+	PAPI_L2_DCM
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.59
+Selected 10 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_OPS
+	PAPI_L1_LDM
+	PAPI_L2_STM
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TLB_IM
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.52
+Selected 5 features:
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TOT_IIS
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.49
+Selected 14 features:
+	PAPI_HW_INT
+	PAPI_L1_DCA
+	PAPI_L1_ICH
+	PAPI_L1_TCA
+	PAPI_L1_TCM
+	PAPI_L2_DCM
+	PAPI_L2_ICM
+	PAPI_L2_LDM
+	PAPI_L2_STM
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_REF_CYC
+	PAPI_RES_STL
+	PAPI_SR_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.6
+Selected 12 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_INS
+	PAPI_L2_DCM
+	PAPI_L2_STM
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TLB_DM
+	PAPI_TLB_IM
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.49
+Selected 20 features:
+	PAPI_DP_OPS
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_OPS
+	PAPI_L1_DCA
+	PAPI_L1_DCM
+	PAPI_L1_ICA
+	PAPI_L1_ICH
+	PAPI_L1_ICM
+	PAPI_L1_STM
+	PAPI_L2_DCM
+	PAPI_L2_ICA
+	PAPI_L2_ICH
+	PAPI_L2_ICM
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_REF_CYC
+	PAPI_SR_INS
+	PAPI_TLB_DM
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.51
+Selected 5 features:
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_FP_OPS
+	PAPI_TLB_DM
+	PAPI_TOT_IIS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+
+Best score in training set: 0.51
+Selected 12 features:
+	PAPI_CA_SHR
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_L1_DCH
+	PAPI_L2_DCM
+	PAPI_L2_TCA
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_SP_OPS
+	PAPI_SR_INS
+	PAPI_TLB_DM
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.49
+Selected 9 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_L1_TCM
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_LD_INS
+	PAPI_TOT_CYC
+	PAPI_VEC_INS
+	PAPI_VEC_SP
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.55
+Selected 9 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_L1_TCA
+	PAPI_L2_DCW
+	PAPI_L2_TCM
+	PAPI_L2_TCW
+	PAPI_LD_INS
+	PAPI_SP_OPS
+	PAPI_TOT_IIS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.5
+Selected 9 features:
+	PAPI_FDV_INS
+	PAPI_FP_OPS
+	PAPI_L1_ICM
+	PAPI_L1_STM
+	PAPI_L2_DCA
+	PAPI_L2_STM
+	PAPI_LD_INS
+	PAPI_SP_OPS
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.62
+Selected 21 features:
+	PAPI_BR_INS
+	PAPI_BR_NTK
+	PAPI_BR_TKN
+	PAPI_FML_INS
+	PAPI_HW_INT
+	PAPI_L1_LDM
+	PAPI_L1_TCM
+	PAPI_L2_DCA
+	PAPI_L2_DCM
+	PAPI_L2_DCR
+	PAPI_L2_DCW
+	PAPI_L2_LDM
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_L2_TCM
+	PAPI_L2_TCR
+	PAPI_RES_STL
+	PAPI_SP_OPS
+	PAPI_SR_INS
+	PAPI_TLB_DM
+	PAPI_TLB_IM
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.49
+Selected 8 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_L1_DCA
+	PAPI_L2_DCM
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_TLB_DM
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.49
+Selected 6 features:
+	PAPI_CA_CLN
+	PAPI_FDV_INS
+	PAPI_L1_STM
+	PAPI_L2_DCM
+	PAPI_L2_TCM
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.51
+Selected 8 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_FP_OPS
+	PAPI_L1_LDM
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_L2_TCW
+	PAPI_LD_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.57
+Selected 11 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_FP_OPS
+	PAPI_L2_DCM
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TOT_CYC
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.57
+Selected 14 features:
+	PAPI_BR_INS
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_FP_OPS
+	PAPI_HW_INT
+	PAPI_L1_TCM
+	PAPI_L2_DCM
+	PAPI_L2_LDM
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TLB_DM
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.49
+Selected 25 features:
+	PAPI_BR_CN
+	PAPI_BR_PRC
+	PAPI_CA_SHR
+	PAPI_DP_OPS
+	PAPI_FML_INS
+	PAPI_FP_INS
+	PAPI_FP_OPS
+	PAPI_L1_DCA
+	PAPI_L1_DCM
+	PAPI_L1_ICM
+	PAPI_L1_LDM
+	PAPI_L1_TCA
+	PAPI_L2_DCW
+	PAPI_L2_ICA
+	PAPI_L2_ICH
+	PAPI_L2_ICM
+	PAPI_L2_LDM
+	PAPI_L2_TCA
+	PAPI_L2_TCH
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_SP_OPS
+	PAPI_TLB_DM
+	PAPI_TOT_CYC
+	PAPI_TOT_IIS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.49
+Selected 9 features:
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_L1_DCH
+	PAPI_L2_DCM
+	PAPI_L2_TCH
+	PAPI_LD_INS
+	PAPI_REF_CYC
+	PAPI_TOT_IIS
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.51
+Selected 8 features:
+	PAPI_BR_NTK
+	PAPI_L1_TCM
+	PAPI_L2_DCM
+	PAPI_L2_ICH
+	PAPI_L2_STM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TLB_DM
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.58
+Selected 16 features:
+	PAPI_CA_CLN
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_INS
+	PAPI_FP_OPS
+	PAPI_L1_ICH
+	PAPI_L1_TCM
+	PAPI_L2_ICH
+	PAPI_L2_STM
+	PAPI_L2_TCA
+	PAPI_L2_TCH
+	PAPI_RES_STL
+	PAPI_SP_OPS
+	PAPI_TOT_CYC
+	PAPI_TOT_IIS
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.58
+Selected 13 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_L1_DCH
+	PAPI_L1_ICA
+	PAPI_L1_STM
+	PAPI_L2_DCM
+	PAPI_L2_DCW
+	PAPI_L2_LDM
+	PAPI_LD_INS
+	PAPI_REF_CYC
+	PAPI_TOT_IIS
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.61
+Selected 18 features:
+	PAPI_BR_NTK
+	PAPI_BR_TKN
+	PAPI_FML_INS
+	PAPI_HW_INT
+	PAPI_L1_LDM
+	PAPI_L2_DCM
+	PAPI_L2_DCR
+	PAPI_L2_LDM
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_L2_TCM
+	PAPI_L2_TCR
+	PAPI_RES_STL
+	PAPI_SP_OPS
+	PAPI_SR_INS
+	PAPI_TLB_DM
+	PAPI_TLB_IM
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.59
+Selected 9 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_L1_TCM
+	PAPI_L2_DCM
+	PAPI_L2_STM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TLB_DM
+	PAPI_TOT_CYC
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.49
+Selected 11 features:
+	PAPI_DP_OPS
+	PAPI_FDV_INS
+	PAPI_L1_DCH
+	PAPI_L1_ICH
+	PAPI_L2_ICA
+	PAPI_L2_TCH
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_SP_OPS
+	PAPI_TOT_IIS
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.54
+Selected 9 features:
+	PAPI_FDV_INS
+	PAPI_L1_ICM
+	PAPI_L1_TCM
+	PAPI_L2_DCM
+	PAPI_L2_STM
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_SP_OPS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.61
+Selected 20 features:
+	PAPI_DP_OPS
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_INS
+	PAPI_FP_OPS
+	PAPI_HW_INT
+	PAPI_L1_LDM
+	PAPI_L1_TCM
+	PAPI_L2_DCM
+	PAPI_L2_DCR
+	PAPI_L2_ICA
+	PAPI_L2_ICH
+	PAPI_L2_STM
+	PAPI_L2_TCA
+	PAPI_L2_TCH
+	PAPI_L2_TCR
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_SP_OPS
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.51
+Selected 7 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_L2_TCR
+	PAPI_LD_INS
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.49
+Selected 7 features:
+	PAPI_BR_NTK
+	PAPI_CA_SHR
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_L1_TCM
+	PAPI_L2_TCM
+	PAPI_LD_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.51
+Selected 8 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_L1_STM
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_L2_TCR
+	PAPI_LD_INS
+	PAPI_SP_OPS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.53
+Selected 10 features:
+	PAPI_DP_OPS
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_L1_ICM
+	PAPI_L2_DCR
+	PAPI_L2_STM
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.53
+Selected 11 features:
+	PAPI_BR_PRC
+	PAPI_CA_SHR
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_HW_INT
+	PAPI_L1_TCM
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TOT_CYC
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.52
+Selected 9 features:
+	PAPI_BR_NTK
+	PAPI_CA_SHR
+	PAPI_L1_TCM
+	PAPI_L2_DCM
+	PAPI_L2_STM
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.54
+Selected 16 features:
+	PAPI_BR_PRC
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_OPS
+	PAPI_HW_INT
+	PAPI_L1_DCA
+	PAPI_L1_ICH
+	PAPI_L1_TCA
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TLB_DM
+	PAPI_TLB_IM
+	PAPI_TOT_CYC
+	PAPI_TOT_IIS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.58
+Selected 14 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_L1_DCM
+	PAPI_L2_DCM
+	PAPI_L2_DCW
+	PAPI_L2_STM
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_SP_OPS
+	PAPI_TLB_DM
+	PAPI_TOT_IIS
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.49
+Selected 6 features:
+	PAPI_CA_CLN
+	PAPI_FML_INS
+	PAPI_HW_INT
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_RES_STL
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.54
+Selected 9 features:
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_FP_OPS
+	PAPI_L1_ICM
+	PAPI_L2_DCM
+	PAPI_L2_STM
+	PAPI_L2_TCM
+	PAPI_LD_INS
+	PAPI_RES_STL
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+
+Best score in training set: 0.51
+Selected 8 features:
+	PAPI_BR_NTK
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_L2_DCR
+	PAPI_L2_DCW
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_LD_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.51
+Selected 12 features:
+	PAPI_BR_INS
+	PAPI_CA_SHR
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_L1_DCM
+	PAPI_L1_ICA
+	PAPI_L1_STM
+	PAPI_L1_TCM
+	PAPI_L2_DCM
+	PAPI_LD_INS
+	PAPI_REF_CYC
+	PAPI_SP_OPS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.57
+Selected 10 features:
+	PAPI_BR_INS
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_L1_ICM
+	PAPI_L1_TCM
+	PAPI_L2_DCA
+	PAPI_L2_DCM
+	PAPI_L2_LDM
+	PAPI_LD_INS
+	PAPI_SP_OPS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.49
+Selected 12 features:
+	PAPI_BR_NTK
+	PAPI_DP_OPS
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_FP_OPS
+	PAPI_L1_DCH
+	PAPI_L2_TCH
+	PAPI_LD_INS
+	PAPI_SP_OPS
+	PAPI_TLB_DM
+	PAPI_TOT_IIS
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.6
+Selected 17 features:
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_INS
+	PAPI_FP_OPS
+	PAPI_HW_INT
+	PAPI_L1_LDM
+	PAPI_L2_DCA
+	PAPI_L2_DCR
+	PAPI_L2_ICH
+	PAPI_L2_ICM
+	PAPI_L2_STM
+	PAPI_L2_TCH
+	PAPI_L2_TCM
+	PAPI_L2_TCR
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_VEC_INS
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.64
+Selected 14 features:
+	PAPI_CA_SHR
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_INS
+	PAPI_HW_INT
+	PAPI_L2_DCM
+	PAPI_L2_DCR
+	PAPI_L2_ICM
+	PAPI_L2_LDM
+	PAPI_L2_STM
+	PAPI_L2_TCM
+	PAPI_L2_TCW
+	PAPI_LD_INS
+	PAPI_RES_STL
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.54
+Selected 14 features:
+	PAPI_CA_CLN
+	PAPI_FDV_INS
+	PAPI_FML_INS
+	PAPI_FP_INS
+	PAPI_FP_OPS
+	PAPI_L1_DCM
+	PAPI_L1_LDM
+	PAPI_L1_TCA
+	PAPI_L2_STM
+	PAPI_L2_TCR
+	PAPI_LD_INS
+	PAPI_REF_CYC
+	PAPI_TLB_DM
+	PAPI_TLB_IM
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.55
+Selected 11 features:
+	PAPI_CA_CLN
+	PAPI_FDV_INS
+	PAPI_FP_INS
+	PAPI_HW_INT
+	PAPI_L1_ICM
+	PAPI_L1_STM
+	PAPI_L2_DCM
+	PAPI_L2_LDM
+	PAPI_L2_STM
+	PAPI_LD_INS
+	PAPI_RES_STL
+Performing step feature selection (step=5, n_iter=1)
+Iteration 1 / 1
+Best score in training set: 0.5
+Selected 8 features:
+	PAPI_BR_NTK
+	PAPI_CA_SHR
+	PAPI_L1_TCM
+	PAPI_L2_DCM
+	PAPI_L2_STM
+	PAPI_LD_INS
+	PAPI_RES_STL
+	PAPI_TLB_DM

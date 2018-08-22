@@ -15,10 +15,10 @@ Note: if you encounter `perf_event support disabled by Linux with paranoid=3` us
 ```
 git clone https://github.com/mackoo13/wombat.git
 cd wombat
-pip install .
+pip3 install .
 ```
 
-If you don't have `pip` installed, you can try using the following command instead:
+If you don't have `pip3` installed, you can try a workaround:
 
 ```
 python3 -m pip install .
@@ -29,6 +29,8 @@ python3 -m pip install .
 To obtain the set of programs from LORE repository, you must first download a CSV file with a list of currently available loops. Use [LOOP website](https://vectorization.computer/query.html) and the following query:
 
 `SELECT id, application, benchmark, file, line, function, version FROM loops`
+
+A pre-downloaded file is available in `config/lore_loops.csv`.
 
 Usage: `python3 lore/lore_download.py <path_to_csv_file>`
 
@@ -79,13 +81,13 @@ The result will be saved to `$PAPI_OUT_DIR/<output_file_name>_O0.csv` and `$PAPI
 
 ### `train`
 
-Usage: `python3 lore/train.py -i <input_file_path_1> -i <input_file_path_2> ...`
+Usage: `python3 lore/lore_train.py -i <input_file_path_1> -i <input_file_path_2> ...`
 
 The input can be one or more `.csv` files obtained from `exec`. The script will train a ML model to predict execution time and save it to `models` directory.
 
 ### `train_opt`
 
-Usage: `python3 lore/train_opt.py -i <input_file_prefix_1> -i <input_file_prefix_2> ...`
+Usage: `python3 lore/lore_train_opt.py -i <input_file_prefix_1> -i <input_file_prefix_2> ...`
 
 Files `<input_file_prefix>_O0.csv` and `<input_file_prefix>_O3.csv` obtained from `exec_opt` will be used as the input.
 

@@ -9,7 +9,7 @@ if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!
 parsed=0
 failed=0
 
-while read -r path; do
+for path in ${LORE_PROC_PATH}*/; do
     name=`basename "${path%.*}"`
 
     echo "Generating params for $name"
@@ -20,6 +20,6 @@ while read -r path; do
         ((failed++))
     fi
 
-done <<< `ls -d ${LORE_PROC_PATH}*/`
+done
 
 echo ${parsed} parsed, ${failed} skipped.

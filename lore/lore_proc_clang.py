@@ -86,7 +86,7 @@ def main():
                 code = includes + code
 
                 if not os.path.isdir(out_dir):
-                    os.mkdir(out_dir)
+                    os.makedirs(out_dir)
 
                 if len(refs) == 0:
                     raise ParseException('No refs found - cannot determine max_arr_dim')

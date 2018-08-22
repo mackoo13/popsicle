@@ -8,7 +8,7 @@ if [ -z "$LORE_ORIG_PATH" ]; then echo "Invalid config (LORE_ORIG_PATH) missing!
 if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!"; exit 1; fi
 
 if [ ! -d "$LORE_PROC_PATH" ]; then
-    mkdir ${LORE_PROC_PATH}
+    mkdir -p ${LORE_PROC_PATH}
 fi
 
 python3 ${root_dir}/lore/lore_proc.py ${LORE_ORIG_PATH} ${LORE_PROC_PATH}

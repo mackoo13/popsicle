@@ -66,7 +66,7 @@ def remove_feats(x, y, df, feats):
             new_feats.remove(f)
             x3 = x[:, list(new_feats)]
             score = calc_score(x3, y, df)
-            if score > best:
+            if score >= best:
                 best = score
                 to_remove = f
 
@@ -108,7 +108,7 @@ class FeatureSelector:
         self.nca = nca
 
     def fit_step(self, x, y, df):
-        n_iter = 5
+        n_iter = 1
         step = 5
         best = float('-infinity')
         best_feats = None
@@ -116,11 +116,11 @@ class FeatureSelector:
         print('Performing step feature selection (step=%d, n_iter=%d)' % (step, n_iter))
 
         for i in range(n_iter):
+            print('Iteration', i + 1, '/', n_iter)
             score, feats = make_step_search(x, y, df, step)
             if score > best:
                 best = score
                 best_feats = feats
-            print('Iteration', i + 1, '/', n_iter)
 
         best, _ = remove_feats(x, y, df, best_feats)
 

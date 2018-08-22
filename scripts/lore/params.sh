@@ -9,17 +9,17 @@ if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!
 parsed=0
 failed=0
 
-while read -r path; do
+for path in ${LORE_PROC_PATH}*/; do
     name=`basename "${path%.*}"`
 
     echo "Generating params for $name"
 
-    if res=`python3 ${root_dir}/lore/lore_params.py ${path}`; then
+    if res=`python3 ${root_dir}/lore/lore_params.py ${path} 30o`; then
         ((parsed++))
     else
         ((failed++))
     fi
 
-done <<< `ls -d ${LORE_PROC_PATH}*/`
+done
 
 echo ${parsed} parsed, ${failed} skipped.

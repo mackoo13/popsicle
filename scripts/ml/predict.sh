@@ -8,8 +8,6 @@ scripts_dir=${current_dir}/../
 root_dir=${scripts_dir}/../
 . ${root_dir}/config/lore.cfg
 
-if [ -z "$PAPI_PATH" ]; then echo "Invalid config (PAPI_PATH) missing!"; exit 1; fi
-
 path=$1
 name=${path%.*}
 bkp_path=${path}.bkp

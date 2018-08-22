@@ -8,13 +8,13 @@ if [ -z "$LORE_ORIG_PATH" ]; then echo "Invalid config (LORE_ORIG_PATH) missing!
 if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!"; exit 1; fi
 
 if [ ! -d "$LORE_PROC_PATH" ]; then
-    mkdir ${LORE_PROC_PATH}
+    mkdir -p ${LORE_PROC_PATH}
 fi
 
 parsed=0
 failed=0
 
-while read -r path; do
+for path in `find ${LORE_ORIG_PATH} -iname '*.c'`; do
     name=`basename "${path%.*}"`
 
     echo "Parsing $name"
@@ -26,6 +26,6 @@ while read -r path; do
         ((failed++))
     fi
 
-done <<< `find ${LORE_ORIG_PATH} -iname '*00*.c'`
+done
 
 echo ${parsed} parsed, ${failed} skipped.
