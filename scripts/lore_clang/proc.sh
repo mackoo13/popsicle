@@ -19,7 +19,7 @@ for path in `find ${LORE_ORIG_PATH} -iname '*.c'`; do
 
     echo "Parsing $name"
 
-    if res=`python3 ${root_dir}/lore/lore_proc_clang.py ${path} ${LORE_PROC_PATH}`; then
+    if res=`python3 ${root_dir}/lore/proc_clang.py ${path} ${LORE_PROC_PATH}`; then
         ((parsed++))
         echo $res
     else

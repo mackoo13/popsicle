@@ -15,8 +15,9 @@ setup(name='lore',
           'sklearn', 'numpy'
       ],
       entry_points={
-          'console_scripts': ['lore-proc = lore.lore_proc:main',
-                              'lore-train = lore.lore_train:main',
-                              'lore-predict = lore.lore_precict:main']
+          'console_scripts': ['wombat-proc = lore.proc:main',
+                              'wombat-params = lore.params:main',
+                              'wombat-train = lore.train:main',
+                              'wombat-predict = lore.precict:main']
       },
       zip_safe=False)

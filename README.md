@@ -32,7 +32,7 @@ To obtain the set of programs from LORE repository, you must first download a CS
 
 A pre-downloaded file is available in `config/lore_loops.csv`.
 
-Usage: `python3 lore/lore_download.py <path_to_csv_file>`
+Usage: `python3 lore/download.py <path_to_csv_file>`
 
 ## Preprocessing
 
@@ -41,7 +41,7 @@ The following scripts can be used to prepare data from LORE, train the model and
 
 ### `proc`
 
-Usage: `python3 lore/lore_proc.py`
+Usage: `python3 lore/proc.py`
 
 Transforms the source code of files from LORE repository to a runnable form, inserts PAPI instructions and execution time measurement.
 
@@ -50,7 +50,7 @@ The input files are taken from `LORE_ORIG_PATH` specified in config. Output will
 
 ### `params`
 
-Usage: `python3 lore/lore_params.py <n_params>`
+Usage: `python3 lore/params.py <n_params>`
 
 Generates a range of parameters for LORE programs. This step needs to be applied after `proc`.
 
@@ -83,13 +83,13 @@ The result will be saved to `$PAPI_OUT_DIR/<output_file_name>_O0.csv` and `$PAPI
 
 ### `train`
 
-Usage: `python3 lore/lore_train.py -i <input_file_path_1> -i <input_file_path_2> ...`
+Usage: `python3 lore/train.py -i <input_file_path_1> -i <input_file_path_2> ...`
 
 The input can be one or more `.csv` files obtained from `exec`. The script will train a ML model to predict execution time and save it to `models` directory.
 
 ### `train_opt`
 
-Usage: `python3 lore/lore_train_opt.py -i <input_file_prefix_1> -i <input_file_prefix_2> ...`
+Usage: `python3 lore/train_opt.py -i <input_file_prefix_1> -i <input_file_prefix_2> ...`
 
 Files `<input_file_prefix>_O0.csv` and `<input_file_prefix>_O3.csv` obtained from `exec_opt` will be used as the input.
 

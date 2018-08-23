@@ -22,7 +22,7 @@ else
 fi
 
 echo "Adding PAPI instructions to ${path}"
-python3 ${root_dir}/lore/lore_add_papi.py $1
+python3 ${root_dir}/lore/add_papi.py $1
 
 echo "Compiling..."
 ${scripts_dir}/exec/compile.sh ${name} ""
@@ -34,7 +34,7 @@ echo ",time" >> ${out_file}
 echo "Executing..."
 if res=$(timeout 10 ${root_dir}/exec_loop); then
     echo ${res} >> ${out_file}
-    python3 ${root_dir}/lore/lore_predict.py -i ${out_file}
+    python3 ${root_dir}/lore/predict.py -i ${out_file}
 else
     echo ":("
 fi

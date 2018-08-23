@@ -2,7 +2,7 @@ from pycparser import c_ast
 
 
 # noinspection PyPep8Naming
-from lore_parser import ForDepthCounter
+from parser import ForDepthCounter
 
 
 class ForPragmaUnrollVisitor(c_ast.NodeVisitor):

@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from lore import lore_parser
+from lore import parser
 import re
 import sys
 import os
@@ -60,7 +60,7 @@ def gen_mallocs(bounds, refs, dtypes):
         ref = refs[arr]
 
         if arr in dtypes:
-            sizes = [lore_parser.max_set(size) for size in ref]
+            sizes = [parser.max_set(size) for size in ref]
             sizes = [s for s in sizes if s is not None]
             if len(sizes) > 0:
                 res += malloc(arr, dtypes[arr], sizes, 0)
@@ -189,7 +189,7 @@ def find_max_param(refs, ast, verbose=False):
     """
     max_arr_dim = max([len(refs) for refs in refs.values()])
     arr_count = len(refs)
-    loop_depth = lore_parser.find_for_depth(ast)
+    loop_depth = parser.find_for_depth(ast)
 
     max_param_arr = math.pow(50000000 / arr_count, 1 / max_arr_dim)
     max_param_loop = math.pow(5000000000, 1 / loop_depth)

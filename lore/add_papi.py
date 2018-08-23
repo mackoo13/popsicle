@@ -1,7 +1,7 @@
 from __future__ import print_function
 import argparse
 
-from lore_proc_utils import split_code, sub_loop_header, add_papi, add_includes
+from proc_utils import split_code, sub_loop_header, add_papi, add_includes
 
 
 def transform(code):

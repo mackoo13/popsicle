@@ -10,7 +10,7 @@ root_dir=${scripts_dir}/../
 . ${root_dir}/config/lore.cfg
 
 if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!"; exit 1; fi
-if [ ! $# -eq 1 ]; then echo "Usage: ./lore_exec_opt.sh <output file name>"; exit 1; fi
+if [ ! $# -eq 1 ]; then echo "Usage: ./exec_opt.sh <output file name>"; exit 1; fi
 
 readonly trials=1
 readonly out_file_O0=${PAPI_OUT_DIR}/speedup/$1_O0.csv
