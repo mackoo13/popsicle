@@ -1,10 +1,16 @@
 import matplotlib.pyplot as plt
 import matplotlib.colors
 import numpy as np
+from sklearn.decomposition import PCA
+from sklearn.neighbors import KNeighborsRegressor
 
 
 def graph(clf, x2, y, labels=[], xlim=(None, None), ylim=(None, None)):
-    # x2 must already be 2D!
+    if x2.shape[1] != 2:
+        pca = PCA(n_components=2)
+        x2 = pca.fit_transform(x2)
+        clf = KNeighborsRegressor(n_neighbors=6, weights='distance')
+        clf.fit(x2, y) 
 
     norm = matplotlib.colors.LogNorm(vmin=y.min(), vmax=y.max())
     fig, ax = plt.subplots()

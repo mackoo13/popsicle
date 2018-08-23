@@ -15,17 +15,26 @@ void print_result(int set, long_long* values, double time_spent) {
 }
 
 
-int main(int argc, char * argv []) {
+int main(int argc, char* argv []) {
 
     int set = PAPI_NULL;
     int event_codes[256];
     int event_count;
+    int retval = 0;
 
     initialize();
     exec(PAPI_multiplex_init());
 
-//    available_event_codes(event_codes, &event_count);
-    load_event_names("/home/maciej/ftb/wombat/config/papi_events.txt", event_codes, &event_count);
+    if(argc >= 1) {
+        retval = load_event_names(argv[1], event_codes, &event_count);
+        if(retval != 0) {
+            printf("Cannot open %s (error %d). \n", argv[1], retval);
+            return retval;
+        }
+    } else {
+        available_event_codes(event_codes, &event_count);
+    }
+
     long_long* values = malloc(event_count * sizeof(long_long));
 
     exec(PAPI_create_eventset(&set));

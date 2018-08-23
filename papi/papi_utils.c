@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <papi.h>
 #include <string.h>
+#include <errno.h>
 
 void handle_error (int retval) {
     printf("PAPI error %d: %s\n", retval, PAPI_strerror(retval));
@@ -35,8 +36,9 @@ void available_event_codes(int* res, int* number) {
     *number = event_count;
 }
 
-void load_event_names(char* file_path, int* res, int* number) {
+int load_event_names(char* file_path, int* res, int* number) {
     FILE* stream = fopen(file_path, "r");
+    if(stream == NULL) return errno;
     *number = 0;
 
     char line[PAPI_MAX_STR_LEN];
@@ -45,4 +47,7 @@ void load_event_names(char* file_path, int* res, int* number) {
         exec(PAPI_event_name_to_code(line, &res[*number]));
         *number = *number + 1;
     }
+
+    fclose(stream);
+    return 0;
 }

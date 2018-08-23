@@ -78,6 +78,24 @@ def remove_feats(x, y, df, feats):
     return best, feats
 
 
+def feature_importance(x, y, df, n_iter=100):
+    res = {}
+    for c in df.columns:
+        res[c] = 0
+
+    for i in range(n_iter):
+        fs = FeatureSelector('step')
+        fs.fit(x, y, df)
+        feats = [df.columns[q] for q in fs.feats]
+        for f in feats:
+            res[f] += 1
+
+    resl = [(k, v) for k, v in res.items()]
+    resl = sorted(resl, key=lambda q: q[1], reverse=True)
+    for k, v in resl:
+        print(k, '\t', v)
+
+
 class FeatureSelector:
     def __init__(self, how):
         self.feats = None
@@ -107,9 +125,7 @@ class FeatureSelector:
         nca.fit(x, y)
         self.nca = nca
 
-    def fit_step(self, x, y, df):
-        n_iter = 1
-        step = 5
+    def fit_step(self, x, y, df, n_iter=10, step=5, require_tot_ins=True):
         best = float('-infinity')
         best_feats = None
 
@@ -125,6 +141,8 @@ class FeatureSelector:
         best, _ = remove_feats(x, y, df, best_feats)
 
         feats_list = sorted(best_feats)
+        if require_tot_ins and 'PAPI_TOT_INS' not in feats_list:
+            feats_list.insert(0, list(df.columns).index('PAPI_TOT_INS'))
 
         print('Best score in training set:', round(best, 2))
         print('Selected %d features:' % len(feats_list))

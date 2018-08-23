@@ -2,6 +2,7 @@
 
 # PARAMS:
 #   $1 output file name (without extension)
+#   $2 path to the list of papi events to measure (optional)
 
 current_dir=$(dirname $(readlink -f $0))
 scripts_dir=${current_dir}/../
@@ -14,7 +15,7 @@ if [ ! $# -eq 1 ]; then echo "Usage: ./lore_exec_opt.sh <output file name>"; exi
 readonly trials=1
 readonly out_file_O0=${PAPI_OUT_DIR}/speedup/$1_O0.csv
 readonly out_file_O3=${PAPI_OUT_DIR}/speedup/$1_O3.csv
-readonly papi_events_list=${root_dir}/config/papi_events.txt
+readonly papi_events_list=$2
 
 executed=0
 failed=0
@@ -31,6 +32,9 @@ echo ",time_O3" >> ${out_file_O3}
 
 start_time=$SECONDS
 
+file_count=`find ${LORE_PROC_PATH} -iname '*.c' | wc -l`
+file_i=1
+
 for path in `find ${LORE_PROC_PATH} -iname '*.c'`; do
     name=`basename "${path%.*}"`
 
@@ -41,10 +45,10 @@ for path in `find ${LORE_PROC_PATH} -iname '*.c'`; do
             if ! ${current_dir}/compile_opt.sh ${file_prefix} "${params}" 0; then break; fi
             if ! ${current_dir}/compile_opt.sh ${file_prefix} "${params}" 3; then break; fi
 
-            echo "Running $name $params ..."
+            echo "[$file_i/$file_count] Running $name $params ..."
 
             for trial in `seq ${trials}`; do
-                if res=$(timeout 10 ${root_dir}/exec_loop_O0); then
+                if res=$(timeout 10 ${root_dir}/exec_loop_O0 ${papi_events_list}); then
                     echo ${name},${params},${res} >> ${out_file_O0}
                     ((executed++))
                 else
@@ -53,7 +57,7 @@ for path in `find ${LORE_PROC_PATH} -iname '*.c'`; do
                     break 2
                 fi
 
-                if res=$(timeout 10 ${root_dir}/exec_loop_O3); then
+                if res=$(timeout 10 ${root_dir}/exec_loop_O3 ${papi_events_list}); then
                     echo ${name},${params},${res} >> ${out_file_O3}
                     ((executed++))
                 else
@@ -66,6 +70,7 @@ for path in `find ${LORE_PROC_PATH} -iname '*.c'`; do
         done < ${file_prefix}_params.txt
     fi
 
+    ((file_i++))
 done
 
 exec_time=$(($SECONDS - start_time))

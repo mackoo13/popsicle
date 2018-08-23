@@ -2,6 +2,7 @@
 
 # PARAMS:
 #   $1 output file name (without extension)
+#   $2 path to the list of papi events to measure (optional)
 
 current_dir=$(dirname $(readlink -f $0))
 scripts_dir=${current_dir}/../
@@ -14,18 +15,25 @@ if [ -z "$PAPI_OUT_DIR" ]; then echo "Invalid config (PAPI_OUT_DIR) missing!"; e
 readonly trials=1
 readonly out_file_ur=${PAPI_OUT_DIR}/unroll/$1_ur.csv
 readonly out_file_nour=${PAPI_OUT_DIR}/unroll/$1_nour.csv
+readonly papi_events_list=$2
 
 executed=0
 failed=0
 
+echo "Compiling..."
+${current_dir}/init.sh
+
 echo -n "alg,run," > ${out_file_ur}
 echo -n "alg,run," > ${out_file_nour}
-${scripts_dir}/papi/papi_events.sh >> ${out_file_ur}
-${scripts_dir}/papi/papi_events.sh >> ${out_file_nour}
+${scripts_dir}/papi/papi_events.sh ${papi_events_list} >> ${out_file_ur}
+${scripts_dir}/papi/papi_events.sh ${papi_events_list} >> ${out_file_nour}
 echo ",time_O0" >> ${out_file_ur}
 echo ",time_O3" >> ${out_file_nour}
 
-${current_dir}/init.sh
+start_time=$SECONDS
+
+file_count=`find ${LORE_PROC_PATH} -iname '*.c' | wc -l`
+file_i=1
 
 for path in `find ${LORE_PROC_PATH} -iname '*.c'`; do
     name=`basename "${path%.*}"`
@@ -37,10 +45,10 @@ for path in `find ${LORE_PROC_PATH} -iname '*.c'`; do
             if ! ${current_dir}/compile.sh ${file_prefix} "${params}" "unroll"; then break; fi
             if ! ${current_dir}/compile.sh ${file_prefix} "${params}" "nounroll"; then break; fi
 
-            echo "Running $name $params ..."
+            echo "[$file_i/$file_count] Running $name $params ..."
 
             for trial in `seq ${trials}`; do
-                if res=$(timeout 10 ${root_dir}/exec_loop); then
+                if res=$(timeout 10 ${root_dir}/exec_loop_unroll ${papi_events_list}); then
                     echo ${name},${params},${res} >> ${out_file_ur}
                     ((executed++))
                 else
@@ -51,7 +59,7 @@ for path in `find ${LORE_PROC_PATH} -iname '*.c'`; do
             done
 
             for trial in `seq ${trials}`; do
-                if res=$(timeout 10 ${root_dir}/exec_loop); then
+                if res=$(timeout 10 ${root_dir}/exec_loop_nounroll ${papi_events_list}); then
                     echo ${name},${params},${res} >> ${out_file_nour}
                     ((executed++))
                 else
@@ -65,3 +73,9 @@ for path in `find ${LORE_PROC_PATH} -iname '*.c'`; do
     fi
 
 done
+
+exec_time=$(($SECONDS - start_time))
+
+echo =========
+echo ${executed} executed, ${failed} skipped.
+echo "Time: $((exec_time / 3600))h $((exec_time % 3600 / 60))m $((exec_time % 60))s"

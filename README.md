@@ -41,7 +41,7 @@ The following scripts can be used to prepare data from LORE, train the model and
 
 ### `proc`
 
-Usage: `./scripts/lore/proc.sh`
+Usage: `python3 lore/lore_proc.py`
 
 Transforms the source code of files from LORE repository to a runnable form, inserts PAPI instructions and execution time measurement.
 
@@ -50,9 +50,11 @@ The input files are taken from `LORE_ORIG_PATH` specified in config. Output will
 
 ### `params`
 
-Usage: `./scripts/lore/params.sh`
+Usage: `python3 lore/lore_params.py <n_params>`
 
 Generates a range of parameters for LORE programs. This step needs to be applied after `proc`.
+
+`<n_params>` is the number of distinct parameters to generate (thus, the number of samples that will be produced by this program).
 
 The directory containing files to process is specified in `LORE_PROC_PATH`. Result is saved in `<program_name>_params.txt` for each program.
 
@@ -98,7 +100,7 @@ The script will train a ML model to predict speedup between `-O3` and `-O0` and 
 
 Use these scripts to predict the execution time for new programs.
 
-The code should conform to [this format](docs/file_format.md).
+The code should conform to [this format](docs/file_format.md). An example is available in `examples/kernel.c`.
 
 
 ### `predict`
