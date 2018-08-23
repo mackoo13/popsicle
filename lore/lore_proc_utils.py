@@ -191,8 +191,8 @@ def find_max_param(refs, ast, verbose=False):
     arr_count = len(refs)
     loop_depth = lore_parser.find_for_depth(ast)
 
-    max_param_arr = math.pow(10000000 / arr_count, 1 / max_arr_dim)
-    max_param_loop = math.pow(1000000000, 1 / loop_depth)
+    max_param_arr = math.pow(50000000 / arr_count, 1 / max_arr_dim)
+    max_param_loop = math.pow(5000000000, 1 / loop_depth)
     max_param = min(max_param_arr, max_param_loop)
 
     if verbose:

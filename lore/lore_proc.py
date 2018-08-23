@@ -11,14 +11,15 @@ from lore_proc_utils import add_includes, add_papi, split_code, sub_loop_header,
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
-    parser.add_argument("orig_path", help="Orig path")
-    parser.add_argument("proc_path", help="Proc path")
     args = parser.parse_args()
     verbose = args.verbose
-    orig_path = args.orig_path
-    proc_path = args.proc_path
+    orig_path = os.environ['LORE_ORIG_PATH']
+    proc_path = os.environ['LORE_PROC_PATH']
 
     max_arr_dims = {}
+
+    if not os.path.isdir(proc_path):
+        os.makedirs(proc_path)
 
     for file_name in os.listdir(orig_path):
         try:
