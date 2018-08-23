@@ -14,7 +14,7 @@ for path in ${LORE_PROC_PATH}*/; do
 
     echo "Generating params for $name"
 
-    if res=`python3 ${root_dir}/lore/lore_params.py ${path} 30o`; then
+    if res=`python3 ${root_dir}/lore/lore_params.py ${path} 30`; then
         ((parsed++))
     else
         ((failed++))

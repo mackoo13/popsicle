@@ -2,8 +2,8 @@ import math
 import argparse
 
 
-def intermediate_value(k, n_params, max_param):
-    return int(math.pow(k/4, 1/n_params) * max_param)   # todo 4
+def intermediate_value(k, k_max, n_params, max_param):
+    return int(math.pow(k / k_max, 1/n_params) * max_param)
 
 
 def main():
@@ -26,7 +26,7 @@ def main():
             if len(param_names) > 0 and len(param_names[0]) > 0:
 
                 for k in range(1, k_max + 1):
-                    defines = ['-D ' + p + '=' + str(intermediate_value(k, len(param_names), max_param))
+                    defines = ['-D ' + p + '=' + str(intermediate_value(k, k_max, len(param_names), max_param))
                                for p in param_names]
                     fout.write(' '.join(defines) + '\n')
             else:
