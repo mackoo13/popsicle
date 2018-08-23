@@ -42,8 +42,6 @@ for path in `find ${LORE_PROC_PATH} -iname '*.c'`; do
             if ! ${current_dir}/compile_opt.sh ${file_prefix} "${params}" 3; then break; fi
 
             echo "Running $name $params ..."
-            ${root_dir}/exec_loop_O0
-            echo rr
 
             for trial in `seq ${trials}`; do
                 if res=$(timeout 10 ${root_dir}/exec_loop_O0); then
@@ -71,5 +69,7 @@ for path in `find ${LORE_PROC_PATH} -iname '*.c'`; do
 done
 
 exec_time=$(($SECONDS - start_time))
+
+echo =========
 echo ${executed} executed, ${failed} skipped.
-echo "Time: $((exec_time / 60))m $((exec_time % 60))sec"
+echo "Time: $((exec_time / 3600))h $((exec_time % 3600 / 60))m $((exec_time % 60))s"
