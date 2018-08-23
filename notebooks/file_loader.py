@@ -45,27 +45,30 @@ def df_to_xy(df, drop_cols, y_col):
 
 
 def get_df_meta():
-    proc_dir = os.environ['LORE_PROC_PATH']
+    # proc_dir = os.environ['LORE_PROC_PATH']
+    proc_dir = '/home/maciej/ftb/kernels_lore/proc'
     return pd.read_csv(os.path.join(proc_dir, 'metadata.csv'), index_col='alg')
 
 
 class FileLoader:
-    def __init__(self, files, mode='speedup', scaler=None, dim={1, 2}):
-        self.x = []
+    def __init__(self, files, mode='speedup', dim={1, 2}):
+        self.x_train = []
         self.x_test = []
-        self.y = []
+        self.y_train = []
         self.y_test = []
         self.df = None
+        self.df_train = None
         self.df_test = None
         self.files = files
-        self.scaler = scaler
         self.dim = list(dim)
         self.mode = mode
         
         if mode == 'time':
             self.load = self.load_time
+            self.split = self.split_time
         elif mode == 'speedup':
             self.load = self.load_speedup
+            self.split = self.split_speedup
         else:
             raise Exception('Unknown feature selection mode')
             
@@ -75,7 +78,7 @@ class FileLoader:
         paths = [os.path.join(out_dir, self.mode, p) for p in self.files]
 
         dfs = [pd.read_csv(path + name_suffix + '.csv', error_bad_lines=False) for path in paths]
-        df = pd.concat(dfs)
+        df = pd.concat(dfs, join='inner')
         df['run'] = df['run'].astype(str)
 
         if cols is not None:
@@ -86,7 +89,15 @@ class FileLoader:
 
         return df
 
-    def load_time(self, scaler=None):
+    def scale(self, x, x_test):
+        scaler = RobustScaler(quantile_range=(10, 90))
+        self.x_train = scaler.fit_transform(x)
+        self.x_test = scaler.transform(x_test)
+
+        # print('Train:', self.df_train.shape)
+        # print('Test: ', self.df_test.shape)
+
+    def load_time(self):
         df = self.csv_to_df()
 
         # df_meta = pd.read_csv('/home/maciej/ftb/kernels_lore/proc/metadata.csv', index_col='alg')  # todo
@@ -96,27 +107,19 @@ class FileLoader:
         # df = df.loc[df['max_dim'].isin(self.dim)]
 
         df = df_sort_cols(df)
+        self.df = df
 
-        self.df, self.df_test = df_train_test_split(df)
+    def split_time(self):
+        self.df_train, self.df_test = df_train_test_split(self.df)
 
-        x, y = df_to_xy(self.df, ['time'], 'time')
+        x, y = df_to_xy(self.df_train, ['time'], 'time')
         x_test, y_test = df_to_xy(self.df_test, ['time'], 'time')
 
-        if self.scaler is None:
-            scaler = RobustScaler(quantile_range=(10, 90))
-            self.x = scaler.fit_transform(x)
-            self.scaler = scaler
-        else:
-            self.x = scaler.transform(x)
-
-        self.x_test = scaler.transform(x_test)
-        self.y = y
+        self.scale(x, x_test)
+        self.y_train = y
         self.y_test = y_test
 
-        print('Train:', self.df.shape)
-        print('Test: ', self.df_test.shape)
-
-    def load_speedup(self, scaler=None):
+    def load_speedup(self):
         df_o0 = self.csv_to_df(name_suffix='_O0')
         df_o3 = self.csv_to_df(name_suffix='_O3', cols=['alg', 'run', 'time_O3'])
         df = df_o0.merge(df_o3, left_index=True, right_index=True)
@@ -132,22 +135,14 @@ class FileLoader:
         df['speedup'] = df['time_O0'] / df['time_O3']
 
         df = df_sort_cols(df)
+        self.df = df
 
-        self.df, self.df_test = df_train_test_split(df)
+    def split_speedup(self):
+        self.df_train, self.df_test = df_train_test_split(self.df)
 
-        x, y = df_to_xy(self.df,['time_O0', 'time_O3', 'speedup', 'max_dim'], 'speedup')
-        x_test, y_test = df_to_xy(self.df_test,['time_O0', 'time_O3', 'speedup', 'max_dim'], 'speedup')
+        x, y = df_to_xy(self.df_train, ['time_O0', 'time_O3', 'speedup', 'max_dim'], 'speedup')
+        x_test, y_test = df_to_xy(self.df_test, ['time_O0', 'time_O3', 'speedup', 'max_dim'], 'speedup')
 
-        if self.scaler is None:
-            scaler = RobustScaler(quantile_range=(10, 90))
-            self.x = scaler.fit_transform(x)
-            self.scaler = scaler
-        else:
-            self.x = scaler.transform(x)
-
-        self.x_test = scaler.transform(x_test)
-        self.y = y
+        self.scale(x, x_test)
+        self.y_train = y
         self.y_test = y_test
-
-        print('Train:', self.df.shape)
-        print('Test: ', self.df_test.shape)

@@ -117,7 +117,6 @@ class FeatureSelector:
     def fit_pca(self, x, _y, _df, pca_comp=14):
         pca = PCA(n_components=pca_comp)
         pca.fit(x)
-        print('Explained variance:', pca.explained_variance_ratio_.sum())
         self.pca = pca
 
     def fit_nca(self, x, y, _df, nca_dim=6, nca_optimizer='gd'):
