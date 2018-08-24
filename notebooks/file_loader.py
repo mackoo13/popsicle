@@ -61,14 +61,19 @@ class FileLoader:
         self.df_test = None
         self.files = files
         self.dim = list(dim)
-        self.mode = mode
-        
-        if mode == 'time':
+
+        if mode in ('time', 't'):
             self.load = self.load_time
             self.split = self.split_time
-        elif mode == 'speedup':
+            self.mode = 'time'
+        elif mode in ('speedup', 's'):
             self.load = self.load_speedup
             self.split = self.split_speedup
+            self.mode = 'speedup'
+        elif mode in ('unroll', 'u'):
+            self.load = self.load_unroll
+            self.split = self.split_unroll
+            self.mode = 'unroll'
         else:
             raise Exception('Unknown feature selection mode')
             
@@ -146,3 +151,24 @@ class FileLoader:
         self.scale(x, x_test)
         self.y_train = y
         self.y_test = y_test
+
+    def load_unroll(self):
+        df_o0 = self.csv_to_df(name_suffix='_nour')
+        df_o3 = self.csv_to_df(name_suffix='_ur', cols=['alg', 'run', 'time_O0'])
+        df = df_o0.merge(df_o3, left_index=True, right_index=True)
+
+        df_meta = get_df_meta()
+        df['max_dim'] = df.index.get_level_values(0)
+        df['max_dim'] = df['max_dim'].apply(lambda q: df_meta.loc[q]['max_dim'])
+        # df = df.loc[df['time_O3'] > 10]
+        df = df.loc[df['max_dim'].isin(self.dim)]
+
+        df = scale_by_tot_ins(df)
+
+        df['speedup'] = df['time_O3'] / df['time_O0']
+
+        df = df_sort_cols(df)
+        self.df = df
+
+    def split_unroll(self):
+        self.split_speedup()

@@ -208,7 +208,26 @@ def save_max_dims(proc_path, max_arr_dims):
     :param max_arr_dims:
     :return:
     """
-    with open(proc_path + '/metadata.csv', 'w') as fout:
+    with open(os.path.join(proc_path, 'metadata.csv'), 'w') as fout:
         fout.write('alg,max_dim\n')
         for alg, dim in max_arr_dims.items():
             fout.write(alg + ',' + str(dim) + '\n')
+
+
+def add_pragma_macro(includes):
+    """
+    :param includes: C code section containing #include's (as string)
+    :return: Transformed code
+    """
+    includes += '#define PRAGMA(p) _Pragma(p)\n'
+    return includes
+
+
+def remove_pragma_semicolon(code):
+    """
+    Removes the semicolon after PRAGMA macro (added unintentionally by pycparser)
+    :param code: C code
+    :return: Transformed code
+    """
+    code = re.sub(r'(PRAGMA\(.*\));', r'\1', code)
+    return code

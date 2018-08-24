@@ -11,21 +11,30 @@ root_dir=${current_dir}/../../
 file_prefix=$1
 params=$2
 unroll=$3
+u_or_n=${unroll::1}
+vect=""
+if [[ ${u_or_n} == "n" ]]; then vect=-fno-vectorize; fi
 
-clang -c -O3 \
+# Rpass=unroll - shows what unrolling has been performed
+
+echo "Should ${unroll}"
+
+# at least O2 to unroll
+clang -c -Rpass=unroll -O2 \
     ${file_prefix}.c \
     ${params} \
+    ${vect} \
     -D PRAGMA_UNROLL='"'${unroll}'"' \
-    -o ${file_prefix}_${unroll}.o
+    -o ${file_prefix}_${u_or_n}.o
 
-if [ -e ${file_prefix}_${unroll}.o ]; then
-    clang ${file_prefix}_${unroll}.o \
+if [ -e ${file_prefix}_${u_or_n}.o ]; then
+    clang ${file_prefix}_${u_or_n}.o \
         ${root_dir}/papi/exec_loop.o \
         ${root_dir}/papi/papi_utils.o \
         -lpfm \
         -lpapi \
         -lm \
-        -static -o ${root_dir}/exec_loop_${unroll}
+        -static -o ${root_dir}/exec_loop_${u_or_n}
 else
     echo "Skipping $file_prefix (compilation error)"
     exit 1

@@ -5,6 +5,7 @@ from pycparser import c_ast
 from parser import ForDepthCounter
 
 
+# noinspection PyPep8Naming
 class ForPragmaUnrollVisitor(c_ast.NodeVisitor):
     """
     Inserts PRAGMA(PRAGMA_UNROLL) above the innermost for loop
@@ -17,14 +18,19 @@ class ForPragmaUnrollVisitor(c_ast.NodeVisitor):
         counter = ForDepthCounter(self.count + 1, self.res)
         counter.visit(node.stmt)
 
-        if self.res[0] == self.count + 1 and type(node.stmt) is c_ast.Compound:
-            items = node.stmt.block_items
-            for_index = None
+        if self.res[0] == self.count + 1:
+            if type(node.stmt) is c_ast.For:
+                node.stmt = c_ast.Compound([node.stmt])
 
-            for i, item in enumerate(items):
-                if type(item) is c_ast.For:
-                    for_index = i
-            items.insert(for_index, c_ast.FuncCall(c_ast.ID('PRAGMA'), c_ast.ExprList([c_ast.ID('PRAGMA_UNROLL')])))
+            if type(node.stmt) is c_ast.Compound:
+                # note: can be also called after c_ast.For case (above)
+                items = node.stmt.block_items
+                for_index = None
+
+                for i, item in enumerate(items):
+                    if type(item) is c_ast.For:
+                        for_index = i
+                items.insert(for_index, c_ast.FuncCall(c_ast.ID('PRAGMA'), c_ast.ExprList([c_ast.ID('PRAGMA_UNROLL')])))
 
         self.res[0] = max(self.count, self.res[0])
 

@@ -25,7 +25,7 @@ int main(int argc, char* argv []) {
     initialize();
     exec(PAPI_multiplex_init());
 
-    if(argc >= 1) {
+    if(argc >= 2) {
         retval = load_event_names(argv[1], event_codes, &event_count);
         if(retval != 0) {
             printf("Cannot open %s (error %d). \n", argv[1], retval);

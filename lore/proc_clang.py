@@ -1,59 +1,39 @@
 from __future__ import print_function
 
 from pycparser import c_parser, c_generator
-import re
 import os
 import argparse
 
 from proc_utils import add_includes, add_papi, split_code, sub_loop_header, del_extern_restrict, gen_mallocs, \
-    arr_to_ptr_decl, add_mallocs, find_max_param, save_max_dims
+    arr_to_ptr_decl, add_mallocs, find_max_param, save_max_dims, remove_pragma_semicolon, add_pragma_macro
 from parser import analyze, ParseException
 from parser_clang import add_pragma_unroll
 
 
-def add_pragma_macro(includes):
-    """
-    :param includes: C code section containing #include's (as string)
-    :return: Transformed code
-    """
-    includes += '#define PRAGMA(p) _Pragma(p)\n'
-    return includes
-
-
-def remove_pragma_semicolon(code):
-    """
-    Removes the semicolon after PRAGMA macro (added unintentionally by pycparser)
-    :param code: C code
-    :return: Transformed code
-    """
-    code = re.sub(r'(PRAGMA\(.*\));', r'\1', code)
-    return code
-
-
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
-    parser.add_argument("orig_path", help="Orig path")
-    parser.add_argument("proc_path", help="Proc path")
-    args = parser.parse_args()
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
+    args = argparser.parse_args()
     verbose = args.verbose
-    orig_path = args.orig_path
-    proc_path = args.proc_path
+    orig_path = os.environ['LORE_ORIG_PATH']
+    proc_path = os.environ['LORE_PROC_CLANG_PATH']
 
     max_arr_dims = {}
 
+    if not os.path.isdir(proc_path):
+        os.makedirs(proc_path)
+
     for file_name in os.listdir(orig_path):
         try:
-            if not file_name.endswith(".c"):
+            if not file_name.endswith("ff_31.c"):
                 continue
 
             print('Parsing %s' % file_name)
 
-            file_path = os.path.join(orig_path, file_name)
             file_name = str(file_name[:-2])
-            out_dir = proc_path + file_name
+            out_dir = os.path.join(proc_path, file_name)
 
-            with open(orig_path, 'r') as fin:
+            with open(os.path.join(orig_path, file_name + '.c'), 'r') as fin:
                 code = fin.read()
                 includes, code = split_code(code)
 
@@ -61,8 +41,8 @@ def main():
                 #     pass
                 #     raise lore_parser_clang.ParseException('Code contains struct declaration.')
 
-                parser = c_parser.CParser()
-                ast = parser.parse(code)
+                argparser = c_parser.CParser()
+                ast = argparser.parse(code)
 
                 if verbose:
                     ast.show()

@@ -9,7 +9,7 @@ scripts_dir=${current_dir}/../
 root_dir=${scripts_dir}/../
 . ${root_dir}/config/lore.cfg
 
-if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!"; exit 1; fi
+if [ -z "$LORE_PROC_CLANG_PATH" ]; then echo "Invalid config (LORE_PROC_CLANG_PATH) missing!"; exit 1; fi
 if [ -z "$PAPI_OUT_DIR" ]; then echo "Invalid config (PAPI_OUT_DIR) missing!"; exit 1; fi
 
 readonly trials=1
@@ -32,23 +32,24 @@ echo ",time_O3" >> ${out_file_nour}
 
 start_time=$SECONDS
 
-file_count=`find ${LORE_PROC_PATH} -iname '*.c' | wc -l`
-file_i=1
+file_count=`find ${LORE_PROC_CLANG_PATH} -iname '*.c' | wc -l`
+file_i=0
 
-for path in `find ${LORE_PROC_PATH} -iname '*.c'`; do
+for path in `find ${LORE_PROC_CLANG_PATH} -iname '*31.c'`; do
     name=`basename "${path%.*}"`
 
-    file_prefix=${LORE_PROC_PATH}/${name}/${name}
+    file_prefix=${LORE_PROC_CLANG_PATH}/${name}/${name}
+    ((file_i++))
 
     if [ -e ${file_prefix}_params.txt ]; then
         while read -r params; do
-            if ! ${current_dir}/compile.sh ${file_prefix} "${params}" "unroll"; then break; fi
+            if ! ${current_dir}/compile.sh ${file_prefix} "${params}" "unroll(1024)"; then break; fi
             if ! ${current_dir}/compile.sh ${file_prefix} "${params}" "nounroll"; then break; fi
 
             echo "[$file_i/$file_count] Running $name $params ..."
 
             for trial in `seq ${trials}`; do
-                if res=$(timeout 10 ${root_dir}/exec_loop_unroll ${papi_events_list}); then
+                if res=$(timeout 10 ${root_dir}/exec_loop_u ${papi_events_list}); then
                     echo ${name},${params},${res} >> ${out_file_ur}
                     ((executed++))
                 else
@@ -59,7 +60,7 @@ for path in `find ${LORE_PROC_PATH} -iname '*.c'`; do
             done
 
             for trial in `seq ${trials}`; do
-                if res=$(timeout 10 ${root_dir}/exec_loop_nounroll ${papi_events_list}); then
+                if res=$(timeout 10 ${root_dir}/exec_loop_n ${papi_events_list}); then
                     echo ${name},${params},${res} >> ${out_file_nour}
                     ((executed++))
                 else

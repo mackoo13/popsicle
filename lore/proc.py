@@ -9,9 +9,9 @@ from proc_utils import add_includes, add_papi, split_code, sub_loop_header, del_
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
-    args = parser.parse_args()
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
+    args = argparser.parse_args()
     verbose = args.verbose
     orig_path = os.environ['LORE_ORIG_PATH']
     proc_path = os.environ['LORE_PROC_PATH']
@@ -30,7 +30,7 @@ def main():
 
             file_path = os.path.join(orig_path, file_name)
             file_name = str(file_name[:-2])
-            out_dir = proc_path + file_name
+            out_dir = os.path.join(proc_path, file_name)
 
             with open(file_path, 'r') as fin:
                 code = fin.read()
@@ -39,8 +39,8 @@ def main():
                 # if lore_parser.contains_struct(code):
                 #     raise lore_parser.ParseException('Code contains struct declaration.')
 
-                parser = c_parser.CParser()
-                ast = parser.parse(code)
+                astparser = c_parser.CParser()
+                ast = astparser.parse(code)
 
                 if verbose:
                     ast.show()
