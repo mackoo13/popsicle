@@ -6,7 +6,7 @@ import argparse
 
 from proc_utils import add_includes, add_papi, split_code, sub_loop_header, del_extern_restrict, gen_mallocs, \
     arr_to_ptr_decl, add_mallocs, find_max_param, save_max_dims, remove_pragma_semicolon, add_pragma_macro
-from parser import analyze, ParseException
+from parser import analyze, ParseException, StructVisitor
 from parser_clang import add_pragma_unroll
 
 
@@ -23,12 +23,17 @@ def main():
     if not os.path.isdir(proc_path):
         os.makedirs(proc_path)
 
-    for file_name in os.listdir(orig_path):
+    dirs = os.listdir(orig_path)
+    n_dirs = len(dirs)
+    parsed = 0
+    failed = 0
+
+    for i, file_name in enumerate(dirs):
         try:
-            if not file_name.endswith("ff_31.c"):
+            if not file_name.endswith(".c"):
                 continue
 
-            print('Parsing %s' % file_name)
+            print('[' + str(i) + '/' + str(n_dirs) + '] Parsing %s' % file_name)
 
             file_name = str(file_name[:-2])
             out_dir = os.path.join(proc_path, file_name)
@@ -43,6 +48,13 @@ def main():
 
                 argparser = c_parser.CParser()
                 ast = argparser.parse(code)
+
+                sv = StructVisitor()
+                sv.visit(ast)
+                if sv.contains_struct:
+                    print('\tSkipping ' + file_name + ' - contains struct')
+                    failed += 1
+                    continue
 
                 if verbose:
                     ast.show()
@@ -69,6 +81,7 @@ def main():
                     os.makedirs(out_dir)
 
                 if len(refs) == 0:
+                    failed += 1
                     raise ParseException('No refs found - cannot determine max_arr_dim')
 
                 with open(out_dir + '/' + file_name + '.c', 'w') as fout:
@@ -79,14 +92,21 @@ def main():
                     fout.write(str(int(max_param)))
 
                 with open(out_dir + '/' + file_name + '_params_names.txt', 'w') as fout:
+                    # fout.write(','.join(bounds))
                     fout.write(','.join(['PARAM_' + b.upper() for b in bounds]))
 
                 max_arr_dims[file_name] = max_arr_dim
 
+                parsed += 1
+
         except Exception as e:
-                print('\t', e)
+            failed += 1
+            print('\t', e)
 
     save_max_dims(proc_path, max_arr_dims)
+
+    print('========')
+    print(str(parsed) + ' parsed, ' + str(failed) + ' skipped')
 
 
 if __name__ == "__main__":

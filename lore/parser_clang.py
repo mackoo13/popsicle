@@ -30,9 +30,32 @@ class ForPragmaUnrollVisitor(c_ast.NodeVisitor):
                 for i, item in enumerate(items):
                     if type(item) is c_ast.For:
                         for_index = i
-                items.insert(for_index, c_ast.FuncCall(c_ast.ID('PRAGMA'), c_ast.ExprList([c_ast.ID('PRAGMA_UNROLL')])))
+
+                pragma = c_ast.FuncCall(c_ast.ID('PRAGMA'), c_ast.ExprList([c_ast.ID('PRAGMA_UNROLL')]))
+                items.insert(for_index, pragma)
 
         self.res[0] = max(self.count, self.res[0])
+
+
+class CompoundVisitor(c_ast.NodeVisitor):
+    """
+
+    """
+    def __init__(self):
+        pass
+
+    # noinspection PyPep8Naming,PyMethodMayBeStatic
+    def visit_Compound(self, node):
+        items = node.block_items
+        for_index = None
+
+        for i, item in enumerate(items):
+            if type(item) is c_ast.For:
+                for_index = i
+
+        if for_index is not None:
+            pragma = c_ast.FuncCall(c_ast.ID('PRAGMA'), c_ast.ExprList([c_ast.ID('PRAGMA_UNROLL')]))
+            items.insert(for_index, pragma)
 
 
 def add_pragma_unroll(ast):
@@ -43,3 +66,5 @@ def add_pragma_unroll(ast):
     """
     res = [0]
     ForPragmaUnrollVisitor(1, res).visit(ast)
+    if res[0] == 1:
+        CompoundVisitor().visit(ast)

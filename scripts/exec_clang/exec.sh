@@ -12,7 +12,7 @@ root_dir=${scripts_dir}/../
 if [ -z "$LORE_PROC_CLANG_PATH" ]; then echo "Invalid config (LORE_PROC_CLANG_PATH) missing!"; exit 1; fi
 if [ -z "$PAPI_OUT_DIR" ]; then echo "Invalid config (PAPI_OUT_DIR) missing!"; exit 1; fi
 
-readonly trials=1
+readonly trials=3
 readonly out_file_ur=${PAPI_OUT_DIR}/unroll/$1_ur.csv
 readonly out_file_nour=${PAPI_OUT_DIR}/unroll/$1_nour.csv
 readonly papi_events_list=$2
@@ -27,23 +27,24 @@ echo -n "alg,run," > ${out_file_ur}
 echo -n "alg,run," > ${out_file_nour}
 ${scripts_dir}/papi/papi_events.sh ${papi_events_list} >> ${out_file_ur}
 ${scripts_dir}/papi/papi_events.sh ${papi_events_list} >> ${out_file_nour}
-echo ",time_O0" >> ${out_file_ur}
-echo ",time_O3" >> ${out_file_nour}
+echo ",time_ur" >> ${out_file_ur}
+echo ",time_nour" >> ${out_file_nour}
 
 start_time=$SECONDS
 
-file_count=`find ${LORE_PROC_CLANG_PATH} -iname '*.c' | wc -l`
+file_count=`find ${LORE_PROC_CLANG_PATH} -iname '*6.c' | wc -l`
 file_i=0
 
-for path in `find ${LORE_PROC_CLANG_PATH} -iname '*31.c'`; do
+for path in `find ${LORE_PROC_CLANG_PATH} -iname '*6.c'`; do
     name=`basename "${path%.*}"`
 
     file_prefix=${LORE_PROC_CLANG_PATH}/${name}/${name}
     ((file_i++))
 
+    # todo else write que pasa
     if [ -e ${file_prefix}_params.txt ]; then
         while read -r params; do
-            if ! ${current_dir}/compile.sh ${file_prefix} "${params}" "unroll(1024)"; then break; fi
+            if ! ${current_dir}/compile.sh ${file_prefix} "${params}" "unroll(8)"; then break; fi
             if ! ${current_dir}/compile.sh ${file_prefix} "${params}" "nounroll"; then break; fi
 
             echo "[$file_i/$file_count] Running $name $params ..."

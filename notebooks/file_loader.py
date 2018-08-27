@@ -94,10 +94,10 @@ class FileLoader:
 
         return df
 
-    def scale(self, x, x_test):
+    def scale(self):
         scaler = RobustScaler(quantile_range=(10, 90))
-        self.x_train = scaler.fit_transform(x)
-        self.x_test = scaler.transform(x_test)
+        self.x_train = scaler.fit_transform(self.x_train)
+        self.x_test = scaler.transform(self.x_test)
 
         # print('Train:', self.df_train.shape)
         # print('Test: ', self.df_test.shape)
@@ -117,12 +117,10 @@ class FileLoader:
     def split_time(self):
         self.df_train, self.df_test = df_train_test_split(self.df)
 
-        x, y = df_to_xy(self.df_train, ['time'], 'time')
-        x_test, y_test = df_to_xy(self.df_test, ['time'], 'time')
+        self.x_train, self.y_train = df_to_xy(self.df_train, ['time'], 'time')
+        self.x_test, self.y_test = df_to_xy(self.df_test, ['time'], 'time')
 
-        self.scale(x, x_test)
-        self.y_train = y
-        self.y_test = y_test
+        self.scale()
 
     def load_speedup(self):
         df_o0 = self.csv_to_df(name_suffix='_O0')
@@ -145,16 +143,17 @@ class FileLoader:
     def split_speedup(self):
         self.df_train, self.df_test = df_train_test_split(self.df)
 
-        x, y = df_to_xy(self.df_train, ['time_O0', 'time_O3', 'speedup', 'max_dim'], 'speedup')
-        x_test, y_test = df_to_xy(self.df_test, ['time_O0', 'time_O3', 'speedup', 'max_dim'], 'speedup')
+        self.x_train, self.y_train = df_to_xy(self.df_train, ['time_O0', 'time_O3', 'speedup', 'max_dim'], 'speedup')
+        self.x_test, self.y_test = df_to_xy(self.df_test, ['time_O0', 'time_O3', 'speedup', 'max_dim'], 'speedup')
 
-        self.scale(x, x_test)
-        self.y_train = y
-        self.y_test = y_test
+        self.scale()
 
     def load_unroll(self):
         df_o0 = self.csv_to_df(name_suffix='_nour')
-        df_o3 = self.csv_to_df(name_suffix='_ur', cols=['alg', 'run', 'time_O0'])
+        df_o3 = self.csv_to_df(name_suffix='_ur', cols=['alg', 'run', 'time_ur'])
+        df_o3_full = self.csv_to_df(name_suffix='_ur')
+        print(df_o0['PAPI_VEC_INS'].mean())
+        print(df_o3_full['PAPI_VEC_INS'].mean())
         df = df_o0.merge(df_o3, left_index=True, right_index=True)
 
         df_meta = get_df_meta()
@@ -165,10 +164,15 @@ class FileLoader:
 
         df = scale_by_tot_ins(df)
 
-        df['speedup'] = df['time_O3'] / df['time_O0']
+        df['speedup'] = df['time_nour'] / df['time_ur']
 
         df = df_sort_cols(df)
         self.df = df
 
     def split_unroll(self):
-        self.split_speedup()
+        self.df_train, self.df_test = df_train_test_split(self.df)
+
+        self.x_train, self.y_train = df_to_xy(self.df_train, ['time_ur', 'time_nour', 'speedup', 'max_dim'], 'speedup')
+        self.x_test, self.y_test = df_to_xy(self.df_test, ['time_ur', 'time_nour', 'speedup', 'max_dim'], 'speedup')
+
+        self.scale()

@@ -182,7 +182,6 @@ class ForVisitor(c_ast.NodeVisitor):
             raise ParseException('Unknown format of for loop condition ("i < N" or alike expected)')
 
         if type(n) is not c_ast.UnaryOp:
-            print(type(n))
             raise ParseException('Unknown format of for loop increment (UnaryOp expected)')
 
         if n.op not in ('p++', '++', '+=', 'p--', '--', '-='):
@@ -294,6 +293,8 @@ def analyze(ast, verbose=False):
     PtrDeclVisitor(dtypes).visit(ast)
 
     ArrayDeclVisitor(dtypes, dims).visit(ast)
+
+    bounds.difference_update(refs.keys())
 
     if verbose:
         print_debug_info(bounds, refs, dtypes, dims, maxs)
