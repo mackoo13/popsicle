@@ -5,7 +5,8 @@ import os
 import argparse
 
 from proc_utils import add_includes, add_papi, split_code, sub_loop_header, del_extern_restrict, gen_mallocs, \
-    arr_to_ptr_decl, add_mallocs, find_max_param, save_max_dims, remove_pragma_semicolon, add_pragma_macro
+    arr_to_ptr_decl, add_mallocs, find_max_param, save_max_dims, remove_pragma_semicolon, add_pragma_macro, \
+    remove_bound_decl
 from parser import analyze, ParseException, StructVisitor
 from parser_clang import add_pragma_unroll
 
@@ -68,13 +69,14 @@ def main():
                 includes = add_pragma_macro(includes)
 
                 bounds, refs, dtypes, dims = analyze(ast, verbose)
-                mallocs = gen_mallocs(bounds, refs, dtypes)
+                mallocs = gen_mallocs(refs, dtypes)
 
                 code = del_extern_restrict(code)
                 code = arr_to_ptr_decl(code, dtypes, dims)
                 code = add_papi(code)
                 code = add_mallocs(code, mallocs)
                 code = sub_loop_header(code)
+                code = remove_bound_decl(code, bounds, dtypes)
                 code = includes + code
 
                 if not os.path.isdir(out_dir):
@@ -93,7 +95,7 @@ def main():
 
                 with open(out_dir + '/' + file_name + '_params_names.txt', 'w') as fout:
                     # fout.write(','.join(bounds))
-                    fout.write(','.join(['PARAM_' + b.upper() for b in bounds]))
+                    fout.write(','.join(bounds))
 
                 max_arr_dims[file_name] = max_arr_dim
 

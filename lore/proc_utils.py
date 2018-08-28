@@ -47,7 +47,7 @@ def malloc(name, dtype, sizes, dim):
     return res
 
 
-def gen_mallocs(bounds, refs, dtypes):
+def gen_mallocs(refs, dtypes):
     """
     Generates a C code section containing all arrays' memory allocation and initialization.
     :param bounds:
@@ -64,8 +64,6 @@ def gen_mallocs(bounds, refs, dtypes):
             sizes = [s for s in sizes if s is not None]
             if len(sizes) > 0:
                 res += malloc(arr, dtypes[arr], sizes, 0)
-
-    res = add_bounds_init(res, bounds)
 
     return res
 
@@ -230,4 +228,19 @@ def remove_pragma_semicolon(code):
     :return: Transformed code
     """
     code = re.sub(r'(PRAGMA\(.*\));', r'\1', code)
+    return code
+
+
+def remove_bound_decl(code, bounds, dtypes):
+    """
+    todo
+    :param dtypes:
+    :param code:
+    :param bounds:
+    :return:
+    """
+    for b in bounds:
+        # print(bounds)
+        # print(dtypes)
+        code = re.sub(r'(\b' + dtypes[b] + ' ' + b + ';)', r'//\1', code)
     return code

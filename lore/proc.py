@@ -5,7 +5,7 @@ import argparse
 from pycparser import c_parser
 from lore import parser
 from proc_utils import add_includes, add_papi, split_code, sub_loop_header, del_extern_restrict, gen_mallocs, \
-    arr_to_ptr_decl, add_mallocs, find_max_param, save_max_dims
+    arr_to_ptr_decl, add_mallocs, find_max_param, save_max_dims, add_bounds_init
 
 
 def main():
@@ -48,7 +48,8 @@ def main():
                 includes = add_includes(includes)
 
                 bounds, refs, dtypes, dims = parser.analyze(ast, verbose)
-                mallocs = gen_mallocs(bounds, refs, dtypes)
+                mallocs = gen_mallocs(refs, dtypes)
+                mallocs = add_bounds_init(mallocs, bounds)
 
                 code = del_extern_restrict(code)
                 code = arr_to_ptr_decl(code, dtypes, dims)

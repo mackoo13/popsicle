@@ -103,8 +103,8 @@ class FileLoader:
         self.x_train = scaler.fit_transform(self.x_train)
         self.x_test = scaler.transform(self.x_test)
 
-        # print('Train:', self.df_train.shape)
-        # print('Test: ', self.df_test.shape)
+        print('Train:', self.df_train.shape)
+        print('Test: ', self.df_test.shape)
 
     def load_time(self):
         df = self.csv_to_df()
@@ -160,7 +160,7 @@ class FileLoader:
         df_meta = get_df_meta()
         df['max_dim'] = df.index.get_level_values(0)
         df['max_dim'] = df['max_dim'].apply(lambda q: df_meta.loc[q]['max_dim'])
-        # df = df.loc[df['time_O3'] > 10]
+        df = df.loc[df['time_ur'] > 10]
         df = df.loc[df['max_dim'].isin(self.dim)]
 
         df = scale_by_tot_ins(df)

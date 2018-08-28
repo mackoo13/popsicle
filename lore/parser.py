@@ -124,6 +124,24 @@ class AssignmentVisitor(c_ast.NodeVisitor):
 
 
 # noinspection PyPep8Naming
+class TypeDeclVisitor(c_ast.NodeVisitor):
+    """
+    Used to determine the variables data types.
+
+    Attributes:
+        dtypes: Dict[str,str] - variable name -> data type
+    """
+    def __init__(self, dtypes):
+        self.dtypes = dtypes
+
+    def visit_TypeDecl(self, node):
+        n = node.declname
+        t = ' '.join(node.type.names)
+
+        self.dtypes[n] = t
+
+
+# noinspection PyPep8Naming
 class ForDepthCounter(c_ast.NodeVisitor):
     """
     Determines the maximal depth of nested for loops.
@@ -291,8 +309,8 @@ def analyze(ast, verbose=False):
         refs[arr] = [set([estimate(r, maxs, arr, deps) for r in ref]) for ref in refs[arr]]
 
     PtrDeclVisitor(dtypes).visit(ast)
-
     ArrayDeclVisitor(dtypes, dims).visit(ast)
+    TypeDeclVisitor(dtypes).visit(ast)
 
     bounds.difference_update(refs.keys())
 

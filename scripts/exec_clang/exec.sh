@@ -32,10 +32,10 @@ echo ",time_nour" >> ${out_file_nour}
 
 start_time=$SECONDS
 
-file_count=`find ${LORE_PROC_CLANG_PATH} -iname '*0.c' | wc -l`
-file_i=0
+file_count=`find ${LORE_PROC_CLANG_PATH} -iname '*.c' | wc -l`
+file_i=1
 
-for path in `find ${LORE_PROC_CLANG_PATH} -iname '*0.c'`; do
+for path in `find ${LORE_PROC_CLANG_PATH} -iname '*.c'`; do
     name=`basename "${path%.*}"`
 
     file_prefix=${LORE_PROC_CLANG_PATH}/${name}/${name}

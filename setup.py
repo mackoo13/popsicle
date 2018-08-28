@@ -12,7 +12,8 @@ setup(name='lore',
           'pandas',
           'pycparser',
           'scipy',
-          'sklearn', 'numpy'
+          'sklearn',
+          'numpy'
       ],
       entry_points={
           'console_scripts': ['wombat-proc = lore.proc:main',
