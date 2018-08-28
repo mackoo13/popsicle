@@ -1,11 +1,17 @@
 from __future__ import print_function
 import argparse
+import os
+
 import pandas as pd
 from sklearn.externals import joblib
 
 
-out_dir = '/home/maciej/ftb/papi_output/'
-model_dir = '/home/maciej/ftb/wombat/models/'
+if 'PAPI_OUT_DIR' not in os.environ or 'LORE_MODELS_DIR' not in os.environ:
+    print('Invalid config')
+    exit(1)
+
+out_dir = os.environ['PAPI_OUT_DIR']
+model_dir = os.environ['LORE_MODELS_DIR']
 n_components = 2
 n_neighbors = 10
 

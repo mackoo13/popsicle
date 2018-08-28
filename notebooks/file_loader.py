@@ -4,7 +4,12 @@ import pandas as pd
 from sklearn.preprocessing import RobustScaler
 from random import shuffle
 
-out_dir = '~/ftb/papi_output/'
+
+if 'PAPI_OUT_DIR' not in os.environ:
+    print('Invalid config')
+    exit(1)
+
+out_dir = os.environ['PAPI_OUT_DIR']
 
 
 def aggregate(df):
@@ -45,8 +50,7 @@ def df_to_xy(df, drop_cols, y_col):
 
 
 def get_df_meta():
-    # proc_dir = os.environ['LORE_PROC_PATH']
-    proc_dir = '/home/maciej/ftb/kernels_lore/proc'
+    proc_dir = os.environ['LORE_PROC_PATH']
     return pd.read_csv(os.path.join(proc_dir, 'metadata.csv'), index_col='alg')
 
 
@@ -151,9 +155,6 @@ class FileLoader:
     def load_unroll(self):
         df_o0 = self.csv_to_df(name_suffix='_nour')
         df_o3 = self.csv_to_df(name_suffix='_ur', cols=['alg', 'run', 'time_ur'])
-        df_o3_full = self.csv_to_df(name_suffix='_ur')
-        print(df_o0['PAPI_VEC_INS'].mean())
-        print(df_o3_full['PAPI_VEC_INS'].mean())
         df = df_o0.merge(df_o3, left_index=True, right_index=True)
 
         df_meta = get_df_meta()
