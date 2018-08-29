@@ -1,9 +1,7 @@
-from functools import reduce
+# noinspection PyPep8Naming
 from pycparser import c_ast
 
-
-class ParseException(Exception):
-    pass
+from proc_ast_parser import estimate, ParseException
 
 
 # noinspection PyPep8Naming
@@ -123,22 +121,25 @@ class AssignmentVisitor(c_ast.NodeVisitor):
                     self.maxs[left.name] = {right_est}
 
 
-# noinspection PyPep8Naming
-class TypeDeclVisitor(c_ast.NodeVisitor):
+class CompoundVisitor(c_ast.NodeVisitor):
     """
-    Used to determine the variables data types.
-
-    Attributes:
-        dtypes: Dict[str,str] - variable name -> data type
+    todo
     """
-    def __init__(self, dtypes):
-        self.dtypes = dtypes
+    def __init__(self):
+        pass
 
-    def visit_TypeDecl(self, node):
-        n = node.declname
-        t = ' '.join(node.type.names)
+    # noinspection PyPep8Naming,PyMethodMayBeStatic
+    def visit_Compound(self, node):
+        items = node.block_items
+        for_index = None
 
-        self.dtypes[n] = t
+        for i, item in enumerate(items):
+            if type(item) is c_ast.For:
+                for_index = i
+
+        if for_index is not None:
+            pragma = c_ast.FuncCall(c_ast.ID('PRAGMA'), c_ast.ExprList([c_ast.ID('PRAGMA_UNROLL')]))
+            items.insert(for_index, pragma)
 
 
 # noinspection PyPep8Naming
@@ -168,6 +169,38 @@ class ForDepthCounter(c_ast.NodeVisitor):
     def visit_For(self, node):
         counter = ForDepthCounter(self.count + 1, self.res)
         counter.visit(node.stmt)
+        self.res[0] = max(self.count, self.res[0])
+
+
+# noinspection PyPep8Naming
+class ForPragmaUnrollVisitor(c_ast.NodeVisitor):
+    """
+    Inserts PRAGMA(PRAGMA_UNROLL) above the innermost for loop
+    """
+    def __init__(self, count, res):
+        self.count = count
+        self.res = res
+
+    def visit_For(self, node):
+        counter = ForDepthCounter(self.count + 1, self.res)
+        counter.visit(node.stmt)
+
+        if self.res[0] == self.count + 1:
+            if type(node.stmt) is c_ast.For:
+                node.stmt = c_ast.Compound([node.stmt])
+
+            if type(node.stmt) is c_ast.Compound:
+                # note: can be also called after c_ast.For case (above)
+                items = node.stmt.block_items
+                for_index = None
+
+                for i, item in enumerate(items):
+                    if type(item) is c_ast.For:
+                        for_index = i
+
+                pragma = c_ast.FuncCall(c_ast.ID('PRAGMA'), c_ast.ExprList([c_ast.ID('PRAGMA_UNROLL')]))
+                items.insert(for_index, pragma)
+
         self.res[0] = max(self.count, self.res[0])
 
 
@@ -276,209 +309,19 @@ class StructVisitor(c_ast.NodeVisitor):
         self.contains_struct = True
 
 
-def analyze(ast, verbose=False):
+# noinspection PyPep8Naming
+class TypeDeclVisitor(c_ast.NodeVisitor):
     """
-    Extract useful information from AST tree
-    :param ast: AST tree object
-    :param verbose: If True, the output will be printed
-    :return:
-        res (string) - malloc instructions and array initialization)
-        bounds () -
-        refs () -
-        dtypes (map: array_name: str -> data type: str)
-        dims (map: array_name: str -> dimensions: int[])
+    Used to determine the variables data types.
+
+    Attributes:
+        dtypes: Dict[str,str] - variable name -> data type
     """
+    def __init__(self, dtypes):
+        self.dtypes = dtypes
 
-    maxs = {}
-    refs = {}
-    dims = {}
-    dtypes = {}
-    bounds = set()
+    def visit_TypeDecl(self, node):
+        n = node.declname
+        t = ' '.join(node.type.names)
 
-    ForVisitor(maxs, bounds).visit(ast)
-
-    AssignmentVisitor(refs, maxs).visit(ast)
-
-    for var in maxs:
-        maxs[var] = set(remove_non_extreme_numbers(maxs[var]))
-
-    ArrayRefVisitor(refs, maxs).visit(ast)
-
-    deps = {}
-    for arr in refs:
-        refs[arr] = [set([estimate(r, maxs, arr, deps) for r in ref]) for ref in refs[arr]]
-
-    PtrDeclVisitor(dtypes).visit(ast)
-    ArrayDeclVisitor(dtypes, dims).visit(ast)
-    TypeDeclVisitor(dtypes).visit(ast)
-
-    bounds.difference_update(refs.keys())
-
-    if verbose:
-        print_debug_info(bounds, refs, dtypes, dims, maxs)
-
-    return bounds, refs, dtypes, dims
-
-
-def contains_struct(ast):
-    sv = StructVisitor()
-    sv.visit(ast)
-    return sv.contains_struct
-
-
-def estimate(n, maxs=None, var=None, deps=None):
-    """
-    Attempts to find the greatest value that an expression might have. The primary use of this function is determining
-    the minimal size of an array based on the source code.
-    If there is more than one expression that might be the maximum (e.g. variable-dependent or too complicated to be
-    calculated here), all possible options are enclosed in MAX macro and left to be determined by C compiler.
-    :param var:
-    :param deps:
-    :param n: An expression given as a c_ast object or a string
-    :param maxs: A map containing possible upper bound of variables
-    :return: C expression that will evaluate to the maximal possible value of the input expression.
-    """
-    if maxs is None:
-        maxs = {}
-
-    if deps is None:
-        deps = {}
-
-    options = estimate_options(n, maxs, var, deps)
-
-    if len(deps) > 0:
-        deps_values = reduce(lambda a, b: a | b, deps.values())
-        raise ParseException('Variable-dependent array size detected: ' + ','.join(deps_values))
-
-    options = remove_non_extreme_numbers(options)
-    return max_set(options)
-
-
-def estimate_options(n, maxs=None, var=None, deps=None):
-    """
-    Given an expression, this function attempts to find a list of possible expressions representing its upper bound.
-    :param var: Name of the variable being estimated
-    :param deps:
-    :param n: An expression given as a c_ast object or a string
-    :param maxs: maxs: A map containing possible upper bound of variables
-    :return: List of expressions that might evaluate to the maximal possible value of the input expression.
-    """
-    if maxs is None:
-        maxs = {}
-
-    if deps is None:
-        deps = {}
-
-    if type(n) is str:
-        return maxs[n] if n in maxs else [n]
-    if type(n) is c_ast.ID:
-        if var is not None and n.name not in maxs:
-            if var in deps:
-                deps[var].add(n.name)
-            else:
-                deps[var] = {n.name}
-
-        return estimate_options(n.name, maxs, var, deps)
-    elif type(n) is c_ast.BinaryOp:
-        ls = estimate_options(n.left, maxs, var, deps)
-        rs = estimate_options(n.right, maxs, var, deps)
-        return [eval_basic_op(l, n.op, r) for l in ls for r in rs]
-    elif type(n) is c_ast.Constant:
-        return [n.value]
-    else:
-        return []
-
-
-def eval_basic_op(l, op, r):
-    """
-    Evaluate a basic arithmetic operation
-    :param l: Left operand
-    :param op: Operator
-    :param r: Right operand
-    :return: Result or a string representing the operation if it cannot be calculated
-    """
-    if l.isdecimal() and r.isdecimal():
-        l_num = int(l)
-        r_num = int(r)
-        if op == '+':
-            return str(l_num + r_num)
-        if op == '-':
-            return str(l_num - r_num)
-        if op == '*':
-            return str(l_num * r_num)
-
-    return l + op + r
-
-
-def find_for_depth(ast):
-    """
-    Finds the maximal depth of nested for loops.
-    :param ast: AST tree
-    :return: Max depth
-    """
-    res = [0]
-    ForDepthCounter(1, res).visit(ast)
-    return res[0]
-
-
-def max_set(s):
-    """
-    Transforms an iterable of expressions into a C expression which will evalueate to its maximum.
-    MAX(x, y) macro must be included to the C program.
-    If there are multiple integer values in the iterable, only the greatest one is preserved
-    (see remove_non_extreme_numbers)
-
-    Example: ['3', '6', '7', 'N', 'K'] -> 'MAX(MAX(7, N), 'K')'
-    :param s: An iterable of expressions as strings
-    :return: Output string
-    """
-    s2 = remove_non_extreme_numbers(s, leave_min=False)
-
-    if len(s2) == 0:
-        return None
-    if len(s2) == 1:
-        return s2[0]
-    else:
-        return reduce((lambda a, b: 'MAX(' + a + ', ' + b + ')'), s2)
-
-
-def print_debug_info(bounds, refs, dtypes, dims, maxs):
-    print('maxs: ', maxs)
-    print('bounds: ', bounds)
-    print('refs: ', refs)
-    print('dtypes: ', dtypes)
-    print('dims: ', dims)
-
-
-def remove_non_extreme_numbers(s, leave_min=True):
-    """
-    Remove from an iterable all numbers which are neither minimal or maximal.
-    The function leaves all non-numeric elements in the iterable untouched.
-    The order of elements might be different in the output.
-
-    Example: ['3', '6', 'N', '7'] -> ['N', '3', '7']
-    :param s: Iterable of expressions as strings
-    :param leave_min: If set to True, preserve minimal and maximum value from s. Otherwise, only maximum is preserved.
-    :return: Transformed iterable
-    """
-    max_num = float('-inf')
-    min_num = 0
-    s2 = []
-
-    for n in s:
-        if n is not None:
-            if n.isdecimal():
-                n_num = int(n)
-                if n_num > max_num:
-                    max_num = n_num
-                if n_num < min_num:
-                    min_num = n_num
-            else:
-                s2.append(n)
-
-    if max_num > 0:
-        s2.append(str(max_num))
-    if leave_min and min_num > 0 and min_num != max_num:
-        s2.append(str(min_num))
-
-    return s2
+        self.dtypes[n] = t

@@ -17,8 +17,6 @@ if [[ ${u_or_n} == "n" ]]; then vect=-fno-vectorize; fi
 
 # Rpass=unroll - shows what unrolling has been performed
 
-echo "Should ${unroll}"
-
 # at least O2 to unroll
 clang -c -Rpass=unroll -O2 \
     ${file_prefix}.c \

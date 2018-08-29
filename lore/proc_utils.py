@@ -1,8 +1,7 @@
 from __future__ import print_function
 
-from lore import parser
+from lore import proc_ast_parser
 import re
-import sys
 import os
 import math
 
@@ -50,7 +49,6 @@ def malloc(name, dtype, sizes, dim):
 def gen_mallocs(refs, dtypes):
     """
     Generates a C code section containing all arrays' memory allocation and initialization.
-    :param bounds:
     :param refs:
     :param dtypes: (map: array_name: str -> data type: str)
     :return:
@@ -60,7 +58,7 @@ def gen_mallocs(refs, dtypes):
         ref = refs[arr]
 
         if arr in dtypes:
-            sizes = [parser.max_set(size) for size in ref]
+            sizes = [proc_ast_parser.max_set(size) for size in ref]
             sizes = [s for s in sizes if s is not None]
             if len(sizes) > 0:
                 res += malloc(arr, dtypes[arr], sizes, 0)
@@ -77,78 +75,6 @@ def split_code(code):
     return re.split(r'\n(?!#)', code, 1)
 
 
-def add_includes(includes):
-    """
-    Adds all necessary #include instructions to the code.
-    :param includes: C code section containing #include's (as string)
-    :return: Transformed code
-    """
-    res = includes + '\n'
-    res += '#include <papi.h>\n'
-    res += '#include <time.h>\n'
-    res += '#include "' + os.path.abspath(os.path.dirname(sys.argv[0])) + '/../papi/papi_utils.h"\n'
-    res += '#define MAX(x, y) (((x) > (y)) ? (x) : (y))\n'
-    return res
-
-
-def arr_to_ptr_decl(code, dtypes, dims):
-    """
-    Replaces all fixed-size array declarations with pointer declarations.
-
-    Example; 'int A[42][42];' -> 'int** A;'
-    :param code: C code (as string)
-    :param dtypes: (map: array_name: str -> data type: str)
-    :param dims: A map from fixed-length arrays to their dimensions (map: array_name: str -> data type: str[])
-    :return: Transformed code
-    """
-    for arr in dims:
-        code = re.sub(r'(' + dtypes[arr] + ')\s+(' + arr + ').*;', r'\1' + '*' * dims[arr] + ' ' + arr + ';', code)
-    return code
-
-
-def add_papi(code):
-    """
-    Adds PAPI instructions in the places indicated by #pragma.
-    :param code: C code (as string)
-    :return: Transformed code
-    """
-    code, scop_count = re.subn(r'(#pragma scop\s+)', r'\1exec(PAPI_start(set));\n*begin = clock();\n', code)
-    code, endscop_count = \
-        re.subn(r'(\s+#pragma endscop\s+)', r'\n*end = clock();\nexec(PAPI_stop(set, values));\1return 0;\n', code)
-
-    if scop_count == 1 and endscop_count == 1:
-        return code
-    else:
-        raise Exception('Exactly one "#pragma scop" and one "#pragma endscop" expected - found ' +
-                        str(scop_count) + ' and ' + str(endscop_count) + ' correspondingly.')
-
-
-def add_mallocs(code, mallocs):
-    """
-    Inserts generated arrays allocation and initialization section.
-    :param code: C code (as string)
-    :param mallocs: Generated C code (as string)
-    :return: Transformed code
-    """
-    code = re.sub(r'(void loop\(\)\s*{)', r'\1\n\n' + mallocs, code)
-    return code
-
-
-def sub_loop_header(code):
-    """
-    Transforms the loop function header.
-    :param code: C code (as string)
-    :return: Transformed code
-    """
-    code, count = re.subn(r'void loop\(\)', 'int loop(int set, long_long* values, clock_t* begin, clock_t* end)', code)
-    code = re.sub(r'return\s*;', 'return 0;', code)
-
-    if count > 0:
-        return code
-    else:
-        raise Exception('No "void loop()" function found')
-
-
 def add_bounds_init(mallocs, bounds):
     """
     Inserts a fragment initializing program parameters into the code.
@@ -161,17 +87,6 @@ def add_bounds_init(mallocs, bounds):
     inits = '\n'.join(inits)
     mallocs = inits + '\n\n' + mallocs
     return mallocs
-
-
-def del_extern_restrict(code):
-    """
-    Remove 'extern' and 'restrict' keywords
-    :param code: C code (as string)
-    :return: Transformed code
-    """
-    code = re.sub(r'extern ', '', code)
-    code = re.sub(r'restrict ', '', code)
-    return code
 
 
 def find_max_param(refs, ast, verbose=False):
@@ -187,7 +102,7 @@ def find_max_param(refs, ast, verbose=False):
     """
     max_arr_dim = max([len(refs) for refs in refs.values()])
     arr_count = len(refs)
-    loop_depth = parser.find_for_depth(ast)
+    loop_depth = proc_ast_parser.find_for_depth(ast)
 
     max_param_arr = math.pow(50000000 / arr_count, 1 / max_arr_dim)
     max_param_loop = math.pow(5000000000, 1 / loop_depth)
@@ -212,15 +127,6 @@ def save_max_dims(proc_path, max_arr_dims):
             fout.write(alg + ',' + str(dim) + '\n')
 
 
-def add_pragma_macro(includes):
-    """
-    :param includes: C code section containing #include's (as string)
-    :return: Transformed code
-    """
-    includes += '#define PRAGMA(p) _Pragma(p)\n'
-    return includes
-
-
 def remove_pragma_semicolon(code):
     """
     Removes the semicolon after PRAGMA macro (added unintentionally by pycparser)
@@ -228,19 +134,4 @@ def remove_pragma_semicolon(code):
     :return: Transformed code
     """
     code = re.sub(r'(PRAGMA\(.*\));', r'\1', code)
-    return code
-
-
-def remove_bound_decl(code, bounds, dtypes):
-    """
-    todo
-    :param dtypes:
-    :param code:
-    :param bounds:
-    :return:
-    """
-    for b in bounds:
-        # print(bounds)
-        # print(dtypes)
-        code = re.sub(r'(\b' + dtypes[b] + ' ' + b + ';)', r'//\1', code)
     return code

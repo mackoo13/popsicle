@@ -1,11 +1,12 @@
 from __future__ import print_function
 
-import os
-import argparse
 from pycparser import c_parser
-from lore import parser
-from proc_utils import add_includes, add_papi, split_code, sub_loop_header, del_extern_restrict, gen_mallocs, \
-    arr_to_ptr_decl, add_mallocs, find_max_param, save_max_dims, add_bounds_init
+from lore import proc_ast_parser
+from proc_ast_parser import ProcASTParser
+from proc_code_transformer import ProcCodeTransformer
+from proc_utils import split_code, gen_mallocs, find_max_param, save_max_dims, add_bounds_init
+import argparse
+import os
 
 
 def main():
@@ -41,38 +42,38 @@ def main():
 
                 astparser = c_parser.CParser()
                 ast = astparser.parse(code)
+                pp = ProcASTParser(ast, verbose)
+                pp.analyze(ast, verbose)
 
-                if verbose:
-                    ast.show()
+                pt = ProcCodeTransformer(includes, code)
+                pt.add_includes()
 
-                includes = add_includes(includes)
+                mallocs = gen_mallocs(pp.refs, pp.dtypes)
+                mallocs = add_bounds_init(mallocs, pp.bounds)
 
-                bounds, refs, dtypes, dims = parser.analyze(ast, verbose)
-                mallocs = gen_mallocs(refs, dtypes)
-                mallocs = add_bounds_init(mallocs, bounds)
+                pt.del_extern_restrict()
+                pt.arr_to_ptr_decl(pp.dtypes, pp.dims)
+                pt.add_papi()
+                pt.add_mallocs(mallocs)
+                pt.sub_loop_header()
 
-                code = del_extern_restrict(code)
-                code = arr_to_ptr_decl(code, dtypes, dims)
-                code = add_papi(code)
-                code = add_mallocs(code, mallocs)
-                code = sub_loop_header(code)
-                code = includes + code
+                code = pt.includes + pt.code
 
                 if not os.path.isdir(out_dir):
                     os.makedirs(out_dir)
 
-                if len(refs) == 0:
-                    raise parser.ParseException('No refs found - cannot determine max_arr_dim')
+                if len(pp.refs) == 0:
+                    raise proc_ast_parser.ParseException('No refs found - cannot determine max_arr_dim')
 
                 with open(out_dir + '/' + file_name + '.c', 'w') as fout:
                     fout.write(code)
 
-                max_param, max_arr_dim = find_max_param(refs, ast, verbose)
+                max_param, max_arr_dim = find_max_param(pp.refs, ast, verbose)
                 with open(out_dir + '/' + file_name + '_max_param.txt', 'w') as fout:
                     fout.write(str(int(max_param)))
 
                 with open(out_dir + '/' + file_name + '_params_names.txt', 'w') as fout:
-                    fout.write(','.join(['PARAM_' + b.upper() for b in bounds]))
+                    fout.write(','.join(['PARAM_' + b.upper() for b in pp.bounds]))
 
                 max_arr_dims[file_name] = max_arr_dim
 

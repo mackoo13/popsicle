@@ -1,14 +1,10 @@
 from __future__ import print_function
-
 from pycparser import c_parser, c_generator
+from proc_code_transformer import ProcCodeTransformer
+from proc_utils import split_code, gen_mallocs, find_max_param, save_max_dims, remove_pragma_semicolon
+from proc_ast_parser import ParseException, ProcASTParser
 import os
 import argparse
-
-from proc_utils import add_includes, add_papi, split_code, sub_loop_header, del_extern_restrict, gen_mallocs, \
-    arr_to_ptr_decl, add_mallocs, find_max_param, save_max_dims, remove_pragma_semicolon, add_pragma_macro, \
-    remove_bound_decl
-from parser import analyze, ParseException, StructVisitor
-from parser_clang import add_pragma_unroll
 
 
 def main():
@@ -49,53 +45,45 @@ def main():
 
                 argparser = c_parser.CParser()
                 ast = argparser.parse(code)
+                pp = ProcASTParser(ast, verbose)
+                pp.analyze(ast, verbose)
+                pp.add_pragma_unroll()
 
-                sv = StructVisitor()
-                sv.visit(ast)
-                if sv.contains_struct:
-                    print('\tSkipping ' + file_name + ' - contains struct')
-                    failed += 1
-                    continue
-
-                if verbose:
-                    ast.show()
-
-                add_pragma_unroll(ast)
                 generator = c_generator.CGenerator()
                 code = generator.visit(ast)
                 code = remove_pragma_semicolon(code)
 
-                includes = add_includes(includes)
-                includes = add_pragma_macro(includes)
+                pt = ProcCodeTransformer(includes, code)
+                pt.add_includes()
+                pt.add_pragma_macro()
 
-                bounds, refs, dtypes, dims = analyze(ast, verbose)
-                mallocs = gen_mallocs(refs, dtypes)
+                mallocs = gen_mallocs(pp.refs, pp.dtypes)
 
-                code = del_extern_restrict(code)
-                code = arr_to_ptr_decl(code, dtypes, dims)
-                code = add_papi(code)
-                code = add_mallocs(code, mallocs)
-                code = sub_loop_header(code)
-                code = remove_bound_decl(code, bounds, dtypes)
+                pt.del_extern_restrict()
+                pt.arr_to_ptr_decl(pp.dtypes, pp.dims)
+                pt.add_papi()
+                pt.add_mallocs(mallocs)
+                pt.sub_loop_header()
+                pt.remove_bound_decl(pp.bounds, pp.dtypes)
+
                 code = includes + code
 
                 if not os.path.isdir(out_dir):
                     os.makedirs(out_dir)
 
-                if len(refs) == 0:
+                if len(pp.refs) == 0:
                     failed += 1
                     raise ParseException('No refs found - cannot determine max_arr_dim')
 
                 with open(out_dir + '/' + file_name + '.c', 'w') as fout:
                     fout.write(code)
 
-                max_param, max_arr_dim = find_max_param(refs, ast, verbose)
+                max_param, max_arr_dim = find_max_param(pp.refs, ast, verbose)
                 with open(out_dir + '/' + file_name + '_max_param.txt', 'w') as fout:
                     fout.write(str(int(max_param)))
 
                 with open(out_dir + '/' + file_name + '_params_names.txt', 'w') as fout:
-                    # fout.write(','.join(bounds))
-                    fout.write(','.join(bounds))
+                    fout.write(','.join(pp.bounds))
 
                 max_arr_dims[file_name] = max_arr_dim
 
