@@ -1,10 +1,9 @@
 from __future__ import print_function
 
 from pycparser import c_parser
-from lore import proc_ast_parser
 from proc_ast_parser import ProcASTParser
 from proc_code_transformer import ProcCodeTransformer
-from proc_utils import split_code, gen_mallocs, find_max_param, save_max_dims, add_bounds_init
+from proc_utils import split_code, gen_mallocs, find_max_param, save_max_dims, add_bounds_init, ParseException
 import argparse
 import os
 
@@ -63,7 +62,7 @@ def main():
                     os.makedirs(out_dir)
 
                 if len(pp.refs) == 0:
-                    raise proc_ast_parser.ParseException('No refs found - cannot determine max_arr_dim')
+                    raise ParseException('No refs found - cannot determine max_arr_dim')
 
                 with open(out_dir + '/' + file_name + '.c', 'w') as fout:
                     fout.write(code)

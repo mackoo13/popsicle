@@ -1,8 +1,8 @@
 from __future__ import print_function
 from pycparser import c_parser, c_generator
 from proc_code_transformer import ProcCodeTransformer
-from proc_utils import split_code, gen_mallocs, find_max_param, save_max_dims, remove_pragma_semicolon
-from proc_ast_parser import ParseException, ProcASTParser
+from proc_utils import split_code, gen_mallocs, find_max_param, save_max_dims, remove_pragma_semicolon, ParseException
+from proc_ast_parser import ProcASTParser
 import os
 import argparse
 
@@ -51,7 +51,7 @@ def main():
 
                 generator = c_generator.CGenerator()
                 code = generator.visit(ast)
-                code = remove_pragma_semicolon(code)
+                code = remove_pragma_semicolon(code)  # todo move
 
                 pt = ProcCodeTransformer(includes, code)
                 pt.add_includes()

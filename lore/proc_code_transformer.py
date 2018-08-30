@@ -60,7 +60,7 @@ class ProcCodeTransformer:
                 r'(' + dtypes[arr] + ')\s+(' + arr + ').*;', r'\1' + '*' * dims[arr] + ' ' + arr + ';',
                 self.code)
 
-    def del_extern_restrict(self):
+    def del_extern_restrict(self):  # todo move
         """
         Remove 'extern' and 'restrict' keywords
         """

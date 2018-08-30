@@ -1,0 +1,58 @@
+FileAST:
+  Decl: i, [], ['extern'], []
+    TypeDecl: i, []
+      IdentifierType: ['int']
+  Decl: error, [], ['extern'], []
+    TypeDecl: error, []
+      IdentifierType: ['int']
+  Decl: b, [], ['extern'], []
+    ArrayDecl: []
+      ArrayDecl: []
+        TypeDecl: b, []
+          IdentifierType: ['int']
+        Constant: int, 10
+      Constant: int, 10
+  FuncDef:
+    Decl: loop, [], [], []
+      FuncDecl:
+        TypeDecl: loop, []
+          IdentifierType: ['void']
+    Compound:
+      Pragma: scop
+      For:
+        Assignment: =
+          ID: i
+          Constant: int, 0
+        BinaryOp: <
+          ID: i
+          Constant: int, 10
+        UnaryOp: p++
+          ID: i
+        Assignment: +=
+          ID: error
+          TernaryOp:
+            BinaryOp: >=
+              BinaryOp: -
+                Constant: int, 1
+                ArrayRef:
+                  ArrayRef:
+                    ID: b
+                    ID: i
+                  ID: i
+              Constant: int, 0
+            BinaryOp: -
+              Constant: int, 1
+              ArrayRef:
+                ArrayRef:
+                  ID: b
+                  ID: i
+                ID: i
+            UnaryOp: -
+              BinaryOp: -
+                Constant: int, 1
+                ArrayRef:
+                  ArrayRef:
+                    ID: b
+                    ID: i
+                  ID: i
+      Pragma: endscop
