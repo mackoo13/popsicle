@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 for path in `find ${PIPS_PROC_PATH} -iname '*_preproc.c'`; do
-    echo $path
     rm ${path}
 done
 

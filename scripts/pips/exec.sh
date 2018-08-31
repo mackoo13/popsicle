@@ -20,7 +20,7 @@ echo -n "alg,run," > ${out_file}
 ${scripts_dir}/papi/papi_events.sh >> ${out_file}
 echo ",time" >> ${out_file}
 
-for path in `find ${PIPS_PROC_PATH} -iname '*8_wombat.c'`; do
+for path in `find ${PIPS_PROC_PATH} -iname '*_wombat.c'`; do
     file_prefix=${path: 0:-2}
 
     if ! ${current_dir}/compile.sh ${file_prefix}; then

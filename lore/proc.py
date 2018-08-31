@@ -1,9 +1,7 @@
 from __future__ import print_function
-
-from pycparser import c_parser
 from proc_ast_parser import ProcASTParser
 from proc_code_transformer import ProcCodeTransformer
-from proc_utils import split_code, gen_mallocs, find_max_param, save_max_dims, add_bounds_init, ParseException
+from proc_utils import split_code, gen_mallocs, save_max_dims, add_bounds_init, ParseException
 import argparse
 import os
 
@@ -36,13 +34,9 @@ def main():
                 code = fin.read()
                 includes, code = split_code(code)
 
-                # if lore_parser.contains_struct(code):
-                #     raise lore_parser.ParseException('Code contains struct declaration.')
-
-                astparser = c_parser.CParser()
-                ast = astparser.parse(code)
-                pp = ProcASTParser(ast, verbose)
-                pp.analyze(ast, verbose)
+                pp = ProcASTParser(code, verbose)
+                pp.analyse()
+                pp.remove_modifiers(['extern', 'restrict'])
 
                 pt = ProcCodeTransformer(includes, code)
                 pt.add_includes()
@@ -50,7 +44,6 @@ def main():
                 mallocs = gen_mallocs(pp.refs, pp.dtypes)
                 mallocs = add_bounds_init(mallocs, pp.bounds)
 
-                pt.del_extern_restrict()
                 pt.arr_to_ptr_decl(pp.dtypes, pp.dims)
                 pt.add_papi()
                 pt.add_mallocs(mallocs)
@@ -67,7 +60,7 @@ def main():
                 with open(out_dir + '/' + file_name + '.c', 'w') as fout:
                     fout.write(code)
 
-                max_param, max_arr_dim = find_max_param(pp.refs, ast, verbose)
+                max_param, max_arr_dim = pp.find_max_param()
                 with open(out_dir + '/' + file_name + '_max_param.txt', 'w') as fout:
                     fout.write(str(int(max_param)))
 

@@ -129,24 +129,28 @@ class AssignmentVisitor(c_ast.NodeVisitor):
 
 
 # noinspection PyPep8Naming,PyMethodMayBeStatic
-class CompoundVisitor(c_ast.NodeVisitor):
+class CompoundInsertBeforeVisitor(c_ast.NodeVisitor):
     """
     todo
+    todo what if contains another compound?
     """
-    def __init__(self):
-        pass
+    def __init__(self, c_ast_type_name, items):
+        self.c_ast_type_name = c_ast_type_name
+        self.items = items
 
     def visit_Compound(self, node):
         items = node.block_items
-        for_index = None
+        indices = []
 
         for i, item in enumerate(items):
-            if type(item) is c_ast.For:
-                for_index = i
+            if type(item).__name__ == self.c_ast_type_name:
+                indices.append(i)
 
-        if for_index is not None:
-            pragma = c_ast.FuncCall(c_ast.ID('PRAGMA'), c_ast.ExprList([c_ast.ID('PRAGMA_UNROLL')]))
-            items.insert(for_index, pragma)
+        # important: indices must be sorted in descending order to preserve indices while new items are inserted
+        for i in indices[::-1]:
+            items[i:i] = self.items
+
+        c_ast.NodeVisitor.generic_visit(self, node)
 
 
 # noinspection PyPep8Naming,PyMethodMayBeStatic
@@ -154,11 +158,11 @@ class DeclVisitor(c_ast.NodeVisitor):
     """
     todo
     """
-    def __init__(self):
-        pass
+    def __init__(self, modifiers_to_remove):
+        self.modifiers_to_remove = modifiers_to_remove
 
     def visit_Decl(self, node):
-        node.storage = [s for s in node.storage if s not in ['extern']]
+        node.storage = [s for s in node.storage if s not in self.modifiers_to_remove]
 
 
 # noinspection PyPep8Naming
@@ -279,6 +283,9 @@ class ForVisitor(c_ast.NodeVisitor):
 
 # noinspection PyPep8Naming,PyPep8Naming
 class FuncFinderVisitor(c_ast.NodeVisitor):
+    """
+    todo
+    """
     def __init__(self, name):
         self.name = name
         self.main = None
@@ -329,8 +336,36 @@ class PtrDeclVisitor(c_ast.NodeVisitor):
         self.dtypes[n] = t
 
 
+# noinspection PyPep8Naming,PyMethodMayBeStatic
+class SingleToCompound(c_ast.NodeVisitor):
+    """
+    todo
+    """
+    def __init__(self):
+        pass
+
+    def visit_DoWhile(self, node):
+        self.visit_For(node)
+
+    def visit_For(self, node):
+        if type(node.stmt) is not c_ast.Compound:
+            node.stmt = c_ast.Compound([node.stmt])
+
+    def visit_If(self, node):
+        if type(node.iftrue) is not c_ast.Compound:
+            node.iftrue = c_ast.Compound([node.iftrue])
+        if type(node.iffalse) is not c_ast.Compound:
+            node.iffalse = c_ast.Compound([node.iffalse])
+
+    def visit_While(self, node):
+        self.visit_For(node)
+
+
 # noinspection PyPep8Naming
 class StructVisitor(c_ast.NodeVisitor):
+    """
+    todo
+    """
     def __init__(self):
         self.contains_struct = False
 
@@ -441,17 +476,6 @@ def eval_basic_op(l, op, r):
     return l + op + r
 
 
-def find_for_depth(ast):
-    """
-    Finds the maximal depth of nested for loops.
-    :param ast: AST tree
-    :return: Max depth
-    """
-    res = [0]
-    ForDepthCounter(1, res).visit(ast)
-    return res[0]
-
-
 def build_decl(var_name, var_type):
     type_decl = c_ast.TypeDecl(var_name, [], c_ast.IdentifierType([var_type]))
     return c_ast.Decl(var_name, [], [], [], type_decl, None, None)
@@ -460,6 +484,9 @@ def build_decl(var_name, var_type):
 def main_to_loop(node):
     decl = node.decl
     body = node.body
+
+    # todo move
+    SingleToCompound().visit(node)
 
     if decl.name == 'main':
         decl.name = 'loop'
@@ -486,8 +513,7 @@ def main_to_loop(node):
 
             body.block_items.insert(0, exec_start)
             body.block_items.insert(1, begin_clock)
-            body.block_items.append(end_clock)
-            body.block_items.append(exec_stop)
+            CompoundInsertBeforeVisitor('Return', [end_clock, exec_stop]).visit(body)
 
 
 def max_set(s):
@@ -551,7 +577,27 @@ def malloc(name, dtype, sizes, dim):
     For multidimensional arrays, the function is called recursively for each dimension.
     A constant of 2 is added to the size for safety.
 
-    Example: malloc('A', 'int', ['N+42'], 0) -> A = malloc((N+42+2)*sizeof(int));
+    Example 1:
+        malloc('A', 'int', ['N+42'], 0)
+        ->
+        A = malloc((N+42+2)*sizeof(int));
+        for(int i_0=0; i_0<N+42+2; ++i_0) {
+            A[i_0] = (int)rand();
+        }
+
+    Example 2:
+        malloc('A', 'int', ['M', 'N'], 0)
+        ->
+        A = malloc((M+2)*sizeof(*int))
+        for(int i_0=0; i_0<M+2; ++i_0) {
+            A[i_0] = malloc((N+2)*sizeof(int))
+            for(int i_0=0; i_0<N+2; ++i_0) {
+                A[i_0][i_1] = (int)rand();
+            }
+        }
+
+    todo check examples
+
     :param name: Array name
     :param dtype: Array data type
     :param sizes: List of dimensions sizes (as strings)
@@ -569,6 +615,7 @@ def malloc(name, dtype, sizes, dim):
     res = '\t' * dim
     res += '%s%s = malloc((%s+2) * sizeof(%s%s));\n' % \
            (name, inds, size, dtype, ptr_asterisks)
+
     res += '\t' * dim
     res += 'for(int %s=0; %s<%s+2; ++%s) {\n' % \
            (i, i, size, i)
@@ -580,7 +627,8 @@ def malloc(name, dtype, sizes, dim):
         res += '\t' * (dim + 1)
         res += '%s%s = (%s)rand();\n' % (name, inds, dtype)
 
-    res += '\t' * dim + '}\n'
+    res += '\t' * dim
+    res += '}\n'
 
     return res
 
@@ -629,31 +677,6 @@ def add_bounds_init(mallocs, bounds):
     return mallocs
 
 
-def find_max_param(refs, ast, verbose=False):
-    """
-    Attempts to find the maximal value of program parameters. The upper bound is either imposed by limited memory
-    (based on arrays dimensionality and their number) or loop count (based on for loop depth)
-
-    if multiple parameters are present, all are assumed to be equal.
-    :param refs:
-    :param ast: AST tree
-    :param verbose: True to print the output
-    :return: The maximal parameter
-    """
-    max_arr_dim = max([len(refs) for refs in refs.values()])
-    arr_count = len(refs)
-    loop_depth = find_for_depth(ast)
-
-    max_param_arr = math.pow(50000000 / arr_count, 1 / max_arr_dim)
-    max_param_loop = math.pow(5000000000, 1 / loop_depth)
-    max_param = min(max_param_arr, max_param_loop)
-
-    if verbose:
-        print('Max param: ', max_param)
-
-    return max_param, max_arr_dim
-
-
 def save_max_dims(proc_path, max_arr_dims):
     """
     todo
@@ -674,14 +697,4 @@ def remove_comments(code):
 
 def remove_inline(code):
     code = re.sub(' __inline__ ', ' ', code)
-    return code
-
-
-def remove_pragma_semicolon(code):
-    """
-    Removes the semicolon after PRAGMA macro (added unintentionally by pycparser)
-    :param code: C code
-    :return: Transformed code
-    """
-    code = re.sub(r'(PRAGMA\(.*\));', r'\1', code)
     return code

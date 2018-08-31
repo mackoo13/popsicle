@@ -8,7 +8,7 @@ class ProcCodeTransformer:
         self.includes = includes
         self.code = code
 
-    def add_includes(self):
+    def add_includes(self, define_max=True):
         """
         Adds all necessary #include instructions to the code.
         """
@@ -16,7 +16,8 @@ class ProcCodeTransformer:
         self.includes += '#include <papi.h>\n'
         self.includes += '#include <time.h>\n'
         self.includes += '#include "' + os.path.abspath(os.path.dirname(sys.argv[0])) + '/../papi/papi_utils.h"\n'
-        self.includes += '#define MAX(x, y) (((x) > (y)) ? (x) : (y))\n'
+        if define_max:
+            self.includes += '#define MAX(x, y) (((x) > (y)) ? (x) : (y))\n'
 
     def add_mallocs(self, mallocs):
         """
@@ -60,16 +61,6 @@ class ProcCodeTransformer:
                 r'(' + dtypes[arr] + ')\s+(' + arr + ').*;', r'\1' + '*' * dims[arr] + ' ' + arr + ';',
                 self.code)
 
-    def del_extern_restrict(self):  # todo move
-        """
-        Remove 'extern' and 'restrict' keywords
-        """
-        self.code = re.sub(r'extern ', '', self.code)
-        self.code = re.sub(r'restrict ', '', self.code)
-
-    def rename_main(self):
-        self.code = re.sub('\bmain\(', 'main_original(', self.code)
-
     def remove_bound_decl(self, bounds, dtypes):
         """
         todo
@@ -79,6 +70,16 @@ class ProcCodeTransformer:
         """
         for b in bounds:
             self.code = re.sub(r'(\b' + dtypes[b] + ' ' + b + ';)', r'//\1', self.code)
+
+    def remove_pragma_semicolon(self):
+        """
+        Removes the semicolon after PRAGMA macro (added unintentionally by pycparser)
+        :return: Transformed code
+        """
+        self.code = re.sub(r'(PRAGMA\(.*\));', r'\1', self.code)
+
+    def rename_main(self):
+        self.code = re.sub(r'\bmain\(', 'main_original(', self.code)
 
     def sub_loop_header(self):
         """

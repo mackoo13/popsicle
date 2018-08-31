@@ -1,5 +1,5 @@
 from __future__ import print_function
-from pycparser import c_parser, c_generator
+from pycparser import c_generator
 from proc_ast_parser import ProcASTParser
 from proc_code_transformer import ProcCodeTransformer
 from proc_utils import remove_inline, remove_comments
@@ -22,7 +22,7 @@ def main():
             try:
                 if not file_name.endswith(".c") \
                         or file_name.endswith("_preproc.c") \
-                        or file_name.endswith("_preproc_wombat.c"):
+                        or file_name.endswith("_wombat.c"):
                     continue
 
                 print('Parsing %s' % file_name)
@@ -41,17 +41,15 @@ def main():
                         preproc_code = remove_comments(preproc_code)
                         preproc_code = remove_inline(preproc_code)
 
-                        astparser = c_parser.CParser()
-                        ast = astparser.parse(preproc_code)
-                        pp = ProcASTParser(ast, verbose, allow_struct=True)
-                        pp.remove_extern()
+                        pp = ProcASTParser(preproc_code, verbose, allow_struct=True)
+                        pp.remove_modifiers(['extern'])
                         pp.main_to_loop()
 
                         generator = c_generator.CGenerator()
                         code_main = generator.visit(pp.main)
 
                         pt = ProcCodeTransformer('', '')
-                        pt.add_includes()
+                        pt.add_includes(define_max=False)
 
                         pt_orig = ProcCodeTransformer('', orig_code)
                         pt_orig.rename_main()
