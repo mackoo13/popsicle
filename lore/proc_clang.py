@@ -39,10 +39,6 @@ def main():
                 code = fin.read()
                 includes, code = split_code(code)
 
-                # if lore_parser_clang.contains_struct(code):
-                #     pass
-                #     raise lore_parser_clang.ParseException('Code contains struct declaration.')
-
                 pp = ProcASTParser(code, verbose)
                 pp.analyse()
                 pp.remove_modifiers(['extern', 'restrict'])
@@ -71,7 +67,7 @@ def main():
 
                 if len(pp.refs) == 0:
                     failed += 1
-                    raise ParseException('No refs found - cannot determine max_arr_dim')
+                    raise ParseException('No refs found - cannot determine max_arr_dim')    # todo move
 
                 with open(out_dir + '/' + file_name + '.c', 'w') as fout:
                     fout.write(code)

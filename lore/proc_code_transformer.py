@@ -66,7 +66,6 @@ class ProcCodeTransformer:
         todo
         :param dtypes:
         :param bounds:
-        :return:
         """
         for b in bounds:
             self.code = re.sub(r'(\b' + dtypes[b] + ' ' + b + ';)', r'//\1', self.code)
@@ -74,7 +73,6 @@ class ProcCodeTransformer:
     def remove_pragma_semicolon(self):
         """
         Removes the semicolon after PRAGMA macro (added unintentionally by pycparser)
-        :return: Transformed code
         """
         self.code = re.sub(r'(PRAGMA\(.*\));', r'\1', self.code)
 
@@ -88,7 +86,7 @@ class ProcCodeTransformer:
         self.code, count = re.subn(
             r'void loop\(\)', 'int loop(int set, long_long* values, clock_t* begin, clock_t* end)',
             self.code)
-        self.code = re.sub(r'return\s*;', 'return 0;', self.code)
+        self.code = re.sub(r'return\s*;', 'return 0;', self.code)   # todo same in pp
 
         if count == 0:
             raise Exception('No "void loop()" function found')

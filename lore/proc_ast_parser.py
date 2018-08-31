@@ -1,8 +1,8 @@
 from pycparser import c_ast, c_parser
 from proc_utils import remove_non_extreme_numbers, estimate, \
-    ArrayRefVisitor, ForVisitor, AssignmentVisitor, PtrDeclVisitor, StructVisitor, \
-    ArrayDeclVisitor, TypeDeclVisitor, ForPragmaUnrollVisitor, DeclVisitor, \
-    FuncFinderVisitor, main_to_loop, CompoundInsertBeforeVisitor, ForDepthCounter
+    ArrayRefVisitor, ForVisitor, AssignmentVisitor, ArrType, StructVisitor, \
+    ArrayDeclVisitor, VarTypeVisitor, ForPragmaUnrollVisitor, RemoveModifiersVisitor, \
+    FindFuncVisitor, main_to_loop, CompoundInsertBeforeVisitor, ForDepthCounter
 import math
 
 
@@ -18,7 +18,7 @@ class ProcASTParser:
         astparser = c_parser.CParser()
         self.ast = astparser.parse(code)
 
-        ffv = FuncFinderVisitor(main_name)
+        ffv = FindFuncVisitor(main_name)
         ffv.visit(self.ast)
         self.main = ffv.main
 
@@ -44,12 +44,6 @@ class ProcASTParser:
     def analyse(self):
         """
         Extract useful information from AST tree
-        :return:
-            res (string) - malloc instructions and array initialization)
-            bounds () -
-            refs () -
-            dtypes (map: array_name: str -> data type: str)
-            dims (map: array_name: str -> dimensions: int[])
         """
 
         ForVisitor(self.maxs, self.bounds).visit(self.ast)
@@ -64,9 +58,9 @@ class ProcASTParser:
         for arr in self.refs:
             self.refs[arr] = [set([estimate(r, self.maxs, arr, deps) for r in ref]) for ref in self.refs[arr]]
 
-        PtrDeclVisitor(self.dtypes).visit(self.ast)
+        ArrType(self.dtypes).visit(self.ast)
         ArrayDeclVisitor(self.dtypes, self.dims).visit(self.ast)
-        TypeDeclVisitor(self.dtypes).visit(self.ast)
+        VarTypeVisitor(self.dtypes).visit(self.ast)
 
         self.bounds.difference_update(self.refs.keys())
 
@@ -111,4 +105,4 @@ class ProcASTParser:
         print('dims: ', self.dims)
 
     def remove_modifiers(self, modifiers_to_remove):
-        DeclVisitor(modifiers_to_remove).visit(self.ast)
+        RemoveModifiersVisitor(modifiers_to_remove).visit(self.ast)

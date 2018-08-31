@@ -2,7 +2,6 @@ from __future__ import print_function
 from functools import reduce
 import re
 import os
-import math
 # noinspection PyPep8Naming
 from pycparser import c_ast
 
@@ -154,7 +153,7 @@ class CompoundInsertBeforeVisitor(c_ast.NodeVisitor):
 
 
 # noinspection PyPep8Naming,PyMethodMayBeStatic
-class DeclVisitor(c_ast.NodeVisitor):
+class RemoveModifiersVisitor(c_ast.NodeVisitor):
     """
     todo
     """
@@ -273,7 +272,7 @@ class ForVisitor(c_ast.NodeVisitor):
         else:
             self.maxs[v.name] = {m_eval}
 
-        id_visitor = IDVisitor()
+        id_visitor = FindAllVarsVisitor()
         id_visitor.visit(m)
         for n in id_visitor.names:
             self.bounds.add(n)
@@ -282,7 +281,7 @@ class ForVisitor(c_ast.NodeVisitor):
 
 
 # noinspection PyPep8Naming,PyPep8Naming
-class FuncFinderVisitor(c_ast.NodeVisitor):
+class FindFuncVisitor(c_ast.NodeVisitor):
     """
     todo
     """
@@ -296,7 +295,7 @@ class FuncFinderVisitor(c_ast.NodeVisitor):
         
 
 # noinspection PyPep8Naming
-class IDVisitor(c_ast.NodeVisitor):
+class FindAllVarsVisitor(c_ast.NodeVisitor):
     """
     Finds all variables used in an expression.
 
@@ -313,7 +312,7 @@ class IDVisitor(c_ast.NodeVisitor):
 
 
 # noinspection PyPep8Naming
-class PtrDeclVisitor(c_ast.NodeVisitor):
+class ArrType(c_ast.NodeVisitor):
     """
     Used to determine the arrays data types.
     This visitor handles pointers declarations only. For bracket syntax declarations see ArrayDeclVisitor.
@@ -337,7 +336,7 @@ class PtrDeclVisitor(c_ast.NodeVisitor):
 
 
 # noinspection PyPep8Naming,PyMethodMayBeStatic
-class SingleToCompound(c_ast.NodeVisitor):
+class SingleToCompoundVisitor(c_ast.NodeVisitor):
     """
     todo
     """
@@ -375,7 +374,7 @@ class StructVisitor(c_ast.NodeVisitor):
 
 
 # noinspection PyPep8Naming
-class TypeDeclVisitor(c_ast.NodeVisitor):
+class VarTypeVisitor(c_ast.NodeVisitor):
     """
     Used to determine the variables data types.
 
@@ -390,6 +389,25 @@ class TypeDeclVisitor(c_ast.NodeVisitor):
         t = ' '.join(node.type.names)
 
         self.dtypes[n] = t
+
+
+def add_bounds_init(mallocs, bounds):
+    """
+    Inserts a fragment initializing program parameters into the code.
+    The actual values should be injected at compilation time (-D option in gcc)
+    :param mallocs: C code (as string)
+    :param bounds:
+    :return: Transformed code
+    """
+    inits = [n + ' = PARAM_' + n.upper() + ';' for n in bounds]
+    inits = '\n'.join(inits)
+    mallocs = inits + '\n\n' + mallocs
+    return mallocs
+
+
+def build_decl(var_name, var_type):
+    type_decl = c_ast.TypeDecl(var_name, [], c_ast.IdentifierType([var_type]))
+    return c_ast.Decl(var_name, [], [], [], type_decl, None, None)
 
 
 def estimate(n, maxs=None, var=None, deps=None):
@@ -476,17 +494,37 @@ def eval_basic_op(l, op, r):
     return l + op + r
 
 
-def build_decl(var_name, var_type):
-    type_decl = c_ast.TypeDecl(var_name, [], c_ast.IdentifierType([var_type]))
-    return c_ast.Decl(var_name, [], [], [], type_decl, None, None)
+def gen_mallocs(refs, dtypes):
+    """
+    Generates a C code section containing all arrays' memory allocation and initialization.
+    :param refs:
+    :param dtypes: (map: array_name: str -> data type: str)
+    :return:
+    """
+    res = ''
+    for arr in refs:
+        ref = refs[arr]
+
+        if arr in dtypes:
+            sizes = [max_set(size) for size in ref]
+            sizes = [s for s in sizes if s is not None]
+            if len(sizes) > 0:
+                res += malloc(arr, dtypes[arr], sizes, 0)
+
+    return res
 
 
 def main_to_loop(node):
+    """
+    todo
+    :param node:
+    :return:
+    """
     decl = node.decl
     body = node.body
 
     # todo move
-    SingleToCompound().visit(node)
+    SingleToCompoundVisitor().visit(node)
 
     if decl.name == 'main':
         decl.name = 'loop'
@@ -514,61 +552,6 @@ def main_to_loop(node):
             body.block_items.insert(0, exec_start)
             body.block_items.insert(1, begin_clock)
             CompoundInsertBeforeVisitor('Return', [end_clock, exec_stop]).visit(body)
-
-
-def max_set(s):
-    """
-    Transforms an iterable of expressions into a C expression which will evalueate to its maximum.
-    MAX(x, y) macro must be included to the C program.
-    If there are multiple integer values in the iterable, only the greatest one is preserved
-    (see remove_non_extreme_numbers)
-
-    Example: ['3', '6', '7', 'N', 'K'] -> 'MAX(MAX(7, N), 'K')'
-    :param s: An iterable of expressions as strings
-    :return: Output string
-    """
-    s2 = remove_non_extreme_numbers(s, leave_min=False)
-
-    if len(s2) == 0:
-        return None
-    if len(s2) == 1:
-        return s2[0]
-    else:
-        return reduce((lambda a, b: 'MAX(' + a + ', ' + b + ')'), s2)
-
-
-def remove_non_extreme_numbers(s, leave_min=True):
-    """
-    Remove from an iterable all numbers which are neither minimal or maximal.
-    The function leaves all non-numeric elements in the iterable untouched.
-    The order of elements might be different in the output.
-
-    Example: ['3', '6', 'N', '7'] -> ['N', '3', '7']
-    :param s: Iterable of expressions as strings
-    :param leave_min: If set to True, preserve minimal and maximum value from s. Otherwise, only maximum is preserved.
-    :return: Transformed iterable
-    """
-    max_num = float('-inf')
-    min_num = 0
-    s2 = []
-
-    for n in s:
-        if n is not None:
-            if n.isdecimal():
-                n_num = int(n)
-                if n_num > max_num:
-                    max_num = n_num
-                if n_num < min_num:
-                    min_num = n_num
-            else:
-                s2.append(n)
-
-    if max_num > 0:
-        s2.append(str(max_num))
-    if leave_min and min_num > 0 and min_num != max_num:
-        s2.append(str(min_num))
-
-    return s2
 
 
 def malloc(name, dtype, sizes, dim):
@@ -619,7 +602,7 @@ def malloc(name, dtype, sizes, dim):
     res += '\t' * dim
     res += 'for(int %s=0; %s<%s+2; ++%s) {\n' % \
            (i, i, size, i)
-    
+
     if dim < len(sizes) - 1:
         res += malloc(name, dtype, sizes, dim + 1)
     else:
@@ -633,48 +616,76 @@ def malloc(name, dtype, sizes, dim):
     return res
 
 
-def gen_mallocs(refs, dtypes):
+def max_set(s):
     """
-    Generates a C code section containing all arrays' memory allocation and initialization.
-    :param refs:
-    :param dtypes: (map: array_name: str -> data type: str)
+    Transforms an iterable of expressions into a C expression which will evalueate to its maximum.
+    MAX(x, y) macro must be included to the C program.
+    If there are multiple integer values in the iterable, only the greatest one is preserved
+    (see remove_non_extreme_numbers)
+
+    Example: ['3', '6', '7', 'N', 'K'] -> 'MAX(MAX(7, N), 'K')'
+    :param s: An iterable of expressions as strings
+    :return: Output string
+    """
+    s2 = remove_non_extreme_numbers(s, leave_min=False)
+
+    if len(s2) == 0:
+        return None
+    if len(s2) == 1:
+        return s2[0]
+    else:
+        return reduce((lambda a, b: 'MAX(' + a + ', ' + b + ')'), s2)
+
+
+def remove_non_extreme_numbers(s, leave_min=True):
+    """
+    Remove from an iterable all numbers which are neither minimal or maximal.
+    The function leaves all non-numeric elements in the iterable untouched.
+    The order of elements might be different in the output.
+
+    Example: ['3', '6', 'N', '7'] -> ['N', '3', '7']
+    :param s: Iterable of expressions as strings
+    :param leave_min: If set to True, preserve minimal and maximum value from s. Otherwise, only maximum is preserved.
+    :return: Transformed iterable
+    """
+    max_num = float('-inf')
+    min_num = 0
+    s2 = []
+
+    for n in s:
+        if n is not None and n.isdecimal():
+            n_num = int(n)
+            min_num = min(min_num, n_num)
+            max_num = max(max_num, n_num)
+        elif n is not None:
+            s2.append(n)
+
+    if max_num > 0:
+        s2.append(str(max_num))
+    if leave_min and min_num > 0 and min_num != max_num:
+        s2.append(str(min_num))
+
+    return s2
+
+
+def remove_comments(code):
+    """
+
+    :param code:
     :return:
     """
-    res = ''
-    for arr in refs:
-        ref = refs[arr]
-
-        if arr in dtypes:
-            sizes = [max_set(size) for size in ref]
-            sizes = [s for s in sizes if s is not None]
-            if len(sizes) > 0:
-                res += malloc(arr, dtypes[arr], sizes, 0)
-
-    return res
+    code = re.sub('//.*\n|/\*.*\*/', '', code)  # greedy *?
+    return code
 
 
-def split_code(code):
+def remove_inline(code):
     """
-    Splits code into the section containing macros and the rest of the code.
-    :param code: C code (as string)
-    :return: Transformed code
-    """
-    includes, code = re.split(r'\n(?!(?:#|\s*\n))', code, 1)
-    return includes, code
 
-
-def add_bounds_init(mallocs, bounds):
+    :param code:
+    :return:
     """
-    Inserts a fragment initializing program parameters into the code.
-    The actual values should be injected at compilation time (-D option in gcc)
-    :param mallocs: C code (as string)
-    :param bounds:
-    :return: Transformed code
-    """
-    inits = [n + ' = PARAM_' + n.upper() + ';' for n in bounds]
-    inits = '\n'.join(inits)
-    mallocs = inits + '\n\n' + mallocs
-    return mallocs
+    code = re.sub(' __inline__ ', ' ', code)
+    return code
 
 
 def save_max_dims(proc_path, max_arr_dims):
@@ -690,11 +701,11 @@ def save_max_dims(proc_path, max_arr_dims):
             fout.write(alg + ',' + str(dim) + '\n')
 
 
-def remove_comments(code):
-    code = re.sub('//.*\n|/\*.*\*/', '', code)
-    return code
-
-
-def remove_inline(code):
-    code = re.sub(' __inline__ ', ' ', code)
-    return code
+def split_code(code):
+    """
+    Splits code into the section containing macros and the rest of the code.
+    :param code: C code (as string)
+    :return: Transformed code
+    """
+    includes, code = re.split(r'\n(?!(?:#|\s*\n))', code, 1)
+    return includes, code
