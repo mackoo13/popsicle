@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
 for path in `find ${PIPS_PROC_PATH} -iname '*_preproc.c'`; do
+    echo $path
     rm ${path}
 done
 
-for path in `find ${PIPS_PROC_PATH} -maxdepth 2 -iname '*.c' -not -iname '*_preproc.c' -not -iname '*_wombat.c'`; do
+for path in `find ${PIPS_PROC_PATH} -maxdepth 2 -iname '*re14.c' -not -iname '*_preproc.c' -not -iname '*_wombat.c'`; do
     if ! grep -q 'main(' "${path}"; then
         continue
     fi

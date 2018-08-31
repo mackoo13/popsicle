@@ -67,6 +67,9 @@ class ProcCodeTransformer:
         self.code = re.sub(r'extern ', '', self.code)
         self.code = re.sub(r'restrict ', '', self.code)
 
+    def rename_main(self):
+        self.code = re.sub('int main\(', 'int main_original(', self.code)
+
     def remove_bound_decl(self, bounds, dtypes):
         """
         todo
