@@ -20,11 +20,11 @@ echo -n "alg,run," > ${out_file}
 ${scripts_dir}/papi/papi_events.sh >> ${out_file}
 echo ",time" >> ${out_file}
 
-for path in `find ${PIPS_PROC_PATH} -iname '*14_wombat.c'`; do
+for path in `find ${PIPS_PROC_PATH} -iname '*8_wombat.c'`; do
     file_prefix=${path: 0:-2}
 
     if ! ${current_dir}/compile.sh ${file_prefix}; then
-        break
+        continue
     fi
 
     echo "Running $file_prefix ..."
@@ -34,7 +34,7 @@ for path in `find ${PIPS_PROC_PATH} -iname '*14_wombat.c'`; do
             echo ${file_prefix},,${res} >> ${out_file}
         else
             echo ":("
-            break 2
+            break
         fi
     done
 done

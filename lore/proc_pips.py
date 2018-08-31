@@ -20,7 +20,7 @@ def main():
     for path, _, file_names in os.walk(proc_path):
         for file_name in file_names:
             try:
-                if not file_name.endswith("re14.c") \
+                if not file_name.endswith(".c") \
                         or file_name.endswith("_preproc.c") \
                         or file_name.endswith("_preproc_wombat.c"):
                     continue
@@ -29,6 +29,9 @@ def main():
 
                 file_path = os.path.join(path, file_name)
                 preproc_path = file_path[:-2] + '_preproc.c'
+
+                if not os.path.isfile(preproc_path):
+                    continue
 
                 with open(file_path, 'r') as fin_orig:
                     with open(preproc_path, 'r') as fin_preproc:
@@ -46,7 +49,6 @@ def main():
 
                         generator = c_generator.CGenerator()
                         code_main = generator.visit(pp.main)
-                        print(code_main)
 
                         pt = ProcCodeTransformer('', '')
                         pt.add_includes()
@@ -54,9 +56,9 @@ def main():
                         pt_orig = ProcCodeTransformer('', orig_code)
                         pt_orig.rename_main()
 
-                        code = pt.includes + pt_orig.code + '\n\n' + code_main
+                        code = pt.includes + '\n\n' + pt_orig.code + '\n\n' + code_main
 
-                        print('\n\n\n\n', code)
+                        # print('\n\n\n\n', code)
 
                         with open(file_path[:-2] + '_wombat.c', 'w') as fout:
                             fout.write(code)
