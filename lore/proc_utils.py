@@ -119,13 +119,13 @@ class AssignmentVisitor(c_ast.NodeVisitor):
             left = node.lvalue
             right = node.rvalue
 
-            right_est = estimate(right, self.maxs)
-
-            if type(left) is c_ast.ID and len(right_est) > 0:
-                if left.name in self.maxs:
-                    self.maxs[left.name].update(right_est)
-                else:
-                    self.maxs[left.name] = right_est
+            if type(left) is c_ast.ID:
+                right_est = estimate(right, self.maxs)
+                if len(right_est) > 0:
+                    if left.name in self.maxs:
+                        self.maxs[left.name].update(right_est)
+                    else:
+                        self.maxs[left.name] = right_est
 
 
 # noinspection PyPep8Naming,PyMethodMayBeStatic
@@ -408,12 +408,14 @@ def build_decl(var_name, var_type):
     return c_ast.Decl(var_name, [], [], [], type_decl, None, None)
 
 
-def estimate(n, maxs=None, var=None, deps=None):
+def estimate(n, maxs=None, var=None, deps=None, parent_calls=None):
     """
+    todo
     Attempts to find the greatest value that an expression might have. The primary use of this function is determining
     the minimal size of an array based on the source code.
     If there is more than one expression that might be the maximum (e.g. variable-dependent or too complicated to be
     calculated here), all possible options are enclosed in MAX macro and left to be determined by C compiler.
+    :param parent_calls:
     :param var:
     :param deps:
     :param n: An expression given as a c_ast object or a string
@@ -426,10 +428,17 @@ def estimate(n, maxs=None, var=None, deps=None):
     if deps is None:
         deps = {}
 
+    if parent_calls is None:
+        parent_calls = []
+
+    if n in parent_calls:
+        return []
+    parent_calls.append(n)
+
     if type(n) is set or type(n) is list:
         options = []
         for ni in n:
-            options.extend(estimate(ni, maxs, var, deps))
+            options.extend(estimate(ni, maxs, var, deps, parent_calls))
 
     elif type(n) is str:
         options = maxs[n] if n in maxs else [n]
@@ -441,11 +450,11 @@ def estimate(n, maxs=None, var=None, deps=None):
             else:
                 deps[var] = {n.name}
 
-        options = estimate(n.name, maxs, var, deps)
+        options = estimate(n.name, maxs, var, deps, parent_calls)
 
     elif type(n) is c_ast.BinaryOp:
-        ls = estimate(n.left, maxs, var, deps)
-        rs = estimate(n.right, maxs, var, deps)
+        ls = estimate(n.left, maxs, var, deps, parent_calls)
+        rs = estimate(n.right, maxs, var, deps, parent_calls)
         options = [eval_basic_op(l, n.op, r) for l in ls for r in rs]
 
     elif type(n) is c_ast.Constant:

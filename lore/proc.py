@@ -1,7 +1,5 @@
 from __future__ import print_function
-
 from pycparser import c_generator
-
 from proc_ast_parser import ProcASTParser
 from proc_code_transformer import ProcCodeTransformer
 from proc_utils import split_code, save_max_dims, ParseException
@@ -22,12 +20,17 @@ def main():
     if not os.path.isdir(proc_path):
         os.makedirs(proc_path)
 
-    for file_name in os.listdir(orig_path):
+    dirs = os.listdir(orig_path)
+    n_dirs = len(dirs)
+    parsed = 0
+    failed = 0
+
+    for i, file_name in enumerate(dirs):
         try:
-            if not file_name.endswith("3_1205.c"):
+            if not file_name.endswith(".c"):
                 continue
 
-            print('Parsing %s' % file_name)
+            print('[' + str(i + 1) + '/' + str(n_dirs) + '] Parsing %s' % file_name)
 
             file_path = os.path.join(orig_path, file_name)
             file_name = str(file_name[:-2])

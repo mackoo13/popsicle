@@ -43,6 +43,7 @@ def main():
                 pp.analyse()
                 pp.remove_modifiers(['extern', 'restrict'])
                 pp.add_pragma_unroll()
+                pp.add_papi()
                 pp.gen_mallocs()
 
                 generator = c_generator.CGenerator()
@@ -54,8 +55,6 @@ def main():
                 pt.add_pragma_macro()
 
                 pt.arr_to_ptr_decl(pp.dtypes, pp.dims)
-                pt.add_papi()
-                pt.sub_loop_header()
                 pt.remove_bound_decl(pp.bounds, pp.dtypes)
 
                 code = includes + code
