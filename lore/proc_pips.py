@@ -43,6 +43,7 @@ def main():
 
                         pp = ProcASTParser(preproc_code, verbose, allow_struct=True)
                         pp.remove_modifiers(['extern'])
+                        pp.single_to_compound()
                         pp.main_to_loop()
 
                         generator = c_generator.CGenerator()
@@ -55,8 +56,6 @@ def main():
                         pt_orig.rename_main()
 
                         code = pt.includes + '\n\n' + pt_orig.code + '\n\n' + code_main
-
-                        # print('\n\n\n\n', code)
 
                         with open(file_path[:-2] + '_wombat.c', 'w') as fout:
                             fout.write(code)

@@ -121,7 +121,7 @@ class AssignmentVisitor(c_ast.NodeVisitor):
 
             right_est = estimate(right, self.maxs)
 
-            if type(left) is c_ast.ID and right_est is not None:
+            if type(left) is c_ast.ID and len(right_est) > 0:
                 if left.name in self.maxs:
                     self.maxs[left.name].update(right_est)
                 else:
@@ -409,7 +409,6 @@ def estimate(n, maxs=None, var=None, deps=None):
     :param maxs: A map containing possible upper bound of variables
     :return: C expression that will evaluate to the maximal possible value of the input expression.
     """
-
     if maxs is None:
         maxs = {}
 
@@ -471,46 +470,6 @@ def eval_basic_op(l, op, r):
             return str(l_num * r_num)
 
     return l + op + r
-
-
-def main_to_loop(node):
-    """
-    todo
-    :param node:
-    :return:
-    """
-    decl = node.decl
-    body = node.body
-
-    # todo move
-    SingleToCompoundVisitor().visit(node)
-
-    if decl.name == 'main':
-        decl.name = 'loop'
-
-        if type(decl.type) is c_ast.FuncDecl:
-            decl.type.args = c_ast.ParamList([
-                build_decl('set', 'int'),
-                build_decl('values', 'long_long*'),
-                build_decl('begin', 'clock_t*'),
-                build_decl('end', 'clock_t*'),
-            ])
-            decl.type.type.declname = 'loop'
-
-        if type(body) is c_ast.Compound:
-            papi_start = c_ast.FuncCall(c_ast.ID('PAPI_start'), c_ast.ParamList([c_ast.ID('set')]))
-            papi_stop = c_ast.FuncCall(c_ast.ID('PAPI_stop'),
-                                       c_ast.ParamList([c_ast.ID('set'), c_ast.ID('values')]))
-            exec_start = c_ast.FuncCall(c_ast.ID('exec'), c_ast.ParamList([papi_start]))
-            exec_stop = c_ast.FuncCall(c_ast.ID('exec'), c_ast.ParamList([papi_stop]))
-
-            clock = c_ast.FuncCall(c_ast.ID('clock'), c_ast.ParamList([]))
-            begin_clock = c_ast.Assignment('=', c_ast.UnaryOp('*', c_ast.ID('begin')), clock)
-            end_clock = c_ast.Assignment('=', c_ast.UnaryOp('*', c_ast.ID('end')), clock)
-
-            body.block_items.insert(0, exec_start)
-            body.block_items.insert(1, begin_clock)
-            CompoundInsertBeforeVisitor('Return', [end_clock, exec_stop]).visit(body)
 
 
 def remove_non_extreme_numbers(s, leave_min=True):

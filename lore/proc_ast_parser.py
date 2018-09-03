@@ -4,7 +4,7 @@ from malloc_builder import MallocBuilder
 from proc_utils import remove_non_extreme_numbers, estimate, \
     ArrayRefVisitor, ForVisitor, AssignmentVisitor, ArrType, StructVisitor, \
     ArrayDeclVisitor, VarTypeVisitor, ForPragmaUnrollVisitor, RemoveModifiersVisitor, \
-    FindFuncVisitor, main_to_loop, CompoundInsertBeforeVisitor, ForDepthCounter
+    FindFuncVisitor, CompoundInsertBeforeVisitor, ForDepthCounter, SingleToCompoundVisitor, build_decl
 import math
 
 
@@ -37,9 +37,6 @@ class ProcASTParser:
         """
         Inserts a fragment initializing program parameters into the code.
         The actual values should be injected at compilation time (-D option in gcc)
-        :param mallocs: C code (as string)
-        :param bounds:
-        :return: Transformed code
         """
         inits = [c_ast.Assignment('=', c_ast.ID(n), c_ast.ID('PARAM_' + n)) for n in self.bounds]
         self.main.body.block_items[0:0] = inits
@@ -118,7 +115,38 @@ class ProcASTParser:
                 self.main.body.block_items[0:0] = mb.alloc_and_init()
 
     def main_to_loop(self):
-        main_to_loop(self.main)
+        """
+        todo
+        """
+        decl = self.main.decl
+        body = self.main.body
+
+        if decl.name == 'main':
+            decl.name = 'loop'
+
+            if type(decl.type) is c_ast.FuncDecl:
+                decl.type.args = c_ast.ParamList([
+                    build_decl('set', 'int'),
+                    build_decl('values', 'long_long*'),
+                    build_decl('begin', 'clock_t*'),
+                    build_decl('end', 'clock_t*'),
+                ])
+                decl.type.type.declname = 'loop'
+
+            if type(body) is c_ast.Compound:
+                papi_start = c_ast.FuncCall(c_ast.ID('PAPI_start'), c_ast.ParamList([c_ast.ID('set')]))
+                papi_stop = c_ast.FuncCall(c_ast.ID('PAPI_stop'),
+                                           c_ast.ParamList([c_ast.ID('set'), c_ast.ID('values')]))
+                exec_start = c_ast.FuncCall(c_ast.ID('exec'), c_ast.ParamList([papi_start]))
+                exec_stop = c_ast.FuncCall(c_ast.ID('exec'), c_ast.ParamList([papi_stop]))
+
+                clock = c_ast.FuncCall(c_ast.ID('clock'), c_ast.ParamList([]))
+                begin_clock = c_ast.Assignment('=', c_ast.UnaryOp('*', c_ast.ID('begin')), clock)
+                end_clock = c_ast.Assignment('=', c_ast.UnaryOp('*', c_ast.ID('end')), clock)
+
+                body.block_items.insert(0, exec_start)
+                body.block_items.insert(1, begin_clock)
+                CompoundInsertBeforeVisitor('Return', [end_clock, exec_stop]).visit(body)
 
     def print_debug_info(self):
         print('maxs: ', self.maxs)
@@ -129,3 +157,6 @@ class ProcASTParser:
 
     def remove_modifiers(self, modifiers_to_remove):
         RemoveModifiersVisitor(modifiers_to_remove).visit(self.ast)
+
+    def single_to_compound(self):
+        SingleToCompoundVisitor().visit(self.main)
