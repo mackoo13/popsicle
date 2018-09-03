@@ -1,7 +1,10 @@
 from __future__ import print_function
+
+from pycparser import c_generator
+
 from proc_ast_parser import ProcASTParser
 from proc_code_transformer import ProcCodeTransformer
-from proc_utils import split_code, gen_mallocs, save_max_dims, add_bounds_init, ParseException
+from proc_utils import split_code, save_max_dims, ParseException
 import argparse
 import os
 
@@ -21,7 +24,7 @@ def main():
 
     for file_name in os.listdir(orig_path):
         try:
-            if not file_name.endswith(".c"):
+            if not file_name.endswith("c_2242.c"):
                 continue
 
             print('Parsing %s' % file_name)
@@ -34,19 +37,20 @@ def main():
                 code = fin.read()
                 includes, code = split_code(code)
 
-                pp = ProcASTParser(code, verbose)
+                pp = ProcASTParser(code, verbose, main_name='loop')
                 pp.analyse()
                 pp.remove_modifiers(['extern', 'restrict'])
+                pp.gen_mallocs()
+                pp.add_bounds_init()
+
+                generator = c_generator.CGenerator()
+                code = generator.visit(pp.ast)
 
                 pt = ProcCodeTransformer(includes, code)
                 pt.add_includes()
 
-                mallocs = gen_mallocs(pp.refs, pp.dtypes)
-                mallocs = add_bounds_init(mallocs, pp.bounds)
-
                 pt.arr_to_ptr_decl(pp.dtypes, pp.dims)
                 pt.add_papi()
-                pt.add_mallocs(mallocs)
                 pt.sub_loop_header()
 
                 code = pt.includes + pt.code

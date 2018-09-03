@@ -1,7 +1,7 @@
 from __future__ import print_function
 from pycparser import c_generator
 from proc_code_transformer import ProcCodeTransformer
-from proc_utils import split_code, gen_mallocs, save_max_dims, ParseException
+from proc_utils import split_code, save_max_dims, ParseException
 from proc_ast_parser import ProcASTParser
 import os
 import argparse
@@ -43,6 +43,7 @@ def main():
                 pp.analyse()
                 pp.remove_modifiers(['extern', 'restrict'])
                 pp.add_pragma_unroll()
+                pp.gen_mallocs()
 
                 generator = c_generator.CGenerator()
                 code = generator.visit(pp.ast)
@@ -52,11 +53,8 @@ def main():
                 pt.add_includes()
                 pt.add_pragma_macro()
 
-                mallocs = gen_mallocs(pp.refs, pp.dtypes)
-
                 pt.arr_to_ptr_decl(pp.dtypes, pp.dims)
                 pt.add_papi()
-                pt.add_mallocs(mallocs)
                 pt.sub_loop_header()
                 pt.remove_bound_decl(pp.bounds, pp.dtypes)
 

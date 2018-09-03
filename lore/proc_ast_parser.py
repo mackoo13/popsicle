@@ -1,4 +1,6 @@
 from pycparser import c_ast, c_parser
+
+from malloc_builder import MallocBuilder
 from proc_utils import remove_non_extreme_numbers, estimate, \
     ArrayRefVisitor, ForVisitor, AssignmentVisitor, ArrType, StructVisitor, \
     ArrayDeclVisitor, VarTypeVisitor, ForPragmaUnrollVisitor, RemoveModifiersVisitor, \
@@ -31,6 +33,17 @@ class ProcASTParser:
             if sv.contains_struct:
                 print('\tSkipping - file contains struct')
 
+    def add_bounds_init(self):
+        """
+        Inserts a fragment initializing program parameters into the code.
+        The actual values should be injected at compilation time (-D option in gcc)
+        :param mallocs: C code (as string)
+        :param bounds:
+        :return: Transformed code
+        """
+        inits = [c_ast.Assignment('=', c_ast.ID(n), c_ast.ID('PARAM_' + n)) for n in self.bounds]
+        self.main.body.block_items[0:0] = inits
+
     def add_pragma_unroll(self):
         """
         todo
@@ -54,9 +67,11 @@ class ProcASTParser:
 
         ArrayRefVisitor(self.refs, self.maxs).visit(self.ast)
 
-        deps = {}
         for arr in self.refs:
-            self.refs[arr] = [set([estimate(r, self.maxs, arr, deps) for r in ref]) for ref in self.refs[arr]]
+            new_refs = []
+            for ref in self.refs[arr]:
+                new_refs.append(estimate(ref, self.maxs, arr))
+            self.refs[arr] = new_refs
 
         ArrType(self.dtypes).visit(self.ast)
         ArrayDeclVisitor(self.dtypes, self.dims).visit(self.ast)
@@ -93,6 +108,14 @@ class ProcASTParser:
         max_param = min(max_param_arr, max_param_loop)
 
         return max_param, max_arr_dim
+
+    def gen_mallocs(self):
+        for arr in self.refs:
+            ref = self.refs[arr]
+
+            if arr in self.dtypes:
+                mb = MallocBuilder(arr, self.dtypes[arr], ref)
+                self.main.body.block_items[0:0] = mb.alloc_and_init()
 
     def main_to_loop(self):
         main_to_loop(self.main)

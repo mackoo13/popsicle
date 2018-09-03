@@ -60,7 +60,6 @@ class ArrayRefVisitor(c_ast.NodeVisitor):
         self.maxs = maxs
 
     def visit_ArrayRef(self, node):
-        var = node.name.name
         sub = node.subscript
 
         # new refs to merge with the old ones
@@ -68,15 +67,17 @@ class ArrayRefVisitor(c_ast.NodeVisitor):
 
         while type(node.name) is c_ast.ArrayRef:
             s_eval = estimate(node.name.subscript)
-            if s_eval is not None:
-                refs.append({s_eval})
+            if len(s_eval) > 0:
+                refs.insert(0, s_eval)
             node = node.name
+
+        var = node.name.name
 
         if var in self.refs:
             for old_ref, new_ref in zip(self.refs[var], refs):
                 old_ref.update(new_ref)
         else:
-            self.refs[estimate(var)] = refs
+            self.refs[var] = refs
 
 
 # noinspection PyPep8Naming
@@ -122,9 +123,9 @@ class AssignmentVisitor(c_ast.NodeVisitor):
 
             if type(left) is c_ast.ID and right_est is not None:
                 if left.name in self.maxs:
-                    self.maxs[left.name].add(right_est)
+                    self.maxs[left.name].update(right_est)
                 else:
-                    self.maxs[left.name] = {right_est}
+                    self.maxs[left.name] = right_est
 
 
 # noinspection PyPep8Naming,PyMethodMayBeStatic
@@ -267,10 +268,10 @@ class ForVisitor(c_ast.NodeVisitor):
         if type(v) is not c_ast.ID:
             return
 
-        if v.name in self.maxs and m_eval is not None:
-            self.maxs[v.name].add(m_eval)
+        if v.name in self.maxs and len(m_eval) > 0:
+            self.maxs[v.name].update(m_eval)
         else:
-            self.maxs[v.name] = {m_eval}
+            self.maxs[v.name] = m_eval
 
         id_visitor = FindAllVarsVisitor()
         id_visitor.visit(m)
@@ -391,20 +392,6 @@ class VarTypeVisitor(c_ast.NodeVisitor):
         self.dtypes[n] = t
 
 
-def add_bounds_init(mallocs, bounds):
-    """
-    Inserts a fragment initializing program parameters into the code.
-    The actual values should be injected at compilation time (-D option in gcc)
-    :param mallocs: C code (as string)
-    :param bounds:
-    :return: Transformed code
-    """
-    inits = [n + ' = PARAM_' + n.upper() + ';' for n in bounds]
-    inits = '\n'.join(inits)
-    mallocs = inits + '\n\n' + mallocs
-    return mallocs
-
-
 def build_decl(var_name, var_type):
     type_decl = c_ast.TypeDecl(var_name, [], c_ast.IdentifierType([var_type]))
     return c_ast.Decl(var_name, [], [], [], type_decl, None, None)
@@ -422,55 +409,47 @@ def estimate(n, maxs=None, var=None, deps=None):
     :param maxs: A map containing possible upper bound of variables
     :return: C expression that will evaluate to the maximal possible value of the input expression.
     """
+
     if maxs is None:
         maxs = {}
 
     if deps is None:
         deps = {}
 
-    options = estimate_options(n, maxs, var, deps)
+    if type(n) is set or type(n) is list:
+        options = []
+        for ni in n:
+            options.extend(estimate(ni, maxs, var, deps))
 
-    if len(deps) > 0:
-        deps_values = reduce(lambda a, b: a | b, deps.values())
-        raise ParseException('Variable-dependent array size detected: ' + ','.join(deps_values))
+    elif type(n) is str:
+        options = maxs[n] if n in maxs else [n]
 
-    options = remove_non_extreme_numbers(options)
-    return max_set(options)
-
-
-def estimate_options(n, maxs=None, var=None, deps=None):
-    """
-    Given an expression, this function attempts to find a list of possible expressions representing its upper bound.
-    :param var: Name of the variable being estimated
-    :param deps:
-    :param n: An expression given as a c_ast object or a string
-    :param maxs: maxs: A map containing possible upper bound of variables
-    :return: List of expressions that might evaluate to the maximal possible value of the input expression.
-    """
-    if maxs is None:
-        maxs = {}
-
-    if deps is None:
-        deps = {}
-
-    if type(n) is str:
-        return maxs[n] if n in maxs else [n]
-    if type(n) is c_ast.ID:
+    elif type(n) is c_ast.ID:
         if var is not None and n.name not in maxs:
             if var in deps:
                 deps[var].add(n.name)
             else:
                 deps[var] = {n.name}
 
-        return estimate_options(n.name, maxs, var, deps)
+        options = estimate(n.name, maxs, var, deps)
+
     elif type(n) is c_ast.BinaryOp:
-        ls = estimate_options(n.left, maxs, var, deps)
-        rs = estimate_options(n.right, maxs, var, deps)
-        return [eval_basic_op(l, n.op, r) for l in ls for r in rs]
+        ls = estimate(n.left, maxs, var, deps)
+        rs = estimate(n.right, maxs, var, deps)
+        options = [eval_basic_op(l, n.op, r) for l in ls for r in rs]
+
     elif type(n) is c_ast.Constant:
-        return [n.value]
+        options = [n.value]
+
     else:
-        return []
+        options = []
+
+    if len(deps) > 0:
+        deps_values = reduce(lambda a, b: a | b, deps.values())
+        raise ParseException('Variable-dependent array size detected: ' + ','.join(deps_values))
+
+    options = remove_non_extreme_numbers(options)
+    return set(options)
 
 
 def eval_basic_op(l, op, r):
@@ -492,26 +471,6 @@ def eval_basic_op(l, op, r):
             return str(l_num * r_num)
 
     return l + op + r
-
-
-def gen_mallocs(refs, dtypes):
-    """
-    Generates a C code section containing all arrays' memory allocation and initialization.
-    :param refs:
-    :param dtypes: (map: array_name: str -> data type: str)
-    :return:
-    """
-    res = ''
-    for arr in refs:
-        ref = refs[arr]
-
-        if arr in dtypes:
-            sizes = [max_set(size) for size in ref]
-            sizes = [s for s in sizes if s is not None]
-            if len(sizes) > 0:
-                res += malloc(arr, dtypes[arr], sizes, 0)
-
-    return res
 
 
 def main_to_loop(node):
@@ -554,89 +513,6 @@ def main_to_loop(node):
             CompoundInsertBeforeVisitor('Return', [end_clock, exec_stop]).visit(body)
 
 
-def malloc(name, dtype, sizes, dim):
-    """
-    Generates C code for array memory allocation and random initialization.
-    For multidimensional arrays, the function is called recursively for each dimension.
-    A constant of 2 is added to the size for safety.
-
-    Example 1:
-        malloc('A', 'int', ['N+42'], 0)
-        ->
-        A = malloc((N+42+2)*sizeof(int));
-        for(int i_0=0; i_0<N+42+2; ++i_0) {
-            A[i_0] = (int)rand();
-        }
-
-    Example 2:
-        malloc('A', 'int', ['M', 'N'], 0)
-        ->
-        A = malloc((M+2)*sizeof(*int))
-        for(int i_0=0; i_0<M+2; ++i_0) {
-            A[i_0] = malloc((N+2)*sizeof(int))
-            for(int i_0=0; i_0<N+2; ++i_0) {
-                A[i_0][i_1] = (int)rand();
-            }
-        }
-
-    todo check examples
-
-    :param name: Array name
-    :param dtype: Array data type
-    :param sizes: List of dimensions sizes (as strings)
-    :param dim: Index of currently processed dimension
-    :return: C code (as string)
-    """
-    size = sizes[dim]
-
-    indices = ['i_' + str(n) for n in range(dim + 1)]
-    indices_in_brackets = ['[' + i + ']' for i in indices]
-    i = indices[-1]
-
-    inds = ''.join(indices_in_brackets[:-1])
-    ptr_asterisks = '*'*(len(sizes) - dim - 1)
-    res = '\t' * dim
-    res += '%s%s = malloc((%s+2) * sizeof(%s%s));\n' % \
-           (name, inds, size, dtype, ptr_asterisks)
-
-    res += '\t' * dim
-    res += 'for(int %s=0; %s<%s+2; ++%s) {\n' % \
-           (i, i, size, i)
-
-    if dim < len(sizes) - 1:
-        res += malloc(name, dtype, sizes, dim + 1)
-    else:
-        inds = ''.join(indices_in_brackets)
-        res += '\t' * (dim + 1)
-        res += '%s%s = (%s)rand();\n' % (name, inds, dtype)
-
-    res += '\t' * dim
-    res += '}\n'
-
-    return res
-
-
-def max_set(s):
-    """
-    Transforms an iterable of expressions into a C expression which will evalueate to its maximum.
-    MAX(x, y) macro must be included to the C program.
-    If there are multiple integer values in the iterable, only the greatest one is preserved
-    (see remove_non_extreme_numbers)
-
-    Example: ['3', '6', '7', 'N', 'K'] -> 'MAX(MAX(7, N), 'K')'
-    :param s: An iterable of expressions as strings
-    :return: Output string
-    """
-    s2 = remove_non_extreme_numbers(s, leave_min=False)
-
-    if len(s2) == 0:
-        return None
-    if len(s2) == 1:
-        return s2[0]
-    else:
-        return reduce((lambda a, b: 'MAX(' + a + ', ' + b + ')'), s2)
-
-
 def remove_non_extreme_numbers(s, leave_min=True):
     """
     Remove from an iterable all numbers which are neither minimal or maximal.
@@ -653,7 +529,7 @@ def remove_non_extreme_numbers(s, leave_min=True):
     s2 = []
 
     for n in s:
-        if n is not None and n.isdecimal():
+        if type(n) is str and n.isdecimal():
             n_num = int(n)
             min_num = min(min_num, n_num)
             max_num = max(max_num, n_num)

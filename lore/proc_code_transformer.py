@@ -19,13 +19,6 @@ class ProcCodeTransformer:
         if define_max:
             self.includes += '#define MAX(x, y) (((x) > (y)) ? (x) : (y))\n'
 
-    def add_mallocs(self, mallocs):
-        """
-        Inserts generated arrays allocation and initialization section.
-        :param mallocs: Generated C code (as string)
-        """
-        self.code = re.sub(r'(void loop\(\)\s*{)', r'\1\n\n' + mallocs, self.code)
-
     def add_papi(self):
         """
         Adds PAPI instructions in the places indicated by #pragma.
