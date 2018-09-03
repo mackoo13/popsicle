@@ -4,7 +4,7 @@ from malloc_builder import MallocBuilder
 from proc_utils import remove_non_extreme_numbers, estimate, \
     ArrayRefVisitor, ForVisitor, AssignmentVisitor, ArrType, StructVisitor, \
     ArrayDeclVisitor, VarTypeVisitor, ForPragmaUnrollVisitor, RemoveModifiersVisitor, \
-    FindFuncVisitor, CompoundInsertBeforeVisitor, ForDepthCounter, SingleToCompoundVisitor, build_decl
+    FindFuncVisitor, CompoundInsertNextToVisitor, ForDepthCounter, SingleToCompoundVisitor, build_decl, ParseException
 import math
 
 
@@ -31,7 +31,7 @@ class ProcASTParser:
             sv = StructVisitor()
             sv.visit(self.ast)
             if sv.contains_struct:
-                print('\tSkipping - file contains struct')
+                raise ParseException('Skipping - file contains struct')
 
     def add_bounds_init(self):
         """
@@ -41,6 +41,30 @@ class ProcASTParser:
         inits = [c_ast.Assignment('=', c_ast.ID(n), c_ast.ID('PARAM_' + n)) for n in self.bounds]
         self.main.body.block_items[0:0] = inits
 
+    def add_papi(self):
+        """
+        todo
+        """
+        body = self.main.body
+
+        self.change_loop_signature()
+
+        if type(body) is c_ast.Compound:
+            papi_start = c_ast.FuncCall(c_ast.ID('PAPI_start'), c_ast.ParamList([c_ast.ID('set')]))
+            papi_stop = c_ast.FuncCall(c_ast.ID('PAPI_stop'),
+                                       c_ast.ParamList([c_ast.ID('set'), c_ast.ID('values')]))
+            exec_start = c_ast.FuncCall(c_ast.ID('exec'), c_ast.ParamList([papi_start]))
+            exec_stop = c_ast.FuncCall(c_ast.ID('exec'), c_ast.ParamList([papi_stop]))
+
+            clock = c_ast.FuncCall(c_ast.ID('clock'), c_ast.ParamList([]))
+            begin_clock = c_ast.Assignment('=', c_ast.UnaryOp('*', c_ast.ID('begin')), clock)
+            end_clock = c_ast.Assignment('=', c_ast.UnaryOp('*', c_ast.ID('end')), clock)
+
+            CompoundInsertNextToVisitor('before', 'Pragma', [exec_start, begin_clock],
+                                        properties={'string': 'scop'}).visit(body)
+            CompoundInsertNextToVisitor('after', 'Pragma', [end_clock, exec_stop],
+                                        properties={'string': 'endscop'}).visit(body)
+
     def add_pragma_unroll(self):
         """
         todo
@@ -49,7 +73,7 @@ class ProcASTParser:
         ForPragmaUnrollVisitor(1, res).visit(self.ast)
         if res[0] == 1:
             pragma = c_ast.FuncCall(c_ast.ID('PRAGMA'), c_ast.ExprList([c_ast.ID('PRAGMA_UNROLL')]))
-            CompoundInsertBeforeVisitor('For', [pragma]).visit(self.ast)
+            CompoundInsertNextToVisitor('before', 'For', [pragma]).visit(self.ast)
 
     def analyse(self):
         """
@@ -78,6 +102,18 @@ class ProcASTParser:
 
         if self.verbose:
             self.print_debug_info()
+
+    def change_loop_signature(self):
+        decl = self.main.decl
+
+        if type(decl.type) is c_ast.FuncDecl:
+            decl.type.args = c_ast.ParamList([
+                build_decl('set', 'int'),
+                build_decl('values', 'long_long*'),
+                build_decl('begin', 'clock_t*'),
+                build_decl('end', 'clock_t*'),
+            ])
+            decl.type.type.declname = 'loop'
 
     def for_depth(self):
         """
@@ -124,14 +160,7 @@ class ProcASTParser:
         if decl.name == 'main':
             decl.name = 'loop'
 
-            if type(decl.type) is c_ast.FuncDecl:
-                decl.type.args = c_ast.ParamList([
-                    build_decl('set', 'int'),
-                    build_decl('values', 'long_long*'),
-                    build_decl('begin', 'clock_t*'),
-                    build_decl('end', 'clock_t*'),
-                ])
-                decl.type.type.declname = 'loop'
+            self.change_loop_signature()
 
             if type(body) is c_ast.Compound:
                 papi_start = c_ast.FuncCall(c_ast.ID('PAPI_start'), c_ast.ParamList([c_ast.ID('set')]))
@@ -146,7 +175,7 @@ class ProcASTParser:
 
                 body.block_items.insert(0, exec_start)
                 body.block_items.insert(1, begin_clock)
-                CompoundInsertBeforeVisitor('Return', [end_clock, exec_stop]).visit(body)
+                CompoundInsertNextToVisitor('before', 'Return', [end_clock, exec_stop]).visit(body)
 
     def print_debug_info(self):
         print('maxs: ', self.maxs)

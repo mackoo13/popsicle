@@ -19,22 +19,6 @@ class ProcCodeTransformer:
         if define_max:
             self.includes += '#define MAX(x, y) (((x) > (y)) ? (x) : (y))\n'
 
-    def add_papi(self):
-        """
-        Adds PAPI instructions in the places indicated by #pragma.
-        """
-        self.code, scop_count = re.subn(
-            r'(#pragma scop\s+)', r'\1exec(PAPI_start(set));\n*begin = clock();\n',
-            self.code)
-
-        self.code, endscop_count = re.subn(
-            r'(\s+#pragma endscop\s+)', r'\n*end = clock();\nexec(PAPI_stop(set, values));\1return 0;\n',
-            self.code)
-
-        if scop_count != 1 or endscop_count != 1:
-            raise Exception('Exactly one "#pragma scop" and one "#pragma endscop" expected - found ' +
-                            str(scop_count) + ' and ' + str(endscop_count) + ' correspondingly.')
-
     def add_pragma_macro(self):
         """
         todo
@@ -71,15 +55,3 @@ class ProcCodeTransformer:
 
     def rename_main(self):
         self.code = re.sub(r'\bmain\(', 'main_original(', self.code)
-
-    def sub_loop_header(self):
-        """
-        Transforms the loop function header.
-        """
-        self.code, count = re.subn(
-            r'void loop\(\)', 'int loop(int set, long_long* values, clock_t* begin, clock_t* end)',
-            self.code)
-        self.code = re.sub(r'return\s*;', 'return 0;', self.code)   # todo same in pp
-
-        if count == 0:
-            raise Exception('No "void loop()" function found')

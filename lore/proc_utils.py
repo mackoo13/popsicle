@@ -129,14 +129,19 @@ class AssignmentVisitor(c_ast.NodeVisitor):
 
 
 # noinspection PyPep8Naming,PyMethodMayBeStatic
-class CompoundInsertBeforeVisitor(c_ast.NodeVisitor):
+class CompoundInsertNextToVisitor(c_ast.NodeVisitor):
     """
     todo
     todo what if contains another compound?
     """
-    def __init__(self, c_ast_type_name, items):
+    def __init__(self, where, c_ast_type_name, items, properties=None):
+        if where not in ('before', 'after'):
+            raise ValueError('CompoundInsertNextToVisitor: \'where\' must be wither \'before\' or \'after\'')
+
+        self.properties = properties if properties is not None else {}
         self.c_ast_type_name = c_ast_type_name
         self.items = items
+        self.where = where
 
     def visit_Compound(self, node):
         items = node.block_items
@@ -144,7 +149,13 @@ class CompoundInsertBeforeVisitor(c_ast.NodeVisitor):
 
         for i, item in enumerate(items):
             if type(item).__name__ == self.c_ast_type_name:
-                indices.append(i)
+                valid = True
+                for prop_k, prop_v in self.properties.items():
+                    if not hasattr(item, prop_k) or getattr(item, prop_k) != prop_v:
+                        valid = False
+
+                if valid:
+                    indices.append(i if self.where == 'before' else i + 1)
 
         # important: indices must be sorted in descending order to preserve indices while new items are inserted
         for i in indices[::-1]:

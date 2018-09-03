@@ -24,7 +24,7 @@ def main():
 
     for file_name in os.listdir(orig_path):
         try:
-            if not file_name.endswith("c_2242.c"):
+            if not file_name.endswith("3_1205.c"):
                 continue
 
             print('Parsing %s' % file_name)
@@ -40,6 +40,7 @@ def main():
                 pp = ProcASTParser(code, verbose, main_name='loop')
                 pp.analyse()
                 pp.remove_modifiers(['extern', 'restrict'])
+                pp.add_papi()
                 pp.gen_mallocs()
                 pp.add_bounds_init()
 
@@ -48,10 +49,7 @@ def main():
 
                 pt = ProcCodeTransformer(includes, code)
                 pt.add_includes()
-
                 pt.arr_to_ptr_decl(pp.dtypes, pp.dims)
-                pt.add_papi()
-                pt.sub_loop_header()
 
                 code = pt.includes + pt.code
 
