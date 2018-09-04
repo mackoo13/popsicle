@@ -2,9 +2,10 @@ from pycparser import c_ast, c_parser
 
 from malloc_builder import MallocBuilder
 from proc_utils import remove_non_extreme_numbers, estimate, \
-    ArrayRefVisitor, ForVisitor, AssignmentVisitor, ArrType, StructVisitor, \
-    ArrayDeclVisitor, VarTypeVisitor, ForPragmaUnrollVisitor, RemoveModifiersVisitor, \
-    FindFuncVisitor, CompoundInsertNextToVisitor, ForDepthCounter, SingleToCompoundVisitor, build_decl, ParseException
+    ArrayRefVisitor, ForVisitor, AssignmentVisitor, PtrDeclVisitor, StructVisitor, \
+    ArrayDeclVisitor, VarTypeVisitor, ForPragmaUnrollVisitor, DeclRemoveModifiersVisitor, \
+    FuncDefFindVisitor, CompoundInsertNextToVisitor, ForDepthCounter, SingleToCompoundVisitor, build_decl, \
+    ParseException, ReturnIntVisitor
 import math
 
 
@@ -20,9 +21,9 @@ class ProcASTParser:
         astparser = c_parser.CParser()
         self.ast = astparser.parse(code)
 
-        ffv = FindFuncVisitor(main_name)
+        ffv = FuncDefFindVisitor(main_name)
         ffv.visit(self.ast)
-        self.main = ffv.main
+        self.main = ffv.res
 
         if verbose:
             self.ast.show()
@@ -94,7 +95,7 @@ class ProcASTParser:
                 new_refs.append(estimate(ref, self.maxs, arr))
             self.refs[arr] = new_refs
 
-        ArrType(self.dtypes).visit(self.ast)
+        PtrDeclVisitor(self.dtypes).visit(self.ast)
         ArrayDeclVisitor(self.dtypes, self.dims).visit(self.ast)
         VarTypeVisitor(self.dtypes).visit(self.ast)
 
@@ -185,7 +186,10 @@ class ProcASTParser:
         print('dims: ', self.dims)
 
     def remove_modifiers(self, modifiers_to_remove):
-        RemoveModifiersVisitor(modifiers_to_remove).visit(self.ast)
+        DeclRemoveModifiersVisitor(modifiers_to_remove).visit(self.ast)
+
+    def return_int(self):
+        ReturnIntVisitor().visit(self.main)
 
     def single_to_compound(self):
         SingleToCompoundVisitor().visit(self.main)

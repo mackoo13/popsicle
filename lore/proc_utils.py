@@ -145,27 +145,27 @@ class CompoundInsertNextToVisitor(c_ast.NodeVisitor):
 
     def visit_Compound(self, node):
         items = node.block_items
-        indices = []
+        found_indices = []
 
         for i, item in enumerate(items):
             if type(item).__name__ == self.c_ast_type_name:
-                valid = True
+                properties_match = True
                 for prop_k, prop_v in self.properties.items():
                     if not hasattr(item, prop_k) or getattr(item, prop_k) != prop_v:
-                        valid = False
+                        properties_match = False
 
-                if valid:
-                    indices.append(i if self.where == 'before' else i + 1)
+                if properties_match:
+                    found_indices.append(i if self.where == 'before' else i + 1)
 
         # important: indices must be sorted in descending order to preserve indices while new items are inserted
-        for i in indices[::-1]:
+        for i in found_indices[::-1]:
             items[i:i] = self.items
 
         c_ast.NodeVisitor.generic_visit(self, node)
 
 
 # noinspection PyPep8Naming,PyMethodMayBeStatic
-class RemoveModifiersVisitor(c_ast.NodeVisitor):
+class DeclRemoveModifiersVisitor(c_ast.NodeVisitor):
     """
     todo
     """
@@ -224,7 +224,7 @@ class ForPragmaUnrollVisitor(c_ast.NodeVisitor):
                 node.stmt = c_ast.Compound([node.stmt])
 
             if type(node.stmt) is c_ast.Compound:
-                # note: can be also called after c_ast.For case (above)
+                # note: can also be called after c_ast.For case (above)
                 items = node.stmt.block_items
                 for_index = None
 
@@ -260,54 +260,54 @@ class ForVisitor(c_ast.NodeVisitor):
         self.bounds = bounds
 
     def visit_For(self, node):
-        n = node.next
-        c = node.cond
+        nxt = node.next
+        cond = node.cond
 
-        if type(c) is not c_ast.BinaryOp:
+        if type(cond) is not c_ast.BinaryOp:
             raise ParseException('Unknown format of for loop condition ("i < N" or alike expected)')
 
-        if type(n) is not c_ast.UnaryOp and type(n) is not c_ast.Assignment:
+        if type(nxt) is not c_ast.UnaryOp and type(nxt) is not c_ast.Assignment:
             raise ParseException('Unknown format of for loop increment (UnaryOp or Assignment expected)')
 
-        if n.op not in ('p++', '++', '+=', 'p--', '--', '-='):
-            raise ParseException('Unknown format of for loop increment ("++" or "+=" expected, "' + n.op + '" found)')
+        if nxt.op not in ('p++', '++', '+=', 'p--', '--', '-='):
+            raise ParseException('Unknown format of for loop increment ("++" or "+=" expected, "' + nxt.op + '" found)')
 
-        v = c.left
-        m = c.right
-        m_eval = estimate(m)
+        counter = cond.left
+        bound = cond.right
+        bound_eval = estimate(bound)
 
-        if type(v) is not c_ast.ID:
+        if type(counter) is not c_ast.ID:
             return
 
-        if v.name in self.maxs and len(m_eval) > 0:
-            self.maxs[v.name].update(m_eval)
+        if counter.name in self.maxs and len(bound_eval) > 0:
+            self.maxs[counter.name].update(bound_eval)
         else:
-            self.maxs[v.name] = m_eval
+            self.maxs[counter.name] = bound_eval
 
-        id_visitor = FindAllVarsVisitor()
-        id_visitor.visit(m)
-        for n in id_visitor.names:
-            self.bounds.add(n)
+        id_visitor = IDVisitor()
+        id_visitor.visit(bound)
+        for nxt in id_visitor.names:
+            self.bounds.add(nxt)
 
         c_ast.NodeVisitor.generic_visit(self, node)
 
 
 # noinspection PyPep8Naming,PyPep8Naming
-class FindFuncVisitor(c_ast.NodeVisitor):
+class FuncDefFindVisitor(c_ast.NodeVisitor):
     """
     todo
     """
     def __init__(self, name):
         self.name = name
-        self.main = None
+        self.res = None
 
     def visit_FuncDef(self, node):
         if node.decl.name == self.name:
-            self.main = node
-        
+            self.res = node
+
 
 # noinspection PyPep8Naming
-class FindAllVarsVisitor(c_ast.NodeVisitor):
+class IDVisitor(c_ast.NodeVisitor):
     """
     Finds all variables used in an expression.
 
@@ -319,12 +319,11 @@ class FindAllVarsVisitor(c_ast.NodeVisitor):
 
     def visit_ID(self, node):
         self.names.add(node.name)
-
         c_ast.NodeVisitor.generic_visit(self, node)
 
 
 # noinspection PyPep8Naming
-class ArrType(c_ast.NodeVisitor):
+class PtrDeclVisitor(c_ast.NodeVisitor):
     """
     Used to determine the arrays data types.
     This visitor handles pointers declarations only. For bracket syntax declarations see ArrayDeclVisitor.
@@ -341,10 +340,23 @@ class ArrType(c_ast.NodeVisitor):
         while type(type_node) is c_ast.PtrDecl:
             type_node = type_node.type
 
-        n = type_node.declname
-        t = ' '.join(type_node.type.names)
+        var_name = type_node.declname
+        var_type = ' '.join(type_node.type.names)
 
-        self.dtypes[n] = t
+        self.dtypes[var_name] = var_type
+
+
+# noinspection PyPep8Naming,PyMethodMayBeStatic
+class ReturnIntVisitor(c_ast.NodeVisitor):
+    """
+    todo
+    """
+    def __init__(self):
+        pass
+
+    def visit_Return(self, node):
+        if type(node.expr) is not c_ast.Constant:
+            node.expr = c_ast.Constant('int', '0')
 
 
 # noinspection PyPep8Naming,PyMethodMayBeStatic
@@ -355,12 +367,15 @@ class SingleToCompoundVisitor(c_ast.NodeVisitor):
     def __init__(self):
         pass
 
-    def visit_DoWhile(self, node):
-        self.visit_For(node)
-
-    def visit_For(self, node):
+    def generic_visit_loop(self, node):
         if type(node.stmt) is not c_ast.Compound:
             node.stmt = c_ast.Compound([node.stmt])
+
+    def visit_DoWhile(self, node):
+        self.generic_visit_loop(node)
+
+    def visit_For(self, node):
+        self.generic_visit_loop(node)
 
     def visit_If(self, node):
         if type(node.iftrue) is not c_ast.Compound:
@@ -369,7 +384,7 @@ class SingleToCompoundVisitor(c_ast.NodeVisitor):
             node.iffalse = c_ast.Compound([node.iffalse])
 
     def visit_While(self, node):
-        self.visit_For(node)
+        self.generic_visit_loop(node)
 
 
 # noinspection PyPep8Naming
@@ -397,10 +412,10 @@ class VarTypeVisitor(c_ast.NodeVisitor):
         self.dtypes = dtypes
 
     def visit_TypeDecl(self, node):
-        n = node.declname
-        t = ' '.join(node.type.names)
+        var_name = node.declname
+        var_type = ' '.join(node.type.names)
 
-        self.dtypes[n] = t
+        self.dtypes[var_name] = var_type
 
 
 def build_decl(var_name, var_type):
@@ -415,11 +430,11 @@ def estimate(n, maxs=None, var=None, deps=None, parent_calls=None):
     the minimal size of an array based on the source code.
     If there is more than one expression that might be the maximum (e.g. variable-dependent or too complicated to be
     calculated here), all possible options are enclosed in MAX macro and left to be determined by C compiler.
-    :param parent_calls:
-    :param var:
-    :param deps:
     :param n: An expression given as a c_ast object or a string
     :param maxs: A map containing possible upper bound of variables
+    :param var:
+    :param deps:
+    :param parent_calls:
     :return: C expression that will evaluate to the maximal possible value of the input expression.
     """
     if maxs is None:
@@ -505,22 +520,22 @@ def remove_non_extreme_numbers(s, leave_min=True):
     """
     max_num = float('-inf')
     min_num = 0
-    s2 = []
+    res = []
 
-    for n in s:
-        if type(n) is str and n.isdecimal():
-            n_num = int(n)
-            min_num = min(min_num, n_num)
-            max_num = max(max_num, n_num)
-        elif n is not None:
-            s2.append(n)
+    for el in s:
+        if type(el) is str and el.isdecimal():
+            el_num = int(el)
+            min_num = min(min_num, el_num)
+            max_num = max(max_num, el_num)
+        elif el is not None:
+            res.append(el)
 
     if max_num > 0:
-        s2.append(str(max_num))
+        res.append(str(max_num))
     if leave_min and min_num > 0 and min_num != max_num:
-        s2.append(str(min_num))
+        res.append(str(min_num))
 
-    return s2
+    return res
 
 
 def remove_comments(code):
@@ -534,11 +549,6 @@ def remove_comments(code):
 
 
 def remove_inline(code):
-    """
-
-    :param code:
-    :return:
-    """
     code = re.sub(' __inline__ ', ' ', code)
     return code
 

@@ -16,7 +16,9 @@ class ProcCodeTransformer:
         self.includes += '#include <papi.h>\n'
         self.includes += '#include <time.h>\n'
         # todo
-        self.includes += '#include "' + os.path.abspath(os.path.dirname(sys.argv[0])) + '/../papi/papi_utils.h"\n'
+        current_dir = os.path.dirname(sys.argv[0])
+        self.includes += '#include "' + os.path.abspath(os.path.join(current_dir, '../papi/papi_utils.h')) + '"\n'
+        # todo move
         if define_max:
             self.includes += '#define MAX(x, y) (((x) > (y)) ? (x) : (y))\n'
 
@@ -56,3 +58,4 @@ class ProcCodeTransformer:
 
     def rename_main(self):
         self.code = re.sub(r'\bmain\(', 'main_original(', self.code)
+        self.code = re.sub(r'\n\s*(main_original\()', 'int \1', self.code)

@@ -12,7 +12,7 @@ if [ -z "$PIPS_PROC_PATH" ]; then echo "Invalid config (PIPS_PROC_PATH) missing!
 if [ -z "$PAPI_OUT_DIR" ]; then echo "Invalid config (PAPI_OUT_DIR) missing!"; exit 1; fi
 
 readonly trials=1
-readonly out_file=${PAPI_OUT_DIR}$1.csv
+readonly out_file=${PAPI_OUT_DIR}pips/$1.csv
 
 ${current_dir}/init.sh
 

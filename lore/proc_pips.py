@@ -45,6 +45,7 @@ def main():
                         pp.remove_modifiers(['extern'])
                         pp.single_to_compound()
                         pp.main_to_loop()
+                        pp.return_int()
 
                         generator = c_generator.CGenerator()
                         code_main = generator.visit(pp.main)
