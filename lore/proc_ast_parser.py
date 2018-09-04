@@ -38,7 +38,7 @@ class ProcASTParser:
         Inserts a fragment initializing program parameters into the code.
         The actual values should be injected at compilation time (-D option in gcc)
         """
-        inits = [c_ast.Assignment('=', c_ast.ID(n), c_ast.ID('PARAM_' + n)) for n in self.bounds]
+        inits = [c_ast.Assignment('=', c_ast.ID(n), c_ast.ID('PARAM_' + n.upper())) for n in self.bounds]
         self.main.body.block_items[0:0] = inits
 
     def add_papi(self):

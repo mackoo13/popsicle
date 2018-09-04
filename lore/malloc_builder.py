@@ -102,7 +102,11 @@ class MallocBuilder:
 
     def for_loop(self, depth):
         i = self.counter_prefix + str(depth)
-        init = c_ast.Assignment('=', c_ast.ID(i), c_ast.ID('0'))
+        init = c_ast.DeclList([c_ast.Decl(
+            c_ast.ID(i), [], [], [],
+            c_ast.TypeDecl(i, [], c_ast.ID('int')),
+            c_ast.Constant('int', '0'), ''
+        )])
         cond = c_ast.BinaryOp('<', c_ast.ID(i), self.sizes[depth])
         nxt = c_ast.Assignment('++', c_ast.ID(i), None)
         stmt = c_ast.Compound([])

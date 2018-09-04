@@ -22,7 +22,7 @@ echo ",time" >> ${out_file}
 
 for path in `find ${LORE_PROC_PATH} -iname '*.c'`; do
     name=`basename "${path%.*}"`
-N
+
     file_prefix=${LORE_PROC_PATH}/${name}/${name}
 
     if [ -e ${file_prefix}_params.txt ]; then
