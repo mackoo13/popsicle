@@ -39,6 +39,29 @@ class ArrayDeclVisitor(c_ast.NodeVisitor):
             self.dtypes[var] = ' '.join(node.type.type.names)
 
 
+# noinspection PyPep8Naming,PyMethodMayBeStatic
+class ArrayDeclToPtrVisitor(c_ast.NodeVisitor):
+    def __init__(self, dims):
+        self.dims = dims
+
+    def visit_FileAST(self, node):
+        for i, item in enumerate(node.ext):
+            if type(item) is not c_ast.Decl or type(item.type) is not c_ast.ArrayDecl:
+                continue
+
+            type_decl = item.type
+
+            while type(type_decl) is c_ast.ArrayDecl:
+                type_decl = type_decl.type
+
+            dim = self.dims[type_decl.declname]
+
+            decl_node = type_decl
+            for _ in range(dim):
+                decl_node = c_ast.PtrDecl([], decl_node)
+            node.ext[i].type = decl_node
+
+
 # noinspection PyPep8Naming
 class ArrayRefVisitor(c_ast.NodeVisitor):
     """

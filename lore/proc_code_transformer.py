@@ -28,19 +28,6 @@ class ProcCodeTransformer:
         """
         self.includes += '#define PRAGMA(p) _Pragma(p)\n'
 
-    def arr_to_ptr_decl(self, dtypes, dims):
-        """
-        Replaces all fixed-size array declarations with pointer declarations.
-
-        Example; 'int A[42][42];' -> 'int** A;'
-        :param dtypes: (map: array_name: str -> data type: str)
-        :param dims: A map from fixed-length arrays to their dimensions (map: array_name: str -> data type: str[])
-        """
-        for arr in dims:
-            self.code = re.sub(
-                r'(' + dtypes[arr] + ')\s+(' + arr + ').*;', r'\1' + '*' * dims[arr] + ' ' + arr + ';',
-                self.code)
-
     def remove_bound_decl(self, bounds, dtypes):
         """
         todo

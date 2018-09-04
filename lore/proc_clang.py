@@ -45,6 +45,7 @@ def main():
                 pp.add_pragma_unroll()
                 pp.add_papi()
                 pp.gen_mallocs()
+                pp.arr_to_ptr_decl()
 
                 generator = c_generator.CGenerator()
                 code = generator.visit(pp.ast)
@@ -54,7 +55,6 @@ def main():
                 pt.add_includes()
                 pt.add_pragma_macro()
 
-                pt.arr_to_ptr_decl(pp.dtypes, pp.dims)
                 pt.remove_bound_decl(pp.bounds, pp.dtypes)
 
                 code = includes + code

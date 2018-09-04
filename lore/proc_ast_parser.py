@@ -5,7 +5,7 @@ from proc_utils import remove_non_extreme_numbers, estimate, \
     ArrayRefVisitor, ForVisitor, AssignmentVisitor, PtrDeclVisitor, StructVisitor, \
     ArrayDeclVisitor, VarTypeVisitor, ForPragmaUnrollVisitor, DeclRemoveModifiersVisitor, \
     FuncDefFindVisitor, CompoundInsertNextToVisitor, ForDepthCounter, SingleToCompoundVisitor, build_decl, \
-    ParseException, ReturnIntVisitor
+    ParseException, ReturnIntVisitor, ArrayDeclToPtrVisitor
 import math
 
 
@@ -103,6 +103,9 @@ class ProcASTParser:
 
         if self.verbose:
             self.print_debug_info()
+
+    def arr_to_ptr_decl(self):
+        ArrayDeclToPtrVisitor(self.dims).visit(self.ast)
 
     def change_loop_signature(self):
         decl = self.main.decl

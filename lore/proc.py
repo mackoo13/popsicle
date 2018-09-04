@@ -46,13 +46,13 @@ def main():
                 pp.add_papi()
                 pp.gen_mallocs()
                 pp.add_bounds_init()
+                pp.arr_to_ptr_decl()
 
                 generator = c_generator.CGenerator()
                 code = generator.visit(pp.ast)
 
                 pt = ProcCodeTransformer(includes, code)
                 pt.add_includes()
-                pt.arr_to_ptr_decl(pp.dtypes, pp.dims)
 
                 code = pt.includes + pt.code
 
