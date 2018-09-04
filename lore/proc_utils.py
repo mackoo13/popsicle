@@ -287,13 +287,13 @@ class ForVisitor(c_ast.NodeVisitor):
         cond = node.cond
 
         if type(cond) is not c_ast.BinaryOp:
-            raise ParseException('Unknown format of for loop condition ("i < N" or alike expected)')
+            raise ParseException('Unsupported format of for loop condition ("i < N" or alike expected)')
 
         if type(nxt) is not c_ast.UnaryOp and type(nxt) is not c_ast.Assignment:
-            raise ParseException('Unknown format of for loop increment (UnaryOp or Assignment expected)')
+            raise ParseException('Unsupported format of for loop increment (UnaryOp or Assignment expected)')
 
         if nxt.op not in ('p++', '++', '+=', 'p--', '--', '-='):
-            raise ParseException('Unknown format of for loop increment ("++" or "+=" expected, "' + nxt.op + '" found)')
+            raise ParseException('Unsupported format of for loop increment ("++" or "+=" expected, "' + nxt.op + '" found)')
 
         counter = cond.left
         bound = cond.right

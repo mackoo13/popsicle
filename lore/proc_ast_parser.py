@@ -150,6 +150,10 @@ class ProcASTParser:
         for arr in self.refs:
             ref = self.refs[arr]
 
+            for dim_size in ref:
+                if len(dim_size) == 0:
+                    raise ParseException('Unknown dimensions of array ' + arr)
+
             if arr in self.dtypes:
                 mb = MallocBuilder(arr, self.dtypes[arr], ref)
                 self.main.body.block_items[0:0] = mb.alloc_and_init()
