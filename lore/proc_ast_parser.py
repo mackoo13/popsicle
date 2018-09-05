@@ -5,7 +5,7 @@ from proc_utils import remove_non_extreme_numbers, estimate, \
     ArrayRefVisitor, ForVisitor, AssignmentVisitor, PtrDeclVisitor, StructVisitor, \
     ArrayDeclVisitor, VarTypeVisitor, ForPragmaUnrollVisitor, DeclRemoveModifiersVisitor, \
     FuncDefFindVisitor, CompoundInsertNextToVisitor, ForDepthCounter, SingleToCompoundVisitor, build_decl, \
-    ParseException, ReturnIntVisitor, ArrayDeclToPtrVisitor
+    ParseException, ReturnIntVisitor, ArrayDeclToPtrVisitor, papi_instr
 import math
 
 
@@ -51,19 +51,11 @@ class ProcASTParser:
         self.change_loop_signature()
 
         if type(body) is c_ast.Compound:
-            papi_start = c_ast.FuncCall(c_ast.ID('PAPI_start'), c_ast.ParamList([c_ast.ID('set')]))
-            papi_stop = c_ast.FuncCall(c_ast.ID('PAPI_stop'),
-                                       c_ast.ParamList([c_ast.ID('set'), c_ast.ID('values')]))
-            exec_start = c_ast.FuncCall(c_ast.ID('exec'), c_ast.ParamList([papi_start]))
-            exec_stop = c_ast.FuncCall(c_ast.ID('exec'), c_ast.ParamList([papi_stop]))
+            papi_begin, papi_end = papi_instr()
 
-            clock = c_ast.FuncCall(c_ast.ID('clock'), c_ast.ParamList([]))
-            begin_clock = c_ast.Assignment('=', c_ast.UnaryOp('*', c_ast.ID('begin')), clock)
-            end_clock = c_ast.Assignment('=', c_ast.UnaryOp('*', c_ast.ID('end')), clock)
-
-            CompoundInsertNextToVisitor('before', 'Pragma', [exec_start, begin_clock],
+            CompoundInsertNextToVisitor('before', 'Pragma', papi_begin,
                                         properties={'string': 'scop'}).visit(body)
-            CompoundInsertNextToVisitor('after', 'Pragma', [end_clock, exec_stop],
+            CompoundInsertNextToVisitor('after', 'Pragma', papi_end,
                                         properties={'string': 'endscop'}).visit(body)
 
     def add_pragma_unroll(self):

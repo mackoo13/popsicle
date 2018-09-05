@@ -539,6 +539,20 @@ def exprs_sum(exprs):
     return reduce(lambda a, b: c_ast.BinaryOp('+', a, b), exprs)
 
 
+def papi_instr():
+    papi_start = c_ast.FuncCall(c_ast.ID('PAPI_start'), c_ast.ParamList([c_ast.ID('set')]))
+    papi_stop = c_ast.FuncCall(c_ast.ID('PAPI_stop'),
+                               c_ast.ParamList([c_ast.ID('set'), c_ast.ID('values')]))
+    exec_start = c_ast.FuncCall(c_ast.ID('exec'), c_ast.ParamList([papi_start]))
+    exec_stop = c_ast.FuncCall(c_ast.ID('exec'), c_ast.ParamList([papi_stop]))
+
+    clock = c_ast.FuncCall(c_ast.ID('clock'), c_ast.ParamList([]))
+    begin_clock = c_ast.Assignment('=', c_ast.UnaryOp('*', c_ast.ID('begin')), clock)
+    end_clock = c_ast.Assignment('=', c_ast.UnaryOp('*', c_ast.ID('end')), clock)
+
+    return [exec_start, begin_clock], [end_clock, exec_stop]
+
+
 def remove_non_extreme_numbers(s, leave_min=True):
     """
     Remove from an iterable all numbers which are neither minimal or maximal.
