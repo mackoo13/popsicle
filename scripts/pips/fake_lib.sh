@@ -5,12 +5,12 @@ for path in `find ${PIPS_PROC_PATH} -iname '*_preproc.c'`; do
 done
 
 for path in `find ${PIPS_PROC_PATH} -maxdepth 2 -iname '*.c' -not -iname '*_preproc.c' -not -iname '*_wombat.c'`; do
-    if ! grep -q 'main(' "${path}"; then
+    if ! grep -q 'main(\|main (' "${path}"; then
         echo "Skipping ${path} (no main function)"
         continue
     fi
 
-    if ! grep -q 'for(' "${path}"; then
+    if ! grep -q 'for(\|for (' "${path}"; then
         echo "Skipping ${path} (no for loop)"
         continue
     fi

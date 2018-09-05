@@ -1,5 +1,5 @@
 from pycparser import c_ast
-from proc_utils import remove_non_extreme_numbers
+from proc_utils import remove_non_extreme_numbers, exprs_prod
 
 
 def max_set(s):
@@ -64,10 +64,11 @@ class MallocBuilder:
     :return: C code (as string)
     """
 
-    def __init__(self, name, dtype, sizes):
-        self.sizes = [max_set(s) for s in sizes]
-        self.dtype = c_ast.ID(dtype)
+    def __init__(self, name, dtype, sizes, initialiser='rand'):
         self.name = name
+        self.dtype = c_ast.ID(dtype)
+        self.sizes = [max_set(s) for s in sizes]
+        self.initialiser = self.polybench_init if initialiser == 'polybench' else self.rand_init
         self.counter_prefix = 'i_' if not name.startswith('i_') else 'i' + name
 
     def alloc_and_init(self):
@@ -87,6 +88,12 @@ class MallocBuilder:
         subs = [c_ast.ID(self.counter_prefix + str(i)) for i in range(depth)]
         return c_ast.Assignment('=', self.array_ref(subs), self.malloc(depth))
 
+    def polybench_init(self, depth):
+        subs = [c_ast.ID(self.counter_prefix + str(i)) for i in range(depth)]
+        left = self.array_ref(subs)
+        right = c_ast.Cast(self.dtype, c_ast.BinaryOp('/', exprs_prod(subs), self.sizes[0]))    # todo 0?
+        return c_ast.Assignment('=', left, right)
+
     def rand_init(self, depth):
         subs = [c_ast.ID(self.counter_prefix + str(i)) for i in range(depth)]
         left = self.array_ref(subs)
@@ -97,8 +104,8 @@ class MallocBuilder:
         if len(subs) == 0:
             return c_ast.ID(self.name)
         else:
-            sub = subs.pop()
-            return c_ast.ArrayRef(self.array_ref(subs), sub)
+            sub = subs[-1]  # todo not tested
+            return c_ast.ArrayRef(self.array_ref(subs[:-1]), sub)
 
     def for_loop(self, depth):
         i = self.counter_prefix + str(depth)
@@ -114,6 +121,6 @@ class MallocBuilder:
         if depth < len(self.sizes) - 1:
             stmt.block_items = [self.malloc_assign(depth + 1), self.for_loop(depth + 1)]
         else:
-            stmt.block_items = [self.rand_init(depth + 1)]
+            stmt.block_items = [self.initialiser(depth + 1)]
 
         return c_ast.For(init, cond, nxt, stmt)

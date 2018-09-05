@@ -293,7 +293,8 @@ class ForVisitor(c_ast.NodeVisitor):
             raise ParseException('Unsupported format of for loop increment (UnaryOp or Assignment expected)')
 
         if nxt.op not in ('p++', '++', '+=', 'p--', '--', '-='):
-            raise ParseException('Unsupported format of for loop increment ("++" or "+=" expected, "' + nxt.op + '" found)')
+            raise ParseException(
+                'Unsupported format of for loop increment ("++" or "+=" expected, "' + nxt.op + '" found)')
 
         counter = cond.left
         bound = cond.right
@@ -528,6 +529,14 @@ def eval_basic_op(l, op, r):
             return str(l_num * r_num)
 
     return l + op + r
+
+
+def exprs_prod(exprs):
+    return reduce(lambda a, b: c_ast.BinaryOp('*', a, b), exprs)
+
+
+def exprs_sum(exprs):
+    return reduce(lambda a, b: c_ast.BinaryOp('+', a, b), exprs)
 
 
 def remove_non_extreme_numbers(s, leave_min=True):
