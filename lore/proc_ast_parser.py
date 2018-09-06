@@ -1,11 +1,13 @@
+from typing import Iterable
+
 from pycparser import c_ast, c_parser
 
 from malloc_builder import MallocBuilder
 from proc_utils import remove_non_extreme_numbers, estimate, \
     ArrayRefVisitor, ForVisitor, AssignmentVisitor, PtrDeclVisitor, StructVisitor, \
     ArrayDeclVisitor, VarTypeVisitor, ForPragmaUnrollVisitor, DeclRemoveModifiersVisitor, \
-    FuncDefFindVisitor, CompoundInsertNextToVisitor, ForDepthCounter, SingleToCompoundVisitor, build_decl, \
-    ParseException, ReturnIntVisitor, ArrayDeclToPtrVisitor, papi_instr
+    FuncDefFindVisitor, CompoundInsertNextToVisitor, ForDepthCounter, SingleToCompoundVisitor, \
+    ParseException, ReturnIntVisitor, ArrayDeclToPtrVisitor, papi_instr, pragma_unroll, loop_func_params
 import math
 
 
@@ -44,7 +46,7 @@ class ProcASTParser:
 
     def add_papi(self):
         """
-        todo
+        Inserts code responsible for starting PAPI and making PAPI and execution time measurements
         """
         body = self.main.body
 
@@ -60,17 +62,17 @@ class ProcASTParser:
 
     def add_pragma_unroll(self):
         """
-        todo
+        Inserts #pragma statement defining the type of unrolling next to every innermost loop
         """
-        res = [0]
-        ForPragmaUnrollVisitor(1, res).visit(self.ast)
-        if res[0] == 1:
-            pragma = c_ast.FuncCall(c_ast.ID('PRAGMA'), c_ast.ExprList([c_ast.ID('PRAGMA_UNROLL')]))
-            CompoundInsertNextToVisitor('before', 'For', [pragma]).visit(self.ast)
+        fpuv = ForPragmaUnrollVisitor()
+        fpuv.visit(self.ast)
+
+        if fpuv.depth == 1:
+            CompoundInsertNextToVisitor('before', 'For', [pragma_unroll()]).visit(self.ast)
 
     def analyse(self):
         """
-        Extract useful information from AST tree
+        Extracts useful information from AST tree
         """
 
         ForVisitor(self.maxs, self.bounds).visit(self.ast)
@@ -97,28 +99,25 @@ class ProcASTParser:
             self.print_debug_info()
 
     def arr_to_ptr_decl(self):
+        """
+        Converts all arrays declared like 'int A[42]' to 'int* A'
+        """
         ArrayDeclToPtrVisitor(self.dims).visit(self.ast)
 
     def change_loop_signature(self):
+        """
+        Changes the self.main function signature to:
+            int loop(int set, long_long* values, clock_t* begin, clock_t* end)
+        """
+        if self.main is None:
+            raise ValueError
+
         decl = self.main.decl
+        decl.name = 'loop'
 
         if type(decl.type) is c_ast.FuncDecl:
-            decl.type.args = c_ast.ParamList([
-                build_decl('set', 'int'),
-                build_decl('values', 'long_long*'),
-                build_decl('begin', 'clock_t*'),
-                build_decl('end', 'clock_t*'),
-            ])
+            decl.type.args = loop_func_params()
             decl.type.type.declname = 'loop'
-
-    def for_depth(self):
-        """
-        Finds the maximal depth of nested for loops.
-        :return: Max depth
-        """
-        res = [0]
-        ForDepthCounter(1, res).visit(self.ast)
-        return res[0]
 
     def find_max_param(self):
         """
@@ -130,7 +129,7 @@ class ProcASTParser:
         """
         max_arr_dim = max([len(refs) for refs in self.refs.values()])
         arr_count = len(self.refs)
-        loop_depth = self.for_depth()
+        loop_depth = self.__for_depth()
 
         max_param_arr = math.pow(50000000 / arr_count, 1 / max_arr_dim)
         max_param_loop = math.pow(5000000000, 1 / loop_depth)
@@ -139,6 +138,9 @@ class ProcASTParser:
         return max_param, max_arr_dim
 
     def gen_mallocs(self):
+        """
+        Generates code responsible for array allocation and initialisation
+        """
         for arr in self.refs:
             ref = self.refs[arr]
 
@@ -154,28 +156,15 @@ class ProcASTParser:
         """
         todo
         """
-        decl = self.main.decl
+        self.change_loop_signature()
         body = self.main.body
 
-        if decl.name == 'main':
-            decl.name = 'loop'
+        if type(body) is c_ast.Compound:
+            [exec_start, begin_clock], [end_clock, exec_stop] = papi_instr()
 
-            self.change_loop_signature()
-
-            if type(body) is c_ast.Compound:
-                papi_start = c_ast.FuncCall(c_ast.ID('PAPI_start'), c_ast.ParamList([c_ast.ID('set')]))
-                papi_stop = c_ast.FuncCall(c_ast.ID('PAPI_stop'),
-                                           c_ast.ParamList([c_ast.ID('set'), c_ast.ID('values')]))
-                exec_start = c_ast.FuncCall(c_ast.ID('exec'), c_ast.ParamList([papi_start]))
-                exec_stop = c_ast.FuncCall(c_ast.ID('exec'), c_ast.ParamList([papi_stop]))
-
-                clock = c_ast.FuncCall(c_ast.ID('clock'), c_ast.ParamList([]))
-                begin_clock = c_ast.Assignment('=', c_ast.UnaryOp('*', c_ast.ID('begin')), clock)
-                end_clock = c_ast.Assignment('=', c_ast.UnaryOp('*', c_ast.ID('end')), clock)
-
-                body.block_items.insert(0, exec_start)
-                body.block_items.insert(1, begin_clock)
-                CompoundInsertNextToVisitor('before', 'Return', [end_clock, exec_stop]).visit(body)
+            body.block_items.insert(0, exec_start)
+            body.block_items.insert(1, begin_clock)
+            CompoundInsertNextToVisitor('before', 'Return', [end_clock, exec_stop]).visit(body)
 
     def print_debug_info(self):
         print('maxs: ', self.maxs)
@@ -184,11 +173,34 @@ class ProcASTParser:
         print('dtypes: ', self.dtypes)
         print('dims: ', self.dims)
 
-    def remove_modifiers(self, modifiers_to_remove):
+    def remove_modifiers(self, modifiers_to_remove: Iterable[str]):
+        """
+        todo does it work for restrict?
+        Removes all indicated modifiers from variable declarations (for example 'extern')
+        :param modifiers_to_remove:
+        """
         DeclRemoveModifiersVisitor(modifiers_to_remove).visit(self.ast)
 
     def return_int(self):
+        """
+        todo move to change_loop_signature?
+        Changes every 'return;' to 'return 0;'
+        """
         ReturnIntVisitor().visit(self.main)
 
     def single_to_compound(self):
+        """
+        Transforms single expressions to compounds where possible to facilitate parsing
+        """
         SingleToCompoundVisitor().visit(self.main)
+
+    # PRIVATE MEMBERS
+
+    def __for_depth(self):
+        """
+        Finds the maximal depth of nested for loops.
+        :return: Max depth
+        """
+        fdc = ForDepthCounter(1)
+        fdc.visit(self.ast)
+        return fdc.depth

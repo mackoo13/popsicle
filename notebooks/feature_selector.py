@@ -8,12 +8,26 @@ import numpy as np
 
 
 def adjust_r2(r2, n, k):
+    """
+    https://en.wikipedia.org/wiki/Coefficient_of_determination#Adjusted_R2
+    :param r2: R2 score (unadjusted yet)
+    :param n: Number of samples
+    :param k: Number of features
+    :return: Adjusted R2 score
+    """
     nom = (1 - r2) * (n-1)
     denom = n - k - 1
     return 1 - (nom / denom)
 
 
 def dim_sign(x, y, df):
+    """
+    todo
+    :param x:
+    :param y:
+    :param df:
+    :return:
+    """
     regr = RandomForestRegressor()
     regr.fit(x, y)
     res = [(i, col, imp) for i, (col, imp) in enumerate(zip(df.columns, regr.feature_importances_))]
@@ -22,6 +36,14 @@ def dim_sign(x, y, df):
 
 
 def calc_score(x, y, df, n_neighbors):
+    """
+    todo
+    :param x:
+    :param y:
+    :param df:
+    :param n_neighbors:
+    :return:
+    """
     clf = KNeighborsRegressor(n_neighbors=n_neighbors, weights='distance')
     clf.fit(x, y)
 
@@ -32,6 +54,15 @@ def calc_score(x, y, df, n_neighbors):
 
 
 def make_step_search(x, y, df, step, n_neighbors):
+    """
+    todo
+    :param x:
+    :param y:
+    :param df:
+    :param step:
+    :param n_neighbors:
+    :return:
+    """
     feats = set()
     left = dim_sign(x, y, df)[:, 0].astype(int)
     best = float('-infinity')
@@ -66,6 +97,9 @@ def remove_feats(x, y, df, feats, n_neighbors):
 
     while True:
         to_remove = None
+
+        if len(feats) == 1:
+            break
 
         for f in feats:
             new_feats = feats.copy()

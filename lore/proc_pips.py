@@ -51,7 +51,7 @@ def main():
                         code_main = generator.visit(pp.main)
 
                         pt = ProcCodeTransformer('', '')
-                        pt.add_includes(define_max=False)
+                        pt.add_includes()
 
                         pt_orig = ProcCodeTransformer('', orig_code)
                         pt_orig.rename_main()

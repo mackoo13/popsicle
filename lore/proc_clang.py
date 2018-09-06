@@ -53,6 +53,7 @@ def main():
                 pt = ProcCodeTransformer(includes, code)
                 pt.remove_pragma_semicolon()
                 pt.add_includes()
+                pt.add_max_macro()
                 pt.add_pragma_macro()
 
                 pt.remove_bound_decl(pp.bounds, pp.dtypes)

@@ -3,6 +3,8 @@ from functools import reduce
 import re
 import os
 # noinspection PyPep8Naming
+from typing import List, Mapping, Set, Iterable, Tuple
+
 from pycparser import c_ast
 
 
@@ -200,13 +202,12 @@ class DeclRemoveModifiersVisitor(c_ast.NodeVisitor):
 
 
 # noinspection PyPep8Naming
-class ForDepthCounter(c_ast.NodeVisitor):
+class ForDepthCounter(c_ast.NodeVisitor):   # todo check
     """
     Determines the maximal depth of nested for loops.
 
     Attributes:
-        count: int - accumulative counter, for each loop being equal to the number of parent loops
-        res: List[int, len=1] - result wrapped in a list to make it mutable
+        depth: int
 
     Example:
         Input:
@@ -215,34 +216,32 @@ class ForDepthCounter(c_ast.NodeVisitor):
                     for(...) {}
                 }
                 for(...) {} ...'
-            res: [0]
         Output:
-            res: [2]
+            depth: 2
     """
-    def __init__(self, count, res):
-        self.count = count
-        self.res = res
+    def __init__(self, depth=0):
+        self.depth = depth
 
     def visit_For(self, node):
-        counter = ForDepthCounter(self.count + 1, self.res)
-        counter.visit(node.stmt)
-        self.res[0] = max(self.count, self.res[0])
+        fdc = ForDepthCounter(self.depth + 1)
+        fdc.visit(node.stmt)
+        self.depth = max(self.depth, fdc.depth)
 
 
-# noinspection PyPep8Naming
-class ForPragmaUnrollVisitor(c_ast.NodeVisitor):
+# noinspection PyPep8Naming,PyMethodMayBeStatic
+class ForPragmaUnrollVisitor(c_ast.NodeVisitor):    # todo check, what if there is only one loop?
     """
     Inserts PRAGMA(PRAGMA_UNROLL) above the innermost for loop
     """
-    def __init__(self, count, res):
-        self.count = count
-        self.res = res
+    def __init__(self, depth=0):
+        self.depth = depth
 
     def visit_For(self, node):
-        counter = ForDepthCounter(self.count + 1, self.res)
-        counter.visit(node.stmt)
+        fpuv = ForPragmaUnrollVisitor(self.depth + 1)
+        fpuv.visit(node.stmt)
+        self.depth = max(self.depth, fpuv.depth)
 
-        if self.res[0] == self.count + 1:
+        if self.depth == 1:
             if type(node.stmt) is c_ast.For:
                 node.stmt = c_ast.Compound([node.stmt])
 
@@ -255,10 +254,7 @@ class ForPragmaUnrollVisitor(c_ast.NodeVisitor):
                     if type(item) is c_ast.For:
                         for_index = i
 
-                pragma = c_ast.FuncCall(c_ast.ID('PRAGMA'), c_ast.ExprList([c_ast.ID('PRAGMA_UNROLL')]))
-                items.insert(for_index, pragma)
-
-        self.res[0] = max(self.count, self.res[0])
+                items.insert(for_index, pragma_unroll())
 
 
 # noinspection PyPep8Naming
@@ -442,24 +438,28 @@ class VarTypeVisitor(c_ast.NodeVisitor):
         self.dtypes[var_name] = var_type
 
 
-def build_decl(var_name, var_type):
+def build_decl(var_name: str, var_type: str) -> c_ast.Decl:
     type_decl = c_ast.TypeDecl(var_name, [], c_ast.IdentifierType([var_type]))
     return c_ast.Decl(var_name, [], [], [], type_decl, None, None)
 
 
-def estimate(n, maxs=None, var=None, deps=None, parent_calls=None):
+def estimate(expr: any,
+             maxs: Mapping[str, Set[str]]=None,
+             var: str=None,
+             deps: Mapping[str, Set[str]]=None,
+             parent_calls: List[str]=None
+             ) -> Set[str]:
     """
-    todo
-    Attempts to find the greatest value that an expression might have. The primary use of this function is determining
-    the minimal size of an array based on the source code.
+    Attempts to find a set of expressions which *might* represent the maximal value of expr. The primary use of this
+    function is determining the size of an array based on its uses in the code.
     If there is more than one expression that might be the maximum (e.g. variable-dependent or too complicated to be
     calculated here), all possible options are enclosed in MAX macro and left to be determined by C compiler.
-    :param n: An expression given as a c_ast object or a string
-    :param maxs: A map containing possible upper bound of variables
+    :param expr: An expression to estimate
+    :param maxs: A map containing possible upper bounds for variables
     :param var:
     :param deps:
-    :param parent_calls:
-    :return: C expression that will evaluate to the maximal possible value of the input expression.
+    :param parent_calls: History of expressions from previous recurrent calls  - prevents infinite loop
+    :return: Set of C expressions whose maximum would evaluate to the maximal possible value of the input expression.
     """
     if maxs is None:
         maxs = {}
@@ -470,34 +470,34 @@ def estimate(n, maxs=None, var=None, deps=None, parent_calls=None):
     if parent_calls is None:
         parent_calls = []
 
-    if n in parent_calls:
-        return []
-    parent_calls.append(n)
+    if expr in parent_calls:
+        return set()
+    parent_calls.append(expr)
 
-    if type(n) is set or type(n) is list:
+    if type(expr) is set or type(expr) is list:
         options = []
-        for ni in n:
+        for ni in expr:
             options.extend(estimate(ni, maxs, var, deps, parent_calls))
 
-    elif type(n) is str:
-        options = maxs[n] if n in maxs else [n]
+    elif type(expr) is str:
+        options = maxs[expr] if expr in maxs else [expr]
 
-    elif type(n) is c_ast.ID:
-        if var is not None and n.name not in maxs:
+    elif type(expr) is c_ast.ID:
+        if var is not None and expr.name not in maxs:
             if var in deps:
-                deps[var].add(n.name)
+                deps[var].add(expr.name)
             else:
-                deps[var] = {n.name}
+                deps[var] = {expr.name}
 
-        options = estimate(n.name, maxs, var, deps, parent_calls)
+        options = estimate(expr.name, maxs, var, deps, parent_calls)
 
-    elif type(n) is c_ast.BinaryOp:
-        ls = estimate(n.left, maxs, var, deps, parent_calls)
-        rs = estimate(n.right, maxs, var, deps, parent_calls)
-        options = [eval_basic_op(l, n.op, r) for l in ls for r in rs]
+    elif type(expr) is c_ast.BinaryOp:
+        ls = estimate(expr.left, maxs, var, deps, parent_calls)
+        rs = estimate(expr.right, maxs, var, deps, parent_calls)
+        options = [eval_basic_op(l, expr.op, r) for l in ls for r in rs]
 
-    elif type(n) is c_ast.Constant:
-        options = [n.value]
+    elif type(expr) is c_ast.Constant:
+        options = [expr.value]
 
     else:
         options = []
@@ -510,7 +510,7 @@ def estimate(n, maxs=None, var=None, deps=None, parent_calls=None):
     return set(options)
 
 
-def eval_basic_op(l, op, r):
+def eval_basic_op(l: str, op: str, r: str) -> str:
     """
     Evaluate a basic arithmetic operation
     :param l: Left operand
@@ -531,15 +531,47 @@ def eval_basic_op(l, op, r):
     return l + op + r
 
 
-def exprs_prod(exprs):
+def exprs_prod(exprs: List[c_ast.Node]) -> c_ast.Node:
+    """
+    Product of a list of c_ast expressions
+    :param exprs: Expressions
+    :return: c_ast.Node representing the product
+    """
+    # noinspection PyTypeChecker
     return reduce(lambda a, b: c_ast.BinaryOp('*', a, b), exprs)
 
 
-def exprs_sum(exprs):
+def exprs_sum(exprs: List[c_ast.Node]) -> c_ast.Node:
+    """
+    Sum of a list of c_ast expressions
+    :param exprs: Expressions
+    :return: c_ast.Node representing the sum
+    """
+    # noinspection PyTypeChecker
     return reduce(lambda a, b: c_ast.BinaryOp('+', a, b), exprs)
 
 
-def papi_instr():
+def loop_func_params():
+    """
+    todo
+    """
+    return c_ast.ParamList([
+        build_decl('set', 'int'),
+        build_decl('values', 'long_long*'),
+        build_decl('begin', 'clock_t*'),
+        build_decl('end', 'clock_t*'),
+    ])
+
+
+def papi_instr() -> Tuple[List[c_ast.Node], List[c_ast.Node]]:
+    """
+    :return: c_ast nodes representing the following code:
+        exec(PAPI_start(set));
+        *begin = clock();
+        ...
+        *end = clock();
+        exec(PAPI_stop(set, values));
+    """
     papi_start = c_ast.FuncCall(c_ast.ID('PAPI_start'), c_ast.ParamList([c_ast.ID('set')]))
     papi_stop = c_ast.FuncCall(c_ast.ID('PAPI_stop'),
                                c_ast.ParamList([c_ast.ID('set'), c_ast.ID('values')]))
@@ -553,10 +585,18 @@ def papi_instr():
     return [exec_start, begin_clock], [end_clock, exec_stop]
 
 
-def remove_non_extreme_numbers(s, leave_min=True):
+def pragma_unroll() -> c_ast.FuncCall:
     """
-    Remove from an iterable all numbers which are neither minimal or maximal.
-    The function leaves all non-numeric elements in the iterable untouched.
+    :return: c_ast node representing the following code:
+        PRAGMA(PRAGMA_UNROLL);
+    """
+    return c_ast.FuncCall(c_ast.ID('PRAGMA'), c_ast.ExprList([c_ast.ID('PRAGMA_UNROLL')]))
+
+
+def remove_non_extreme_numbers(s: Iterable[str], leave_min=True) -> Iterable[str]:
+    """
+    Removes from an iterable all numbers which are neither minimal or maximal.
+    All non-numeric elements are left untouched.
     The order of elements might be different in the output.
 
     Example: ['3', '6', 'N', '7'] -> ['N', '3', '7']
@@ -584,9 +624,9 @@ def remove_non_extreme_numbers(s, leave_min=True):
     return res
 
 
-def remove_comments(code):
+def remove_comments(code: str) -> str:
     """
-
+    todo
     :param code:
     :return:
     """
@@ -594,12 +634,17 @@ def remove_comments(code):
     return code
 
 
-def remove_inline(code):
+def remove_inline(code: str) -> str:
+    """
+    todo
+    :param code:
+    :return:
+    """
     code = re.sub(' __inline__ ', ' ', code)
     return code
 
 
-def save_max_dims(proc_path, max_arr_dims):
+def save_max_dims(proc_path: str, max_arr_dims: Mapping[str, int]) -> None:
     """
     todo
     :param proc_path:
@@ -612,7 +657,7 @@ def save_max_dims(proc_path, max_arr_dims):
             fout.write(alg + ',' + str(dim) + '\n')
 
 
-def split_code(code):
+def split_code(code: str) -> Tuple[str, str]:
     """
     Splits code into the section containing macros and the rest of the code.
     :param code: C code (as string)

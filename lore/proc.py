@@ -53,6 +53,7 @@ def main():
 
                 pt = ProcCodeTransformer(includes, code)
                 pt.add_includes()
+                pt.add_max_macro()
 
                 code = pt.includes + pt.code
 

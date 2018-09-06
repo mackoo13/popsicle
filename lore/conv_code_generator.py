@@ -3,9 +3,36 @@ from pycparser import c_ast, c_generator
 import numpy as np
 from malloc_builder import MallocBuilder
 from proc_code_transformer import ProcCodeTransformer
-from proc_utils import exprs_sum, papi_instr, build_decl
+from proc_utils import exprs_sum, papi_instr, loop_func_params
 
 out_dir = os.path.join(os.environ['KERNEL_PATH'], 'conv')
+
+
+def for_loop(counter, bound, loop):
+    init = c_ast.DeclList([c_ast.Decl(
+        counter, [], [], [],
+        c_ast.TypeDecl(counter.name, [], c_ast.ID('int')),
+        c_ast.Constant('int', '1'), None
+    )])
+    cond = c_ast.BinaryOp('<', counter, c_ast.BinaryOp('-', c_ast.ID(bound), c_ast.Constant('int', '1')))
+    nxt = c_ast.Assignment('++', counter, None)
+    stmt = c_ast.Compound([loop])
+    loop = c_ast.For(init, cond, nxt, stmt)
+
+    return loop
+
+
+def loop_func_def(body):
+    func_decl = c_ast.FuncDecl(
+        loop_func_params(),
+        c_ast.TypeDecl('loop', [], c_ast.IdentifierType(['int']))
+    )
+    func_loop = c_ast.FuncDef(
+        c_ast.Decl('loop', [], [], [], func_decl, None, None),
+        [],
+        body
+    )
+    return func_loop
 
 
 def relative_subs(subs, offsets):
@@ -31,96 +58,45 @@ class ConvCodeGenerator:
         self.dtype = 'double'
         self.code = None
 
-    def array_decl(self):
-        type_decl = c_ast.TypeDecl(self.name, [], c_ast.IdentifierType([self.dtype]))
-
-        decl_node = type_decl
-        for _ in range(self.dims):
-            decl_node = c_ast.PtrDecl([], decl_node)
-
-        return c_ast.Decl(self.name, [], [], [], decl_node, None, None)
-
-    def array_ref(self, subs):
-        if len(subs) == 0:
-            return c_ast.ID(self.name)
-        else:
-            sub = subs[-1]
-            return c_ast.ArrayRef(self.array_ref(subs[:-1]), sub)
-
-    def conv_offsets(self):
-        mesh_args = [[-1, 0, 1]] * self.dims
-        mesh = np.meshgrid(*mesh_args)
-        return np.dstack(mesh).reshape(-1, self.dims)
-
     def generate(self):
         mb = MallocBuilder(self.name, self.dtype, self.bounds, initialiser='polybench')
-        mallocs = mb.alloc_and_init()
-        mallocs = c_ast.Compound(mallocs)
-
+        mallocs = c_ast.Compound(mb.alloc_and_init())
         papi_begin, papi_end = papi_instr()
 
-        offsets = self.conv_offsets()
+        offsets = self.__conv_offsets()
         subs = [c_ast.ID('i_' + str(dim)) for dim in range(self.dims)]
 
-        lvalue = self.array_ref(subs)
-        rvalue = exprs_sum([self.array_ref(relative_subs(subs, o)) for o in offsets])
+        lvalue = self.__array_ref(subs)
+        rvalue = exprs_sum([self.__array_ref(relative_subs(subs, o)) for o in offsets])
         loop = c_ast.Assignment('=', lvalue, rvalue)
 
         loop_counters = subs if self.reverse_loops_order else subs[::-1]
         loop_bounds = self.bounds if self.reverse_loops_order else self.bounds[::-1]    # todo check
-        for counter, bound in zip(loop_counters, loop_bounds):
-            init = c_ast.DeclList([c_ast.Decl(
-                counter, [], [], [],
-                c_ast.TypeDecl(counter.name, [], c_ast.ID('int')),
-                c_ast.Constant('int', '1'), None
-            )])
-            cond = c_ast.BinaryOp('<', counter, c_ast.BinaryOp('-', c_ast.ID(bound), c_ast.Constant('int', '1')))
-            nxt = c_ast.Assignment('++', counter, None)
-            stmt = c_ast.Compound([loop])
-            loop = c_ast.For(init, cond, nxt, stmt)
 
-        func_decl = c_ast.FuncDecl(c_ast.ParamList([
-            build_decl('set', 'int'),
-            build_decl('values', 'long_long*'),
-            build_decl('begin', 'clock_t*'),
-            build_decl('end', 'clock_t*'),
-        ]), c_ast.TypeDecl('loop', [], c_ast.IdentifierType(['int'])))
-        func_loop = c_ast.FuncDef(
-            c_ast.Decl('loop', [], [], [], func_decl, None, None),
-            [],
-            c_ast.Compound(mallocs.block_items + papi_begin + [loop] + papi_end)
-        )
+        for counter, bound in zip(loop_counters, loop_bounds):
+            loop = for_loop(counter, bound, loop)
+
+        func_loop = loop_func_def(c_ast.Compound(mallocs.block_items + papi_begin + [loop] + papi_end))
 
         gen = c_generator.CGenerator()
-        code = gen.visit(c_ast.FileAST([self.array_decl(), func_loop]))
+        code = gen.visit(c_ast.FileAST([self.__array_decl(), func_loop]))
 
         pt = ProcCodeTransformer('', code)
-        pt.add_includes(other_includes=['stdlib.h'], define_max=False)
+        pt.add_includes(other_includes=['stdlib.h'])
         self.code = pt.includes + pt.code
 
         return self.code
-
-    def max_param(self):
-        max_n_iters = 5000000000
-        max_n_loads = 200000000
-        max_n_cells = 100000000
-        n_arrays = 1    # todo
-
-        return int(min([
-            np.math.pow(max_n_iters, 1 / self.dims),
-            np.math.pow(max_n_cells / n_arrays, 1 / self.dims),
-            np.math.pow(max_n_loads, 1 / self.dims) / 3,
-        ]))
 
     def save(self):
         if self.code is None:
             raise ValueError
 
-        dir_name = 'd' + str(self.dims) + '_r' + str(1 if self.reverse_loops_order else 0)
+        dir_name = 'd' + str(self.dims) + '_r' + ('1' if self.reverse_loops_order else '0')
         dir_path = os.path.join(out_dir, dir_name)
         file_name = dir_name + '.c'
         max_param_file_name = dir_name + '_max_param.txt'
         params_names_file_name = dir_name + '_params_names.txt'
+
         if not os.path.isdir(dir_path):
             os.makedirs(dir_path)
 
@@ -129,14 +105,47 @@ class ConvCodeGenerator:
             print('Saved code to ' + file_name)
 
         with open(os.path.join(dir_path, max_param_file_name), 'w') as fout:
-            fout.write(str(self.max_param()))
+            fout.write(str(self.__max_param()))
 
         with open(os.path.join(dir_path, params_names_file_name), 'w') as fout:
             fout.write(','.join(self.bounds))
 
+    def __array_decl(self):
+        type_decl = c_ast.TypeDecl(self.name, [], c_ast.IdentifierType([self.dtype]))
+
+        decl_node = type_decl
+        for _ in range(self.dims):
+            decl_node = c_ast.PtrDecl([], decl_node)
+
+        return c_ast.Decl(self.name, [], [], [], decl_node, None, None)
+
+    def __array_ref(self, subs):
+        if len(subs) == 0:
+            return c_ast.ID(self.name)
+        else:
+            sub = subs[-1]
+            return c_ast.ArrayRef(self.__array_ref(subs[:-1]), sub)
+
+    def __conv_offsets(self):
+        mesh_args = [[-1, 0, 1]] * self.dims
+        mesh = np.meshgrid(*mesh_args)
+        return np.dstack(mesh).reshape(-1, self.dims)
+
+    def __max_param(self):
+        max_n_iters = 20000000000
+        max_n_loads = 1000000000
+        max_n_cells = 500000000
+        n_arrays = 1    # todo
+
+        return int(min([
+            np.math.pow(max_n_iters, 1 / self.dims),
+            np.math.pow(max_n_cells / n_arrays, 1 / self.dims),
+            np.math.pow(max_n_loads, 1 / self.dims) / 3,
+        ]))
+
 
 def main():
-    dimss = range(2, 4)
+    dimss = range(2, 5)
     revs = (True, False)
 
     for dims in dimss:

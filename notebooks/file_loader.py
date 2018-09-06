@@ -44,9 +44,10 @@ def df_sort_cols(df):
 
 
 def df_to_xy(df, drop_cols, y_col):
-    x = df.drop(drop_cols, axis=1).values
     y = df[y_col].values
-    return x, y
+    df = df.drop(drop_cols, axis=1)
+    x = df.values
+    return x, y, df
 
 
 def get_df_meta():
@@ -125,8 +126,8 @@ class FileLoader:
     def split_time(self):
         self.df_train, self.df_test = df_train_test_split(self.df)
 
-        self.x_train, self.y_train = df_to_xy(self.df_train, ['time'], 'time')
-        self.x_test, self.y_test = df_to_xy(self.df_test, ['time'], 'time')
+        self.x_train, self.y_train, self.df_train = df_to_xy(self.df_train, ['time'], 'time')
+        self.x_test, self.y_test, self.df_test = df_to_xy(self.df_test, ['time'], 'time')
 
         self.scale()
 
@@ -151,8 +152,10 @@ class FileLoader:
     def split_speedup(self):
         self.df_train, self.df_test = df_train_test_split(self.df)
 
-        self.x_train, self.y_train = df_to_xy(self.df_train, ['time_O0', 'time_O3', 'speedup', 'max_dim'], 'speedup')
-        self.x_test, self.y_test = df_to_xy(self.df_test, ['time_O0', 'time_O3', 'speedup', 'max_dim'], 'speedup')
+        self.x_train, self.y_train, self.df_train = df_to_xy(self.df_train,
+                                                             ['time_O0', 'time_O3', 'speedup', 'max_dim'], 'speedup')
+        self.x_test, self.y_test, self.df_test = df_to_xy(self.df_test,
+                                                          ['time_O0', 'time_O3', 'speedup', 'max_dim'], 'speedup')
 
         self.scale()
 
@@ -177,8 +180,10 @@ class FileLoader:
     def split_unroll(self):
         self.df_train, self.df_test = df_train_test_split(self.df)
 
-        self.x_train, self.y_train = df_to_xy(self.df_train, ['time_ur', 'time_nour', 'speedup', 'max_dim'], 'speedup')
-        self.x_test, self.y_test = df_to_xy(self.df_test, ['time_ur', 'time_nour', 'speedup', 'max_dim'], 'speedup')
+        self.x_train, self.y_train, self.df_train = df_to_xy(self.df_train,
+                                                             ['time_ur', 'time_nour', 'speedup', 'max_dim'], 'speedup')
+        self.x_test, self.y_test, self.df_test = df_to_xy(self.df_test,
+                                                          ['time_ur', 'time_nour', 'speedup', 'max_dim'], 'speedup')
 
         self.scale()
 
@@ -191,14 +196,16 @@ class FileLoader:
         algs = list(df.index.get_level_values(0))
         df = df_sort_cols(df)
         df['dims'] = [q.split('_')[0][1:] for q in algs]
+        df['dims'] = df['dims'].astype(float)
         df['rev'] = [q.split('_')[1][1:] for q in algs]
+        df['rev'] = df['rev'].astype(float)
 
         self.df = df
 
     def split_conv(self):
         self.df_train, self.df_test = df_train_test_split(self.df)
 
-        self.x_train, self.y_train = df_to_xy(self.df_train, ['dims'], 'rev')
-        self.x_test, self.y_test = df_to_xy(self.df_test, ['dims'], 'rev')
+        self.x_train, self.y_train, self.df_train = df_to_xy(self.df_train, ['dims', 'rev'], 'rev')
+        self.x_test, self.y_test, self.df_test = df_to_xy(self.df_test, ['dims', 'rev'], 'rev')
 
         self.scale()

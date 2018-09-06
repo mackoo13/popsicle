@@ -13,6 +13,18 @@ def max_set(s):
     :param s: An iterable of expressions as strings
     :return: Output string
     """
+
+    def max_set_recur(s):
+        if len(s) == 0:
+            return None
+        if len(s) == 1:
+            return s[0]
+        else:
+            half = int(len(s) / 2)
+            a = max_set_recur(s[:half])
+            b = max_set_recur(s[half:])
+            return c_ast.FuncCall(c_ast.ID('MAX'), c_ast.ExprList([a, b]))
+    
     if type(s) is str:
         return c_ast.ID(s)
 
@@ -20,18 +32,6 @@ def max_set(s):
     s = [c_ast.ID(e) for e in s]
 
     return max_set_recur(s)
-
-
-def max_set_recur(s):
-    if len(s) == 0:
-        return None
-    if len(s) == 1:
-        return s[0]
-    else:
-        half = int(len(s) / 2)
-        a = max_set_recur(s[:half])
-        b = max_set_recur(s[half:])
-        return c_ast.FuncCall(c_ast.ID('MAX'), c_ast.ExprList([a, b]))
 
 
 class MallocBuilder:
@@ -71,46 +71,46 @@ class MallocBuilder:
         self.name = name
         self.dtype = c_ast.ID(dtype)
         self.sizes = [max_set(s) for s in sizes]
-        self.initialiser = self.polybench_init if initialiser == 'polybench' else self.rand_init
+        self.initialiser = self.__polybench_init if initialiser == 'polybench' else self.__rand_init
         self.counter_prefix = 'i_' if not name.startswith('i_') else 'i' + name
 
     def alloc_and_init(self):
         return [
-            self.malloc_assign(0),
-            self.for_loop(0)
+            self.__malloc_assign(0),
+            self.__for_loop(0)
         ]
 
-    def malloc(self, depth):
+    def __malloc(self, depth):
         size_expr = c_ast.BinaryOp('+', self.sizes[depth], c_ast.ID('2'))
         sizeof = c_ast.FuncCall(c_ast.ID('sizeof'),
                                 c_ast.ExprList([c_ast.ID(self.dtype.name + '*' * (len(self.sizes) - depth - 1))]))
         arg = c_ast.BinaryOp('*', size_expr, sizeof)
         return c_ast.FuncCall(c_ast.ID('malloc'), c_ast.ExprList([arg]))
 
-    def malloc_assign(self, depth):
+    def __malloc_assign(self, depth):
         subs = [c_ast.ID(self.counter_prefix + str(i)) for i in range(depth)]
-        return c_ast.Assignment('=', self.array_ref(subs), self.malloc(depth))
+        return c_ast.Assignment('=', self.__array_ref(subs), self.__malloc(depth))
 
-    def polybench_init(self, depth):
+    def __polybench_init(self, depth):
         subs = [c_ast.ID(self.counter_prefix + str(i)) for i in range(depth)]
-        left = self.array_ref(subs)
+        left = self.__array_ref(subs)
         right = c_ast.Cast(self.dtype, c_ast.BinaryOp('/', exprs_prod(subs), self.sizes[0]))    # todo 0?
         return c_ast.Assignment('=', left, right)
 
-    def rand_init(self, depth):
+    def __rand_init(self, depth):
         subs = [c_ast.ID(self.counter_prefix + str(i)) for i in range(depth)]
-        left = self.array_ref(subs)
+        left = self.__array_ref(subs)
         right = c_ast.Cast(self.dtype, c_ast.FuncCall(c_ast.ID('rand'), c_ast.ExprList([])))
         return c_ast.Assignment('=', left, right)
 
-    def array_ref(self, subs):
+    def __array_ref(self, subs):
         if len(subs) == 0:
             return c_ast.ID(self.name)
         else:
             sub = subs[-1]  # todo not tested
-            return c_ast.ArrayRef(self.array_ref(subs[:-1]), sub)
+            return c_ast.ArrayRef(self.__array_ref(subs[:-1]), sub)
 
-    def for_loop(self, depth):
+    def __for_loop(self, depth):
         i = self.counter_prefix + str(depth)
         init = c_ast.DeclList([c_ast.Decl(
             c_ast.ID(i), [], [], [],
@@ -122,7 +122,7 @@ class MallocBuilder:
         stmt = c_ast.Compound([])
 
         if depth < len(self.sizes) - 1:
-            stmt.block_items = [self.malloc_assign(depth + 1), self.for_loop(depth + 1)]
+            stmt.block_items = [self.__malloc_assign(depth + 1), self.__for_loop(depth + 1)]
         else:
             stmt.block_items = [self.initialiser(depth + 1)]
 
