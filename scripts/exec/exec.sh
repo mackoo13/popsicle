@@ -11,8 +11,8 @@ root_dir=${scripts_dir}/../
 if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!"; exit 1; fi
 if [ -z "$PAPI_OUT_DIR" ]; then echo "Invalid config (PAPI_OUT_DIR) missing!"; exit 1; fi
 
-readonly trials=1
-readonly out_file=${PAPI_OUT_DIR}$1.csv
+readonly trials=5
+readonly out_file=${PAPI_OUT_DIR}conv/$1.csv    # todo
 
 ${current_dir}/init.sh
 

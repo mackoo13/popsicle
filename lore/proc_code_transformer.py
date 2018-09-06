@@ -8,13 +8,20 @@ class ProcCodeTransformer:
         self.includes = includes
         self.code = code
 
-    def add_includes(self, define_max=True):
+    def add_includes(self, other_includes=None, define_max=True):
         """
         Adds all necessary #include instructions to the code.
         """
+        if other_includes is None:
+            other_includes = []
+
         self.includes += '\n'
         self.includes += '#include <papi.h>\n'
         self.includes += '#include <time.h>\n'
+
+        for path in other_includes:
+            self.includes += '#include <' + path + '>\n'
+
         # todo
         current_dir = os.path.dirname(sys.argv[0])
         self.includes += '#include "' + os.path.abspath(os.path.join(current_dir, '../papi/papi_utils.h')) + '"\n'

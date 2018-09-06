@@ -13,6 +13,9 @@ def max_set(s):
     :param s: An iterable of expressions as strings
     :return: Output string
     """
+    if type(s) is str:
+        return c_ast.ID(s)
+
     s = remove_non_extreme_numbers(s, leave_min=False)
     s = [c_ast.ID(e) for e in s]
 

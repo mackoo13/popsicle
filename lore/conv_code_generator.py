@@ -1,7 +1,11 @@
+import os
 from pycparser import c_ast, c_generator
 import numpy as np
 from malloc_builder import MallocBuilder
+from proc_code_transformer import ProcCodeTransformer
 from proc_utils import exprs_sum, papi_instr, build_decl
+
+out_dir = os.path.join(os.environ['KERNEL_PATH'], 'conv')
 
 
 def relative_subs(subs, offsets):
@@ -17,10 +21,24 @@ def relative_subs(subs, offsets):
 
 class ConvCodeGenerator:
     def __init__(self, dims=2, reverse_loops_order=False):
+        if dims < 1:
+            raise ValueError
+
         self.dims = dims
         self.reverse_loops_order = reverse_loops_order
-        self.bound = 'N'
+        self.bounds = ['PARAM_N_' + str(d) for d in range(dims)]
         self.name = 'A'
+        self.dtype = 'double'
+        self.code = None
+
+    def array_decl(self):
+        type_decl = c_ast.TypeDecl(self.name, [], c_ast.IdentifierType([self.dtype]))
+
+        decl_node = type_decl
+        for _ in range(self.dims):
+            decl_node = c_ast.PtrDecl([], decl_node)
+
+        return c_ast.Decl(self.name, [], [], [], decl_node, None, None)
 
     def array_ref(self, subs):
         if len(subs) == 0:
@@ -35,7 +53,7 @@ class ConvCodeGenerator:
         return np.dstack(mesh).reshape(-1, self.dims)
 
     def generate(self):
-        mb = MallocBuilder(self.name, 'double', [self.bound] * self.dims, initialiser='polybench')
+        mb = MallocBuilder(self.name, self.dtype, self.bounds, initialiser='polybench')
         mallocs = mb.alloc_and_init()
         mallocs = c_ast.Compound(mallocs)
 
@@ -49,13 +67,14 @@ class ConvCodeGenerator:
         loop = c_ast.Assignment('=', lvalue, rvalue)
 
         loop_counters = subs if self.reverse_loops_order else subs[::-1]
-        for counter in loop_counters:
+        loop_bounds = self.bounds if self.reverse_loops_order else self.bounds[::-1]    # todo check
+        for counter, bound in zip(loop_counters, loop_bounds):
             init = c_ast.DeclList([c_ast.Decl(
                 counter, [], [], [],
                 c_ast.TypeDecl(counter.name, [], c_ast.ID('int')),
-                c_ast.Constant('int', 1), ''
+                c_ast.Constant('int', '1'), None
             )])
-            cond = c_ast.BinaryOp('<', counter, c_ast.BinaryOp('-', c_ast.ID(self.bound), c_ast.Constant('int', 1)))
+            cond = c_ast.BinaryOp('<', counter, c_ast.BinaryOp('-', c_ast.ID(bound), c_ast.Constant('int', '1')))
             nxt = c_ast.Assignment('++', counter, None)
             stmt = c_ast.Compound([loop])
             loop = c_ast.For(init, cond, nxt, stmt)
@@ -73,16 +92,58 @@ class ConvCodeGenerator:
         )
 
         gen = c_generator.CGenerator()
-        code = gen.visit(c_ast.FileAST([func_loop]))
+        code = gen.visit(c_ast.FileAST([self.array_decl(), func_loop]))
 
-        return code
+        pt = ProcCodeTransformer('', code)
+        pt.add_includes(other_includes=['stdlib.h'], define_max=False)
+        self.code = pt.includes + pt.code
+
+        return self.code
+
+    def max_param(self):
+        max_n_iters = 5000000000
+        max_n_loads = 200000000
+        max_n_cells = 100000000
+        n_arrays = 1    # todo
+
+        return int(min([
+            np.math.pow(max_n_iters, 1 / self.dims),
+            np.math.pow(max_n_cells / n_arrays, 1 / self.dims),
+            np.math.pow(max_n_loads, 1 / self.dims) / 3,
+        ]))
+
+    def save(self):
+        if self.code is None:
+            raise ValueError
+
+        dir_name = 'd' + str(self.dims) + '_r' + str(1 if self.reverse_loops_order else 0)
+        dir_path = os.path.join(out_dir, dir_name)
+        file_name = dir_name + '.c'
+        max_param_file_name = dir_name + '_max_param.txt'
+        params_names_file_name = dir_name + '_params_names.txt'
+        if not os.path.isdir(dir_path):
+            os.makedirs(dir_path)
+
+        with open(os.path.join(dir_path, file_name), 'w') as fout:
+            fout.write(self.code)
+            print('Saved code to ' + file_name)
+
+        with open(os.path.join(dir_path, max_param_file_name), 'w') as fout:
+            fout.write(str(self.max_param()))
+
+        with open(os.path.join(dir_path, params_names_file_name), 'w') as fout:
+            fout.write(','.join(self.bounds))
 
 
 def main():
-    ccg = ConvCodeGenerator(dims=3)
-    code = ccg.generate()
+    dimss = range(2, 4)
+    revs = (True, False)
 
-    print(code)
+    for dims in dimss:
+        for rev in revs:
+            ccg = ConvCodeGenerator(dims=dims, reverse_loops_order=rev)
+            ccg.generate()
+            ccg.save()
 
 
 if __name__ == "__main__":

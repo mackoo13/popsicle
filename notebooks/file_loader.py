@@ -78,6 +78,10 @@ class FileLoader:
             self.load = self.load_unroll
             self.split = self.split_unroll
             self.mode = 'unroll'
+        elif mode in ('conv', 'c'):
+            self.load = self.load_conv
+            self.split = self.split_conv
+            self.mode = 'conv'
         else:
             raise Exception('Unknown feature selection mode')
             
@@ -175,5 +179,26 @@ class FileLoader:
 
         self.x_train, self.y_train = df_to_xy(self.df_train, ['time_ur', 'time_nour', 'speedup', 'max_dim'], 'speedup')
         self.x_test, self.y_test = df_to_xy(self.df_test, ['time_ur', 'time_nour', 'speedup', 'max_dim'], 'speedup')
+
+        self.scale()
+
+    def load_conv(self):
+        df = self.csv_to_df()
+
+        df = df.loc[df['time'] > 100]
+        df = scale_by_tot_ins(df)
+
+        algs = list(df.index.get_level_values(0))
+        df = df_sort_cols(df)
+        df['dims'] = [q.split('_')[0][1:] for q in algs]
+        df['rev'] = [q.split('_')[1][1:] for q in algs]
+
+        self.df = df
+
+    def split_conv(self):
+        self.df_train, self.df_test = df_train_test_split(self.df)
+
+        self.x_train, self.y_train = df_to_xy(self.df_train, ['dims'], 'rev')
+        self.x_test, self.y_test = df_to_xy(self.df_test, ['dims'], 'rev')
 
         self.scale()
