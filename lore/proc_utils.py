@@ -1,5 +1,6 @@
 from __future__ import print_function
 from functools import reduce
+import numpy as np
 import re
 import os
 # noinspection PyPep8Naming
@@ -157,7 +158,6 @@ class AssignmentVisitor(c_ast.NodeVisitor):
 class CompoundInsertNextToVisitor(c_ast.NodeVisitor):
     """
     todo
-    todo what if contains another compound?
     """
     def __init__(self, where, c_ast_type_name, items, properties=None):
         if where not in ('before', 'after'):
@@ -170,6 +170,7 @@ class CompoundInsertNextToVisitor(c_ast.NodeVisitor):
 
     def visit_Compound(self, node):
         items = node.block_items
+        old_items = items.copy()
         found_indices = []
 
         for i, item in enumerate(items):
@@ -186,7 +187,8 @@ class CompoundInsertNextToVisitor(c_ast.NodeVisitor):
         for i in found_indices[::-1]:
             items[i:i] = self.items
 
-        c_ast.NodeVisitor.generic_visit(self, node)
+        for item in old_items:
+            c_ast.NodeVisitor.generic_visit(self, item)
 
 
 # noinspection PyPep8Naming,PyMethodMayBeStatic
@@ -229,7 +231,7 @@ class ForDepthCounter(c_ast.NodeVisitor):   # todo check
 
 
 # noinspection PyPep8Naming,PyMethodMayBeStatic
-class ForPragmaUnrollVisitor(c_ast.NodeVisitor):    # todo check, what if there is only one loop?
+class ForPragmaUnrollVisitor(c_ast.NodeVisitor):    # todo check
     """
     Inserts PRAGMA(PRAGMA_UNROLL) above the innermost for loop
     """
@@ -541,12 +543,17 @@ def exprs_prod(exprs: List[c_ast.Node]) -> c_ast.Node:
     return reduce(lambda a, b: c_ast.BinaryOp('*', a, b), exprs)
 
 
-def exprs_sum(exprs: List[c_ast.Node]) -> c_ast.Node:
+def exprs_sum(exprs: List[c_ast.Node], divide_long_expr=True) -> c_ast.Node:
     """
     Sum of a list of c_ast expressions
+    :param divide_long_expr:
     :param exprs: Expressions
     :return: c_ast.Node representing the sum
     """
+    if divide_long_expr and len(exprs) > 50:
+        exprs_slices = np.split(np.array(exprs), range(50, len(exprs), 50))
+        exprs = [exprs_sum(e, divide_long_expr) for e in exprs_slices]
+
     # noinspection PyTypeChecker
     return reduce(lambda a, b: c_ast.BinaryOp('+', a, b), exprs)
 

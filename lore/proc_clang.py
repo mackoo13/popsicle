@@ -8,6 +8,9 @@ import argparse
 
 
 def main():
+    if 'LORE_ORIG_PATH' not in os.environ or 'LORE_PROC_CLANG_PATH' not in os.environ:
+        raise EnvironmentError
+
     argparser = argparse.ArgumentParser()
     argparser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
     args = argparser.parse_args()

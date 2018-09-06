@@ -8,6 +8,9 @@ def intermediate_value(k, k_max, n_params, max_param):
 
 
 def main():
+    if 'LORE_PROC_CLANG_PATH' not in os.environ:
+        raise EnvironmentError
+
     parser = argparse.ArgumentParser()
     parser.add_argument("k", type=int, help="Number of distinct parameters")
     args = parser.parse_args()

@@ -6,6 +6,8 @@ import urllib.parse
 import urllib.request
 import os
 
+if 'LORE_ORIG_PATH' not in os.environ:
+    raise EnvironmentError
 
 lore_url = 'https://vectorization.computer/AJAX/get_src.php'
 out_dir = os.environ["LORE_ORIG_PATH"]

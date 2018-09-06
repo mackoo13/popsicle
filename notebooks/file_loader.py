@@ -6,14 +6,17 @@ from random import shuffle
 
 
 if 'PAPI_OUT_DIR' not in os.environ:
-    print('Invalid config')
-    exit(1)
+    raise EnvironmentError
 
 out_dir = os.environ['PAPI_OUT_DIR']
 
 
 def aggregate(df):
     return df.groupby(['alg', 'run'])[df.columns[2:]].min()
+
+
+def aggregate_conv(df):
+    return df.groupby(['dims', 'n_arrays', 'rev']).mean()
 
 
 def scale_by_tot_ins(df):
@@ -196,16 +199,20 @@ class FileLoader:
         algs = list(df.index.get_level_values(0))
         df = df_sort_cols(df)
         df['dims'] = [q.split('_')[0][1:] for q in algs]
-        df['dims'] = df['dims'].astype(float)
+        df['dims'] = df['dims'].astype(int)
         df['rev'] = [q.split('_')[1][1:] for q in algs]
-        df['rev'] = df['rev'].astype(float)
+        df['rev'] = df['rev'].astype(int)
+        df['n_arrays'] = [q.split('_')[2][1:] for q in algs]
+        df['n_arrays'] = df['n_arrays'].astype(int)
+
+        df = aggregate_conv(df)
 
         self.df = df
 
     def split_conv(self):
         self.df_train, self.df_test = df_train_test_split(self.df)
 
-        self.x_train, self.y_train, self.df_train = df_to_xy(self.df_train, ['dims', 'rev'], 'rev')
-        self.x_test, self.y_test, self.df_test = df_to_xy(self.df_test, ['dims', 'rev'], 'rev')
+        self.x_train, self.y_train, self.df_train = df_to_xy(self.df_train, ['dims', 'rev', 'time', 'n_arrays'], 'rev')
+        self.x_test, self.y_test, self.df_test = df_to_xy(self.df_test, ['dims', 'rev', 'time', 'n_arrays'], 'rev')
 
         self.scale()

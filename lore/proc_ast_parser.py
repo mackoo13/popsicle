@@ -115,9 +115,13 @@ class ProcASTParser:
         decl = self.main.decl
         decl.name = 'loop'
 
-        if type(decl.type) is c_ast.FuncDecl:
-            decl.type.args = loop_func_params()
-            decl.type.type.declname = 'loop'
+        func_decl = decl.type
+        if type(func_decl) is c_ast.FuncDecl:
+            func_decl.args = loop_func_params()
+            func_decl.type.declname = 'loop'
+            func_decl.type.type = c_ast.IdentifierType(['int'])
+
+        self.return_int()
 
     def find_max_param(self):
         """
@@ -150,7 +154,7 @@ class ProcASTParser:
 
             if arr in self.dtypes:
                 mb = MallocBuilder(arr, self.dtypes[arr], ref)
-                self.main.body.block_items[0:0] = mb.alloc_and_init()
+                self.main.body.block_items[0:0] = mb.generate()
 
     def main_to_loop(self):
         """

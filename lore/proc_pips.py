@@ -8,6 +8,9 @@ import os
 
 
 def main():
+    if 'PIPS_PROC_PATH' not in os.environ:
+        raise EnvironmentError
+
     argparser = argparse.ArgumentParser()
     argparser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
     args = argparser.parse_args()
@@ -45,7 +48,6 @@ def main():
                         pp.remove_modifiers(['extern'])
                         pp.single_to_compound()
                         pp.main_to_loop()
-                        pp.return_int()
 
                         generator = c_generator.CGenerator()
                         code_main = generator.visit(pp.main)

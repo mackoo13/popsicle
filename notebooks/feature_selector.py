@@ -15,9 +15,13 @@ def adjust_r2(r2, n, k):
     :param k: Number of features
     :return: Adjusted R2 score
     """
-    nom = (1 - r2) * (n-1)
-    denom = n - k - 1
-    return 1 - (nom / denom)
+    nom = (1-r2) * (n-1)
+    denom = n-k-1
+
+    if denom <= 0:
+        raise ValueError('At least ' + str(k+2) + ' samples needed to calculate adjusted R2 score')
+
+    return 1 - (nom/denom)
 
 
 def dim_sign(x, y, df):
