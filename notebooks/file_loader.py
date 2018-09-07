@@ -15,8 +15,20 @@ def aggregate(df):
     return df.groupby(['alg', 'run'])[df.columns[2:]].min()
 
 
-def aggregate_conv(df):
-    return df.groupby(['dims', 'n_arrays', 'rev']).mean()
+def aggregate_conv_rev(df):
+    df = df.groupby(['dims', 'n_arrays', 'rev']).min()
+
+    for i, r in df.iterrows():
+        if i[2] == 1:
+            r0 = df.loc[(i[0], i[1], 0), :]
+            df.loc[i] = (r - r0) / r
+
+    df = df.drop(0, level=2)
+
+    # print(df.index)
+    # print(df.index.droplevel(2))
+    df.index = df.index.droplevel(2)
+    return df
 
 
 def scale_by_tot_ins(df):
@@ -205,7 +217,7 @@ class FileLoader:
         df['n_arrays'] = [q.split('_')[2][1:] for q in algs]
         df['n_arrays'] = df['n_arrays'].astype(int)
 
-        df = aggregate_conv(df)
+        df = aggregate_conv_rev(df)
 
         self.df = df
 
