@@ -1,7 +1,6 @@
 import os
-from typing import Tuple, List
-
 import pandas as pd
+from typing import Tuple, List
 from sklearn.preprocessing import RobustScaler
 from random import shuffle
 
@@ -13,10 +12,16 @@ out_dir = os.environ['PAPI_OUT_DIR']
 
 
 def aggregate(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    todo
+    """
     return df.groupby(['alg', 'run']).min()
 
 
 def aggregate_conv_rev(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    todo
+    """
     df = df.groupby(['dims', 'n_arrays', 'rev']).mean()
     rev_level = df.index.names.index('rev')
 
@@ -34,13 +39,20 @@ def aggregate_conv_rev(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def print_mean_and_std(df: pd.DataFrame) -> None:
+    """
+    todo
+    """
     for col in df.columns:
         vals = df[col]
         print(col, '\t', str(round(vals.mean(), 2)) + '+/-' + str(round(vals.std(), 2)))
 
 
 def remove_unpaired_rev(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    todo
+    """
     for index, row in df.iterrows():
+        # noinspection PyUnresolvedReferences
         if not (
                 (df['dims'] == row['dims']) &
                 (df['n_arrays'] == row['n_arrays']) &
@@ -48,7 +60,6 @@ def remove_unpaired_rev(df: pd.DataFrame) -> pd.DataFrame:
                 (df.index.get_level_values(1) == index[1])
         ).any():
             df = df.drop(index)
-            print(index)
 
     return df
 
@@ -63,6 +74,26 @@ def scale_by_tot_ins(df: pd.DataFrame) -> pd.DataFrame:
     df['PAPI_TOT_INS'] = 1
     df = df.dropna()
     return df
+
+
+def unpack_conv_file_name(df: pd.DataFrame) -> None:
+    """
+    todo
+    """
+    def str_to_bool(v):
+        return v == '1'
+
+    alg_level = df.index.names.index('alg')
+    algs = list(df.index.get_level_values(0))
+
+    df['dims'] = [q.split('_')[0][1:] for q in algs]
+    df['dims'] = df['dims']
+
+    df['rev'] = [q.split('_')[1][1:] for q in algs]
+    df['rev'] = df['rev'].apply(str_to_bool).astype(bool)
+
+    df['n_arrays'] = [q.split('_')[2][1:] for q in algs]
+    df['n_arrays'] = df['n_arrays'].astype(int)
 
 
 def df_train_test_split(df: pd.DataFrame, test_split: float=0.3) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -135,20 +166,24 @@ class FileLoader:
 
         if mode in ('time', 't'):
             self.load = self.load_time
-            self.split = self.split_time
             self.mode = 'time'
+            self.drop_cols = []
+            self.y_col = 'time'
         elif mode in ('speedup', 's'):
             self.load = self.load_speedup
-            self.split = self.split_speedup
             self.mode = 'speedup'
+            self.drop_cols = ['time_O0', 'time_O3', 'max_dim']
+            self.y_col = 'speedup'
         elif mode in ('unroll', 'u'):
             self.load = self.load_unroll
-            self.split = self.split_unroll
             self.mode = 'unroll'
+            self.drop_cols = ['time_ur', 'time_nour', 'max_dim']
+            self.y_col = 'speedup'
         elif mode in ('conv', 'c'):
             self.load = self.load_conv
-            self.split = self.split_conv
             self.mode = 'conv'
+            self.drop_cols = ['dims', 'time', 'n_arrays']
+            self.y_col = 'rev'
         else:
             raise Exception('Unknown feature selection mode')
             
@@ -178,7 +213,6 @@ class FileLoader:
     def scale(self):
         """
         todo
-        :return:
         """
         scaler = RobustScaler(quantile_range=(10, 90))
         self.x_train = scaler.fit_transform(self.x_train)
@@ -186,6 +220,14 @@ class FileLoader:
 
         print('Train:', self.df_train.shape)
         print('Test: ', self.df_test.shape)
+
+    def split(self):
+        df_train, df_test = df_train_test_split(self.df)
+
+        self.x_train, self.y_train, self.df_train = df_to_xy(df_train, self.drop_cols, self.y_col)
+        self.x_test, self.y_test, self.df_test = df_to_xy(df_test, self.drop_cols, self.y_col)
+
+        self.scale()
 
     def load_time(self):
         df = self.csv_to_df()
@@ -198,16 +240,6 @@ class FileLoader:
 
         df = df_sort_cols(df)
         self.df = df
-
-    def split_time(self):
-        self.df_train, self.df_test = df_train_test_split(self.df)
-
-        drop_cols = []
-        y_col = 'time'
-        self.x_train, self.y_train, self.df_train = df_to_xy(self.df_train, drop_cols, y_col)
-        self.x_test, self.y_test, self.df_test = df_to_xy(self.df_test, drop_cols, y_col)
-
-        self.scale()
 
     def load_speedup(self):
         df_o0 = self.csv_to_df(name_suffix='_O0')
@@ -227,16 +259,6 @@ class FileLoader:
         df = df_sort_cols(df)
         self.df = df
 
-    def split_speedup(self):
-        self.df_train, self.df_test = df_train_test_split(self.df)
-
-        drop_cols = ['time_O0', 'time_O3', 'max_dim']
-        y_col = 'speedup'
-        self.x_train, self.y_train, self.df_train = df_to_xy(self.df_train, drop_cols, y_col)
-        self.x_test, self.y_test, self.df_test = df_to_xy(self.df_test, drop_cols, y_col)
-
-        self.scale()
-
     def load_unroll(self):
         df_o0 = self.csv_to_df(name_suffix='_nour')
         df_o3 = self.csv_to_df(name_suffix='_ur', cols=['alg', 'run', 'time_ur'])
@@ -255,42 +277,16 @@ class FileLoader:
         df = df_sort_cols(df)
         self.df = df
 
-    def split_unroll(self):
-        self.df_train, self.df_test = df_train_test_split(self.df)
-
-        drop_cols = ['time_ur', 'time_nour', 'max_dim']
-        y_col = 'speedup'
-        self.x_train, self.y_train, self.df_train = df_to_xy(self.df_train, drop_cols, y_col)
-        self.x_test, self.y_test, self.df_test = df_to_xy(self.df_test, drop_cols, y_col)
-
-        self.scale()
-
     def load_conv(self):
         df = self.csv_to_df()
 
         df = df.loc[df['time'] > 100]
         df = scale_by_tot_ins(df)
 
-        algs = list(df.index.get_level_values(0))
         df = df_sort_cols(df)
-        df['dims'] = [q.split('_')[0][1:] for q in algs]
-        df['dims'] = df['dims'].astype(int)
-        df['rev'] = [q.split('_')[1][1:] for q in algs]
-        df['rev'] = df['rev'].apply(lambda v: v == '1').astype(bool)
-        df['n_arrays'] = [q.split('_')[2][1:] for q in algs]
-        df['n_arrays'] = df['n_arrays'].astype(int)
+        unpack_conv_file_name(df)
 
         df = remove_unpaired_rev(df)
         df = aggregate_conv_rev(df)
 
         self.df = df
-
-    def split_conv(self):
-        self.df_train, self.df_test = df_train_test_split(self.df)
-
-        drop_cols = ['dims', 'time', 'n_arrays']
-        y_col = 'rev'
-        self.x_train, self.y_train, self.df_train = df_to_xy(self.df_train, drop_cols, y_col)
-        self.x_test, self.y_test, self.df_test = df_to_xy(self.df_test, drop_cols, y_col)
-
-        self.scale()
