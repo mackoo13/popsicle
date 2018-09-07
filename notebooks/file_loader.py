@@ -1,4 +1,5 @@
 import os
+from typing import Tuple, List
 
 import pandas as pd
 from sklearn.preprocessing import RobustScaler
@@ -11,27 +12,51 @@ if 'PAPI_OUT_DIR' not in os.environ:
 out_dir = os.environ['PAPI_OUT_DIR']
 
 
-def aggregate(df):
-    return df.groupby(['alg', 'run'])[df.columns[2:]].min()
+def aggregate(df: pd.DataFrame) -> pd.DataFrame:
+    return df.groupby(['alg', 'run']).min()
 
 
-def aggregate_conv_rev(df):
-    df = df.groupby(['dims', 'n_arrays', 'rev']).min()
+def aggregate_conv_rev(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.groupby(['dims', 'n_arrays', 'rev']).mean()
+    rev_level = df.index.names.index('rev')
 
-    for i, r in df.iterrows():
-        if i[2] == 1:
-            r0 = df.loc[(i[0], i[1], 0), :]
-            df.loc[i] = (r - r0) / r
+    for index, row in df.iterrows():
+        if index[rev_level]:
+            row0_index = list(index)
+            row0_index[rev_level] = False
+            row0 = df.loc[tuple(row0_index), :]
+            df.loc[index] = row / row0        # todo 0
 
-    df = df.drop(0, level=2)
+    df = df.drop(False, level=2)
 
-    # print(df.index)
-    # print(df.index.droplevel(2))
     df.index = df.index.droplevel(2)
     return df
 
 
-def scale_by_tot_ins(df):
+def print_mean_and_std(df: pd.DataFrame) -> None:
+    for col in df.columns:
+        vals = df[col]
+        print(col, '\t', str(round(vals.mean(), 2)) + '+/-' + str(round(vals.std(), 2)))
+
+
+def remove_unpaired_rev(df: pd.DataFrame) -> pd.DataFrame:
+    for index, row in df.iterrows():
+        if not (
+                (df['dims'] == row['dims']) &
+                (df['n_arrays'] == row['n_arrays']) &
+                (df['rev'] != row['rev']) &
+                (df.index.get_level_values(1) == index[1])
+        ).any():
+            df = df.drop(index)
+            print(index)
+
+    return df
+
+
+def scale_by_tot_ins(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Divides values of all PAPI events outputs by PAPI_TOT_INS in order to normalise them
+    """
     for col in df.columns:
         if col[:4] == 'PAPI' and col != 'PAPI_TOT_INS':
             df[col] = df[col].astype(float).div(df['PAPI_TOT_INS'], axis=0)
@@ -40,7 +65,13 @@ def scale_by_tot_ins(df):
     return df
 
 
-def df_train_test_split(df, test_split=0.3):
+def df_train_test_split(df: pd.DataFrame, test_split: float=0.3) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    todo
+    :param df:
+    :param test_split:
+    :return:
+    """
     algs = list(set(df.index.get_level_values(0)))
     shuffle(algs)
     split_point = int(test_split * len(algs))
@@ -53,12 +84,25 @@ def df_train_test_split(df, test_split=0.3):
     return df_train, df_test
 
 
-def df_sort_cols(df):
+def df_sort_cols(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Sorts the columns of a DataFrame
+    """
     cols = sorted(list(df.columns.values))
     return df[cols]
 
 
-def df_to_xy(df, drop_cols, y_col):
+def df_to_xy(df: pd.DataFrame, drop_cols: List[str], y_col: str) -> Tuple[any, any, pd.DataFrame]:  # todo types
+    """
+    todo
+    :param df:
+    :param drop_cols:
+    :param y_col:
+    :return:
+    """
+    if y_col not in drop_cols:
+        drop_cols.append(y_col)
+
     y = df[y_col].values
     df = df.drop(drop_cols, axis=1)
     x = df.values
@@ -66,6 +110,13 @@ def df_to_xy(df, drop_cols, y_col):
 
 
 def get_df_meta():
+    """
+    todo
+    :return:
+    """
+    if 'LORE_PROC_PATH' not in os.environ:
+        raise EnvironmentError
+
     proc_dir = os.environ['LORE_PROC_PATH']
     return pd.read_csv(os.path.join(proc_dir, 'metadata.csv'), index_col='alg')
 
@@ -103,7 +154,13 @@ class FileLoader:
             
         self.load()
 
-    def csv_to_df(self, name_suffix='', cols=None):
+    def csv_to_df(self, name_suffix: str='', cols: List[str]=None):
+        """
+        todo
+        :param name_suffix:
+        :param cols:
+        :return:
+        """
         paths = [os.path.join(out_dir, self.mode, p) for p in self.files]
 
         dfs = [pd.read_csv(path + name_suffix + '.csv', error_bad_lines=False) for path in paths]
@@ -119,6 +176,10 @@ class FileLoader:
         return df
 
     def scale(self):
+        """
+        todo
+        :return:
+        """
         scaler = RobustScaler(quantile_range=(10, 90))
         self.x_train = scaler.fit_transform(self.x_train)
         self.x_test = scaler.transform(self.x_test)
@@ -141,8 +202,10 @@ class FileLoader:
     def split_time(self):
         self.df_train, self.df_test = df_train_test_split(self.df)
 
-        self.x_train, self.y_train, self.df_train = df_to_xy(self.df_train, ['time'], 'time')
-        self.x_test, self.y_test, self.df_test = df_to_xy(self.df_test, ['time'], 'time')
+        drop_cols = []
+        y_col = 'time'
+        self.x_train, self.y_train, self.df_train = df_to_xy(self.df_train, drop_cols, y_col)
+        self.x_test, self.y_test, self.df_test = df_to_xy(self.df_test, drop_cols, y_col)
 
         self.scale()
 
@@ -167,10 +230,10 @@ class FileLoader:
     def split_speedup(self):
         self.df_train, self.df_test = df_train_test_split(self.df)
 
-        self.x_train, self.y_train, self.df_train = df_to_xy(self.df_train,
-                                                             ['time_O0', 'time_O3', 'speedup', 'max_dim'], 'speedup')
-        self.x_test, self.y_test, self.df_test = df_to_xy(self.df_test,
-                                                          ['time_O0', 'time_O3', 'speedup', 'max_dim'], 'speedup')
+        drop_cols = ['time_O0', 'time_O3', 'max_dim']
+        y_col = 'speedup'
+        self.x_train, self.y_train, self.df_train = df_to_xy(self.df_train, drop_cols, y_col)
+        self.x_test, self.y_test, self.df_test = df_to_xy(self.df_test, drop_cols, y_col)
 
         self.scale()
 
@@ -195,10 +258,10 @@ class FileLoader:
     def split_unroll(self):
         self.df_train, self.df_test = df_train_test_split(self.df)
 
-        self.x_train, self.y_train, self.df_train = df_to_xy(self.df_train,
-                                                             ['time_ur', 'time_nour', 'speedup', 'max_dim'], 'speedup')
-        self.x_test, self.y_test, self.df_test = df_to_xy(self.df_test,
-                                                          ['time_ur', 'time_nour', 'speedup', 'max_dim'], 'speedup')
+        drop_cols = ['time_ur', 'time_nour', 'max_dim']
+        y_col = 'speedup'
+        self.x_train, self.y_train, self.df_train = df_to_xy(self.df_train, drop_cols, y_col)
+        self.x_test, self.y_test, self.df_test = df_to_xy(self.df_test, drop_cols, y_col)
 
         self.scale()
 
@@ -213,10 +276,11 @@ class FileLoader:
         df['dims'] = [q.split('_')[0][1:] for q in algs]
         df['dims'] = df['dims'].astype(int)
         df['rev'] = [q.split('_')[1][1:] for q in algs]
-        df['rev'] = df['rev'].astype(int)
+        df['rev'] = df['rev'].apply(lambda v: v == '1').astype(bool)
         df['n_arrays'] = [q.split('_')[2][1:] for q in algs]
         df['n_arrays'] = df['n_arrays'].astype(int)
 
+        df = remove_unpaired_rev(df)
         df = aggregate_conv_rev(df)
 
         self.df = df
@@ -224,7 +288,9 @@ class FileLoader:
     def split_conv(self):
         self.df_train, self.df_test = df_train_test_split(self.df)
 
-        self.x_train, self.y_train, self.df_train = df_to_xy(self.df_train, ['dims', 'rev', 'time', 'n_arrays'], 'rev')
-        self.x_test, self.y_test, self.df_test = df_to_xy(self.df_test, ['dims', 'rev', 'time', 'n_arrays'], 'rev')
+        drop_cols = ['dims', 'time', 'n_arrays']
+        y_col = 'rev'
+        self.x_train, self.y_train, self.df_train = df_to_xy(self.df_train, drop_cols, y_col)
+        self.x_test, self.y_test, self.df_test = df_to_xy(self.df_test, drop_cols, y_col)
 
         self.scale()
