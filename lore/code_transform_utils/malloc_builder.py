@@ -1,7 +1,7 @@
 from typing import List
 
 from pycparser import c_ast
-from proc_utils import remove_non_extreme_numbers, exprs_prod
+from code_transform_utils.code_transform_utils import remove_non_extreme_numbers, exprs_prod
 
 
 def max_set(exprs):

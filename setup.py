@@ -16,8 +16,12 @@ setup(name='lore',
           'numpy'
       ],
       entry_points={
-          'console_scripts': ['wombat-proc = lore.proc:main',
-                              'wombat-params = lore.params:main',
+          'console_scripts': ['wombat-download-lore = lore.download_lore:main',
+                              'wombat-transform-lore = lore.transform_lore:main',
+                              'wombat-transform-lore-unroll = lore.transform_lore_unroll:main',
+                              'wombat-transform-pips = lore.transform_pips:main',
+                              'wombat-params-lore = lore.params_lore:main',
+                              'wombat-params-lore-unroll = lore.params_lore_unroll:main',
                               'wombat-train = lore.train:main',
                               'wombat-predict = lore.precict:main']
       },

@@ -1,7 +1,7 @@
 from pycparser import c_generator
-from code_transformer_ast import CodeTransformerAST
-from code_transformer_str import CodeTransformerStr
-from proc_utils import remove_comments, remove_inline
+from code_transform_utils.code_transformer_ast import CodeTransformerAST
+from code_transform_utils.code_transformer_str import CodeTransformerStr
+from code_transform_utils.code_transform_utils import remove_comments, remove_inline
 
 
 class CodeTransformer:
@@ -29,7 +29,7 @@ class CodeTransformer:
         if papi_scope in ['pragma', 'function']:
             self.papi_scope = papi_scope
         else:
-            raise ValueError
+            raise ValueError('Incorrect \'papi_scope\' value in \'add_papi\' - expected \'pragma\' or \'function\'')
 
         self.includes = includes
         self.code = code

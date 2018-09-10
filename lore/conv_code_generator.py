@@ -3,9 +3,9 @@ import shutil
 from typing import List
 from pycparser import c_ast, c_generator
 import numpy as np
-from malloc_builder import MallocBuilder
-from code_transformer_str import CodeTransformerStr
-from proc_utils import exprs_sum, papi_instr, loop_func_params
+from code_transform_utils.malloc_builder import MallocBuilder
+from code_transform.code_transformer_str import CodeTransformerStr
+from code_transform_utils.code_transform_utils import exprs_sum, papi_instr, loop_func_params
 
 if 'KERNEL_PATH' not in os.environ:
     raise EnvironmentError
@@ -54,7 +54,7 @@ def relative_subs(subs, offsets):
 class ConvCodeGenerator:
     def __init__(self, dims=2, reverse_loops_order=False, n_arrays=1):
         if dims < 1:
-            raise ValueError
+            raise ValueError('ConvCodeGenerator: expected dims >= 2.')
 
         self.offsets = [-1, 1]
         self.dims = dims
@@ -103,7 +103,7 @@ class ConvCodeGenerator:
 
     def save(self):
         if self.code is None:
-            raise ValueError
+            raise ValueError('ConvCodeGenerator: save() called with self.code=None')
 
         dir_name = 'd' + str(self.dims) + \
                    '_r' + ('1' if self.reverse_loops_order else '0') + \

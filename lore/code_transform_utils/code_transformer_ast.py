@@ -2,8 +2,8 @@ from typing import Iterable
 
 from pycparser import c_ast, c_parser
 
-from malloc_builder import MallocBuilder
-from proc_utils import remove_non_extreme_numbers, estimate, \
+from code_transform_utils.malloc_builder import MallocBuilder
+from code_transform_utils.code_transform_utils import remove_non_extreme_numbers, estimate, \
     ArrayRefVisitor, ForVisitor, AssignmentVisitor, PtrDeclVisitor, StructVisitor, \
     ArrayDeclVisitor, VarTypeVisitor, ForPragmaUnrollVisitor, DeclRemoveModifiersVisitor, \
     FuncDefFindVisitor, CompoundInsertNextToVisitor, ForDepthCounter, SingleToCompoundVisitor, \
@@ -26,7 +26,10 @@ class CodeTransformerAST:
 
         ffv = FuncDefFindVisitor(main_name)
         ffv.visit(self.ast)
-        self.main = ffv.res
+        if ffv.res is not None:
+            self.main = ffv.res
+        else:
+            raise ValueError('CodeTransformer: function \'' + main_name + '\' not found')
 
         if verbose:
             self.ast.show()
@@ -39,10 +42,11 @@ class CodeTransformerAST:
 
     def add_bounds_init(self):
         """
-        Inserts a fragment initializing program parameters into the code.
+        Inserts a code fragment initializing program parameters.
         The actual values should be injected at compilation time (-D option in gcc)
         """
-        inits = [c_ast.Assignment('=', c_ast.ID(n), c_ast.ID('PARAM_' + n.upper())) for n in self.bounds]
+        inits = [c_ast.Assignment('=', c_ast.ID(n), c_ast.ID('PARAM_' + n.upper()))
+                 for n in self.bounds]
         self.main.body.block_items[0:0] = inits
 
     def add_papi(self, scope):
@@ -65,7 +69,8 @@ class CodeTransformerAST:
             body.block_items.insert(1, begin_clock)
             CompoundInsertNextToVisitor('before', 'Return', [end_clock, exec_stop]).visit(body)
         else:
-            raise ValueError
+            raise ValueError(
+                'CodeTransformer: incorrect \'scope\' value in \'add_papi\' - expected \'pragma\' or \'function\'')
 
     def add_pragma_unroll(self):
         """
@@ -79,10 +84,11 @@ class CodeTransformerAST:
 
     def analyse(self):
         """
-        Populates ...
-        todo
+        Analyses the code and populates following variables:
+            bounds
+            maxs
+            refs
         """
-
         ForVisitor(self.maxs, self.bounds).visit(self.ast)
         AssignmentVisitor(self.refs, self.maxs).visit(self.ast)
 
@@ -169,9 +175,6 @@ class CodeTransformerAST:
         Removes all indicated modifiers from variable declarations (for example 'extern')
         :param modifiers_to_remove:
         """
-        if self.ast is None:
-            raise ValueError('remove_modifiers called with self.ast=None')
-
         DeclRemoveModifiersVisitor(modifiers_to_remove).visit(self.ast)
 
     def single_to_compound(self):
@@ -179,7 +182,7 @@ class CodeTransformerAST:
         Transforms single expressions to compounds where possible to facilitate parsing
         """
         if self.main is None:
-            raise ValueError('single_to_compound called with self.main=None')
+            raise ValueError('CodeTransformer: single_to_compound() called with self.main=None')
 
         SingleToCompoundVisitor().visit(self.main)
 
