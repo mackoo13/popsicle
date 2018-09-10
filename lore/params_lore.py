@@ -2,14 +2,15 @@ import math
 import argparse
 import os
 
+from utils import check_config
+
 
 def intermediate_value(k, k_max, n_params, max_param):
     return int(math.pow(k / k_max, 1/n_params) * max_param)
 
 
 def main():
-    if 'LORE_PROC_PATH' not in os.environ:
-        raise EnvironmentError
+    check_config(['LORE_PROC_PATH'])
 
     parser = argparse.ArgumentParser()
     parser.add_argument("k", type=int, help="Number of distinct parameters")

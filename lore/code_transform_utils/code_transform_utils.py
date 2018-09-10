@@ -157,9 +157,23 @@ class AssignmentVisitor(c_ast.NodeVisitor):
 # noinspection PyPep8Naming,PyMethodMayBeStatic
 class CompoundInsertNextToVisitor(c_ast.NodeVisitor):
     """
-    todo
+    Used to insert nodes just before or after specific nodes.
     """
     def __init__(self, where, c_ast_type_name, items, properties=None):
+        """
+        :param where: 'before' or 'after'
+        :param c_ast_type_name: Name of c_ast class, next to which new nodes will be added
+        :param items: List of nodes to insert
+        :param properties: A dictionary of attributes. Items will be inserted before/after a node only if it matches
+                           all these properties.
+
+        Examples:
+            CompoundInsertNextToVisitor('before', 'Return, [node1, node2])
+             - inserts node1 and node2 before each return statement
+
+            CompoundInsertNextToVisitor('after', 'Pragma, [node1], properties={'string': 'scop'})
+             - inserts node1 after each '#pragma scop'
+        """
         if where not in ('before', 'after'):
             raise ValueError('CompoundInsertNextToVisitor: \'where\' must be wither \'before\' or \'after\'')
 
@@ -194,7 +208,7 @@ class CompoundInsertNextToVisitor(c_ast.NodeVisitor):
 # noinspection PyPep8Naming,PyMethodMayBeStatic
 class DeclRemoveModifiersVisitor(c_ast.NodeVisitor):
     """
-    todo
+    Removes modifiers (e.g. 'extern') from variable declarations.
     """
     def __init__(self, modifiers_to_remove):
         self.modifiers_to_remove = modifiers_to_remove
@@ -318,7 +332,7 @@ class ForVisitor(c_ast.NodeVisitor):
 # noinspection PyPep8Naming,PyPep8Naming
 class FuncDefFindVisitor(c_ast.NodeVisitor):
     """
-    todo
+    Finds the declaration node of specified function
     """
     def __init__(self, name):
         self.name = name
@@ -372,7 +386,7 @@ class PtrDeclVisitor(c_ast.NodeVisitor):
 # noinspection PyPep8Naming,PyMethodMayBeStatic
 class RemoveBoundDeclsVisitor(c_ast.NodeVisitor):
     """
-    todo
+    Removes declarations of all variables provided in 'names' list.
     """
     def __init__(self, names):
         self.names = names
@@ -391,7 +405,8 @@ class RemoveBoundDeclsVisitor(c_ast.NodeVisitor):
 # noinspection PyPep8Naming,PyMethodMayBeStatic
 class ReturnIntVisitor(c_ast.NodeVisitor):
     """
-    todo
+    Changes all 'return;' statements without parameters to 'return 0;'.
+    This usually follows a change of function type from 'void' to 'int'.
     """
     def __init__(self):
         pass
@@ -404,7 +419,7 @@ class ReturnIntVisitor(c_ast.NodeVisitor):
 # noinspection PyPep8Naming,PyMethodMayBeStatic
 class SingleToCompoundVisitor(c_ast.NodeVisitor):
     """
-    todo
+
     """
     def __init__(self):
         pass
@@ -437,7 +452,8 @@ class SingleToCompoundVisitor(c_ast.NodeVisitor):
 # noinspection PyPep8Naming
 class StructVisitor(c_ast.NodeVisitor):
     """
-    todo
+    Determines if the code contains struct. Structs are not supported during some code generation tasks - in such case,
+    the program will be skipped.
     """
     def __init__(self):
         self.contains_struct = False
@@ -585,7 +601,7 @@ def exprs_sum(exprs: List[c_ast.Node], divide_long_expr=True) -> c_ast.Node:
 
 def loop_func_params():
     """
-    todo
+    Shorthand for 'int set, long_long* values, clock_t* begin, clock_t* end'
     """
     return c_ast.ParamList([
         build_decl('set', 'int'),
@@ -658,9 +674,7 @@ def remove_non_extreme_numbers(s: Iterable[str], leave_min=True) -> Iterable[str
 
 def remove_comments(code: str) -> str:
     """
-    todo
-    :param code:
-    :return:
+    Removes comments from code to facilitate using pycparser.
     """
     code = re.sub('//.*\n|/\*.*\*/', '', code)  # greedy *?
     return code
@@ -668,7 +682,8 @@ def remove_comments(code: str) -> str:
 
 def save_max_dims(proc_path: str, max_arr_dims: Mapping[str, int]) -> None:
     """
-    todo
+    Saves data about maximal array dimensions in programs to a file.
+    Can be extended by other metadata.
     :param proc_path:
     :param max_arr_dims:
     :return:

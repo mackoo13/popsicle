@@ -214,7 +214,6 @@ class CodeTransformerAST:
 
     def __return_int(self):
         """
-        todo move to change_loop_signature?
         Changes every 'return;' to 'return 0;'
         """
         ReturnIntVisitor().visit(self.main)

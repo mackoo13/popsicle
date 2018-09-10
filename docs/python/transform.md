@@ -2,6 +2,14 @@
 
 Scripts `wombat-transform-lore`, `wombat-transform-lore-unroll` and `wombat-transform-pips` prepare C source code to be executed and to perform measurements with PAPI.
 
+Remember to run `source config/lore.cfg` prior to executong this scripts. It will populate following environment variables:
+
+- `LORE_ORIG_PATH` - original LORE programs (our input)
+- `PIPS_ORIG_PATH` - original PIPS programs (our input)
+- `LORE_PROC_PATH` - output directory for `wombat-transform-lore`
+- `LORE_PROC_CLANG_PATH` - output directory for `wombat-transform-lore-unroll`
+- `PIPS_PROC_PATH` - output directory for `wombat-transform-pips`
+
 
 ### `wombat-transform-lore`
 

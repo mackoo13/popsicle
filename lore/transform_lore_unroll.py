@@ -4,10 +4,11 @@ from code_transform_utils.code_transform_utils import split_code, save_max_dims
 import os
 import argparse
 
+from utils import check_config
+
 
 def main():
-    if 'LORE_ORIG_PATH' not in os.environ or 'LORE_PROC_CLANG_PATH' not in os.environ:
-        raise EnvironmentError
+    check_config(['LORE_ORIG_PATH', 'LORE_PROC_CLANG_PATH'])
 
     argparser = argparse.ArgumentParser()
     argparser.add_argument('-v', '--verbose', action='store_true', help='Verbose')

@@ -30,13 +30,13 @@ class CodeTransformerStr:
 
     def add_pragma_macro(self):
         """
-        todo
+        Adds a macro to expand PRAGMA(PRAGMA_UNROLL);
         """
         self.includes += '#define PRAGMA(p) _Pragma(p)\n'
 
     def remove_pragma_semicolon(self):
         """
-        Removes the semicolon after PRAGMA macro (added unintentionally by pycparser)
+        Removes the semicolon after PRAGMA macro (side effect of by pycparser)
         """
         self.code = re.sub(r'(PRAGMA\(.*\));', r'\1', self.code)
 

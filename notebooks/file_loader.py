@@ -4,16 +4,16 @@ from typing import Tuple, List
 from sklearn.preprocessing import RobustScaler
 from random import shuffle
 
+from utils import check_config
 
-if 'PAPI_OUT_DIR' not in os.environ:
-    raise EnvironmentError
-
+check_config('PAPI_OUT_DIR')
 out_dir = os.environ['PAPI_OUT_DIR']
 
 
 def aggregate(df: pd.DataFrame) -> pd.DataFrame:
     """
-    todo
+    Of all measurements of the same program with same parameters, take the minimum.
+    Minimum should be always the best approximation of the actual program characteristics without any overhead.
     """
     return df.groupby(['alg', 'run']).min()
 
@@ -40,7 +40,7 @@ def aggregate_conv_rev(df: pd.DataFrame) -> pd.DataFrame:
 
 def print_mean_and_std(df: pd.DataFrame) -> None:
     """
-    todo
+    For each column, print its mean value and standard deviation.
     """
     for col in df.columns:
         vals = df[col]
@@ -83,7 +83,6 @@ def unpack_conv_file_name(df: pd.DataFrame) -> None:
     def str_to_bool(v):
         return v == '1'
 
-    alg_level = df.index.names.index('alg')
     algs = list(df.index.get_level_values(0))
 
     df['dims'] = [q.split('_')[0][1:] for q in algs]
@@ -98,7 +97,8 @@ def unpack_conv_file_name(df: pd.DataFrame) -> None:
 
 def df_train_test_split(df: pd.DataFrame, test_split: float=0.3) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
-    todo
+    Splits DataFrame into training and testing data. All executions of one program are guaranteed to be in the same
+    partition (this ensures that training and testing data are in fact distinct).
     :param df:
     :param test_split:
     :return:
@@ -125,10 +125,10 @@ def df_sort_cols(df: pd.DataFrame) -> pd.DataFrame:
 
 def df_to_xy(df: pd.DataFrame, drop_cols: List[str], y_col: str) -> Tuple[any, any, pd.DataFrame]:  # todo types
     """
-    todo
-    :param df:
-    :param drop_cols:
-    :param y_col:
+    Separates ML input (x) and output (y) in a DataFrame
+    :param df: Input DataFrame
+    :param drop_cols: Columns to skip
+    :param y_col: Output column
     :return:
     """
     if y_col not in drop_cols:
@@ -140,13 +140,12 @@ def df_to_xy(df: pd.DataFrame, drop_cols: List[str], y_col: str) -> Tuple[any, a
     return x, y, df
 
 
-def get_df_meta():
+def get_df_meta() -> pd.DataFrame:
     """
-    todo
-    :return:
+    Loads metadata to a DataFrame, which then can be merged with the rest of data.
+    :return: DataFrame
     """
-    if 'LORE_PROC_PATH' not in os.environ:
-        raise EnvironmentError
+    check_config('LORE_PROC_PATH')
 
     proc_dir = os.environ['LORE_PROC_PATH']
     return pd.read_csv(os.path.join(proc_dir, 'metadata.csv'), index_col='alg')
@@ -189,12 +188,12 @@ class FileLoader:
             
         self.load()
 
-    def csv_to_df(self, name_suffix: str='', cols: List[str]=None):
+    def csv_to_df(self, name_suffix: str='', cols: List[str]=None) -> pd.DataFrame:
         """
-        todo
-        :param name_suffix:
-        :param cols:
-        :return:
+        Loads csv file(s) to a DataFrame
+        :param name_suffix: Suffix which will be added to each file name. Useful when todo
+        :param cols: Which columns to load
+        :return: DataFrame
         """
         paths = [os.path.join(out_dir, self.mode, p) for p in self.files]
 
@@ -210,9 +209,10 @@ class FileLoader:
 
         return df
 
-    def scale(self):
+    def scale(self) -> None:
         """
-        todo
+        Scales each column of data.
+        See http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.RobustScaler.html for more details.
         """
         scaler = RobustScaler(quantile_range=(10, 90))
         self.x_train = scaler.fit_transform(self.x_train)
@@ -221,7 +221,7 @@ class FileLoader:
         print('Train:', self.df_train.shape)
         print('Test: ', self.df_test.shape)
 
-    def split(self):
+    def split(self) -> None:
         df_train, df_test = df_train_test_split(self.df)
 
         self.x_train, self.y_train, self.df_train = df_to_xy(df_train, self.drop_cols, self.y_col)

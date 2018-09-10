@@ -87,9 +87,9 @@ class MallocBuilder:
 
     def __array_ref(self, subs: List[c_ast.Node]) -> c_ast.Node:
         """
-        todo
-        :param subs:
-        :return:
+        A helper function to construct an ArrayRef with given subscripts.
+        :param subs: List of subs for subsequent dimensions.
+        :return: c_ast.ArrayRef or c_ast.ID if subs is empty
         """
         if len(subs) == 0:
             return c_ast.ID(self.name)
@@ -154,9 +154,11 @@ class MallocBuilder:
 
     def __polybench_init(self, depth: int) -> c_ast.Node:
         """
-        todo
+        Generates a polybench-style array element initialisation.
         :param depth:
-        :return:
+
+        Example:
+            todo
         """
         subs = self.__subs(depth)
         left = self.__array_ref(subs)
@@ -174,9 +176,11 @@ class MallocBuilder:
 
     def __rand_init(self, depth: int) -> c_ast.Node:
         """
-        todo
+        Generates a statement initialising an array element randomly.
         :param depth:
-        :return:
+
+        Example:
+            todo
         """
         subs = self.__subs(depth)
         left = self.__array_ref(subs)

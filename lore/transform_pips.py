@@ -4,10 +4,11 @@ from code_transform_utils.code_transformer_str import CodeTransformerStr
 import argparse
 import os
 
+from utils import check_config
+
 
 def main():
-    if 'PIPS_PROC_PATH' not in os.environ:
-        raise EnvironmentError
+    check_config(['PIPS_PROC_PATH'])
 
     argparser = argparse.ArgumentParser()
     argparser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
