@@ -666,16 +666,6 @@ def remove_comments(code: str) -> str:
     return code
 
 
-def remove_inline(code: str) -> str:
-    """
-    todo
-    :param code:
-    :return:
-    """
-    code = re.sub(' __inline__ ', ' ', code)
-    return code
-
-
 def save_max_dims(proc_path: str, max_arr_dims: Mapping[str, int]) -> None:
     """
     todo

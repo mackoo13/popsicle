@@ -46,11 +46,7 @@ def main():
                             code=preproc_code,
                             papi_scope='function',
                             verbose=verbose,
-                            allow_struct=True,
-                            remove_comments=True,
-                            remove_inline=True,
                             modifiers_to_remove=['extern'],
-                            return_only_main=True
                         ).transform()
 
                         pt = CodeTransformerStr('', '')

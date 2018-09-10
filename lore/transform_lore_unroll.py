@@ -49,7 +49,6 @@ def main():
                     modifiers_to_remove=['extern', 'restrict'],
                     add_pragma_unroll=True,
                     gen_mallocs=True,
-                    arr_to_ptr_decl=True,
                 )
 
                 code = ct.transform()

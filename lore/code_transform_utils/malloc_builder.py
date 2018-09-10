@@ -57,7 +57,7 @@ class MallocBuilder:
         A = malloc((M+2)*sizeof(*int))
         for(int i_0=0; i_0<M+2; ++i_0) {
             A[i_0] = malloc((N+2)*sizeof(int))
-            for(int i_0=0; i_0<N+2; ++i_0) {
+            for(int i_1=0; i_1<N+2; ++i_1) {
                 A[i_0][i_1] = (int)rand();
             }
         }

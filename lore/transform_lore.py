@@ -49,8 +49,7 @@ def main():
                     main_name='loop',
                     modifiers_to_remove=['extern', 'restrict'],
                     gen_mallocs=True,
-                    add_bounds_init=True,
-                    arr_to_ptr_decl=True,
+                    rename_bounds=True,
                 )
 
                 code = ct.transform()

@@ -40,7 +40,7 @@ class CodeTransformerAST:
             if sv.contains_struct:
                 raise ParseException('Skipping - file contains struct')
 
-    def add_bounds_init(self):
+    def rename_bounds(self):
         """
         Inserts a code fragment initializing program parameters.
         The actual values should be injected at compilation time (-D option in gcc)
@@ -71,6 +71,8 @@ class CodeTransformerAST:
         else:
             raise ValueError(
                 'CodeTransformer: incorrect \'scope\' value in \'add_papi\' - expected \'pragma\' or \'function\'')
+
+        self.__change_loop_signature()
 
     def add_pragma_unroll(self):
         """
@@ -154,8 +156,6 @@ class CodeTransformerAST:
                 mb = MallocBuilder(arr, self.dtypes[arr], ref)
                 self.main.body.block_items[0:0] = mb.generate()
 
-        self.remove_bound_decls()
-
     def print_debug_info(self):
         print('maxs: ', self.maxs)
         print('bounds: ', self.bounds)
@@ -165,13 +165,12 @@ class CodeTransformerAST:
 
     def remove_bound_decls(self):
         """
-        todo
+        Removes all declarations of variables which will be provided on compilation time.
         """
         RemoveBoundDeclsVisitor(self.bounds).visit(self.ast)
 
     def remove_modifiers(self, modifiers_to_remove: Iterable[str]):
         """
-        todo does it work for restrict?
         Removes all indicated modifiers from variable declarations (for example 'extern')
         :param modifiers_to_remove:
         """
