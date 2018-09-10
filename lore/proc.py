@@ -1,8 +1,6 @@
 from __future__ import print_function
-from pycparser import c_generator
-from proc_ast_parser import ProcASTParser
-from proc_code_transformer import ProcCodeTransformer
-from proc_utils import split_code, save_max_dims, ParseException
+from code_transformer import CodeTransformer
+from proc_utils import split_code, save_max_dims
 import argparse
 import os
 
@@ -43,41 +41,33 @@ def main():
                 code = fin.read()
                 includes, code = split_code(code)
 
-                pp = ProcASTParser(code, verbose, main_name='loop')
-                pp.analyse()
-                pp.remove_modifiers(['extern', 'restrict'])
-                pp.add_papi()
-                pp.gen_mallocs()
-                pp.add_bounds_init()
-                pp.arr_to_ptr_decl()
+                ct = CodeTransformer(
+                    includes=includes,
+                    code=code,
+                    papi_scope='pragma',
+                    verbose=verbose,
+                    main_name='loop',
+                    modifiers_to_remove=['extern', 'restrict'],
+                    gen_mallocs=True,
+                    add_bounds_init=True,
+                    arr_to_ptr_decl=True,
+                )
 
-                generator = c_generator.CGenerator()
-                code = generator.visit(pp.ast)
-
-                pt = ProcCodeTransformer(includes, code)
-                pt.add_includes()
-                pt.add_max_macro()
-
-                code = pt.includes + pt.code
+                code = ct.transform()
 
                 if not os.path.isdir(out_dir):
                     os.makedirs(out_dir)
 
-                if len(pp.refs) == 0:
-                    failed += 1
-                    raise ParseException('No refs found - cannot determine max_arr_dim')
-
-                with open(os.path.join(out_dir, file_name) + '.c', 'w') as fout:
+                with open(os.path.join(out_dir, file_name + '.c'), 'w') as fout:
                     fout.write(code)
 
-                max_param, max_arr_dim = pp.find_max_param()
                 with open(os.path.join(out_dir, file_name + '_max_param.txt'), 'w') as fout:
-                    fout.write(str(int(max_param)))
+                    fout.write(str(ct.max_param))
 
                 with open(os.path.join(out_dir, file_name + '_params_names.txt'), 'w') as fout:
-                    fout.write(','.join(['PARAM_' + b.upper() for b in pp.bounds]))
+                    fout.write(','.join(['PARAM_' + b.upper() for b in ct.pp.bounds]))
 
-                max_arr_dims[file_name] = max_arr_dim
+                max_arr_dims[file_name] = ct.max_arr_dim
 
                 parsed += 1
 

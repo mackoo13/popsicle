@@ -183,8 +183,8 @@ class CompoundInsertNextToVisitor(c_ast.NodeVisitor):
                 if properties_match:
                     found_indices.append(i if self.where == 'before' else i + 1)
 
-        # important: indices must be sorted in descending order to preserve indices while new items are inserted
-        for i in found_indices[::-1]:
+        while len(found_indices) > 0:
+            i = found_indices.pop()
             items[i:i] = self.items
 
         for item in old_items:
@@ -231,9 +231,9 @@ class ForDepthCounter(c_ast.NodeVisitor):   # todo check
 
 
 # noinspection PyPep8Naming,PyMethodMayBeStatic
-class ForPragmaUnrollVisitor(c_ast.NodeVisitor):    # todo check
+class ForPragmaUnrollVisitor(c_ast.NodeVisitor):
     """
-    Inserts PRAGMA(PRAGMA_UNROLL) above the innermost for loop
+    Inserts PRAGMA(PRAGMA_UNROLL) above the innermost 'for' loop
     """
     def __init__(self, depth=0):
         self.depth = depth
@@ -248,7 +248,7 @@ class ForPragmaUnrollVisitor(c_ast.NodeVisitor):    # todo check
                 node.stmt = c_ast.Compound([node.stmt])
 
             if type(node.stmt) is c_ast.Compound:
-                # note: can also be called after c_ast.For case (above)
+                # note: this branch can also be called after c_ast.For case (above)
                 items = node.stmt.block_items
                 for_index = None
 
@@ -256,7 +256,8 @@ class ForPragmaUnrollVisitor(c_ast.NodeVisitor):    # todo check
                     if type(item) is c_ast.For:
                         for_index = i
 
-                items.insert(for_index, pragma_unroll())
+                if for_index is not None:
+                    items.insert(for_index, pragma_unroll())
 
 
 # noinspection PyPep8Naming
@@ -369,6 +370,25 @@ class PtrDeclVisitor(c_ast.NodeVisitor):
 
 
 # noinspection PyPep8Naming,PyMethodMayBeStatic
+class RemoveBoundDeclsVisitor(c_ast.NodeVisitor):
+    """
+    todo
+    """
+    def __init__(self, names):
+        self.names = names
+
+    def visit_FileAST(self, node):
+        i_to_remove = []
+        for i, e in enumerate(node.ext):
+            if type(e) is c_ast.Decl and e.name in self.names:
+                i_to_remove.append(i)
+
+        while len(i_to_remove) > 0:
+            i = i_to_remove.pop()
+            node.ext.pop(i)
+
+
+# noinspection PyPep8Naming,PyMethodMayBeStatic
 class ReturnIntVisitor(c_ast.NodeVisitor):
     """
     todo
@@ -393,6 +413,8 @@ class SingleToCompoundVisitor(c_ast.NodeVisitor):
         if type(node.stmt) is not c_ast.Compound:
             node.stmt = c_ast.Compound([node.stmt])
 
+        self.generic_visit(node.stmt)
+
     def visit_DoWhile(self, node):
         self.generic_visit_loop(node)
 
@@ -404,6 +426,9 @@ class SingleToCompoundVisitor(c_ast.NodeVisitor):
             node.iftrue = c_ast.Compound([node.iftrue])
         if type(node.iffalse) is not c_ast.Compound:
             node.iffalse = c_ast.Compound([node.iffalse])
+
+        self.generic_visit(node.iftrue)
+        self.generic_visit(node.iffalse)
 
     def visit_While(self, node):
         self.generic_visit_loop(node)

@@ -3,7 +3,7 @@ import sys
 import re
 
 
-class ProcCodeTransformer:
+class CodeTransformerStr:
     def __init__(self, includes, code):
         self.includes = includes
         self.code = code
@@ -33,15 +33,6 @@ class ProcCodeTransformer:
         todo
         """
         self.includes += '#define PRAGMA(p) _Pragma(p)\n'
-
-    def remove_bound_decl(self, bounds, dtypes):
-        """
-        todo
-        :param dtypes:
-        :param bounds:
-        """
-        for b in bounds:
-            self.code = re.sub(r'(\b' + dtypes[b] + ' ' + b + ';)', r'//\1', self.code)
 
     def remove_pragma_semicolon(self):
         """

@@ -7,11 +7,12 @@ from proc_utils import remove_non_extreme_numbers, estimate, \
     ArrayRefVisitor, ForVisitor, AssignmentVisitor, PtrDeclVisitor, StructVisitor, \
     ArrayDeclVisitor, VarTypeVisitor, ForPragmaUnrollVisitor, DeclRemoveModifiersVisitor, \
     FuncDefFindVisitor, CompoundInsertNextToVisitor, ForDepthCounter, SingleToCompoundVisitor, \
-    ParseException, ReturnIntVisitor, ArrayDeclToPtrVisitor, papi_instr, pragma_unroll, loop_func_params
+    ParseException, ReturnIntVisitor, ArrayDeclToPtrVisitor, papi_instr, pragma_unroll, loop_func_params, \
+    RemoveBoundDeclsVisitor
 import math
 
 
-class ProcASTParser:
+class CodeTransformerAST:
     def __init__(self, code, verbose=False, allow_struct=False, main_name='main'):
         self.maxs = {}
         self.refs = {}
@@ -44,21 +45,27 @@ class ProcASTParser:
         inits = [c_ast.Assignment('=', c_ast.ID(n), c_ast.ID('PARAM_' + n.upper())) for n in self.bounds]
         self.main.body.block_items[0:0] = inits
 
-    def add_papi(self):
+    def add_papi(self, scope):
         """
         Inserts code responsible for starting PAPI and making PAPI and execution time measurements
         """
         body = self.main.body
+        [exec_start, begin_clock], [end_clock, exec_stop] = papi_instr()
 
-        self.change_loop_signature()
+        if type(body) is not c_ast.Compound:
+            return
 
-        if type(body) is c_ast.Compound:
-            papi_begin, papi_end = papi_instr()
-
-            CompoundInsertNextToVisitor('before', 'Pragma', papi_begin,
+        if scope == 'pragma':
+            CompoundInsertNextToVisitor('before', 'Pragma', [exec_start, begin_clock],
                                         properties={'string': 'scop'}).visit(body)
-            CompoundInsertNextToVisitor('after', 'Pragma', papi_end,
+            CompoundInsertNextToVisitor('after', 'Pragma', [end_clock, exec_stop],
                                         properties={'string': 'endscop'}).visit(body)
+        elif scope == 'function':
+            body.block_items.insert(0, exec_start)
+            body.block_items.insert(1, begin_clock)
+            CompoundInsertNextToVisitor('before', 'Return', [end_clock, exec_stop]).visit(body)
+        else:
+            raise ValueError
 
     def add_pragma_unroll(self):
         """
@@ -72,7 +79,8 @@ class ProcASTParser:
 
     def analyse(self):
         """
-        Extracts useful information from AST tree
+        Populates ...
+        todo
         """
 
         ForVisitor(self.maxs, self.bounds).visit(self.ast)
@@ -104,25 +112,6 @@ class ProcASTParser:
         """
         ArrayDeclToPtrVisitor(self.dims).visit(self.ast)
 
-    def change_loop_signature(self):
-        """
-        Changes the self.main function signature to:
-            int loop(int set, long_long* values, clock_t* begin, clock_t* end)
-        """
-        if self.main is None:
-            raise ValueError
-
-        decl = self.main.decl
-        decl.name = 'loop'
-
-        func_decl = decl.type
-        if type(func_decl) is c_ast.FuncDecl:
-            func_decl.args = loop_func_params()
-            func_decl.type.declname = 'loop'
-            func_decl.type.type = c_ast.IdentifierType(['int'])
-
-        self.return_int()
-
     def find_max_param(self):
         """
         Attempts to find the maximal value of program parameters. The upper bound is either imposed by limited memory
@@ -131,13 +120,16 @@ class ProcASTParser:
         if multiple parameters are present, all are assumed to be equal.
         :return: The maximal parameter
         """
+        if len(self.refs) == 0:
+            raise ParseException('No refs found - cannot determine max_arr_dim')
+
         max_arr_dim = max([len(refs) for refs in self.refs.values()])
         arr_count = len(self.refs)
         loop_depth = self.__for_depth()
 
         max_param_arr = math.pow(50000000 / arr_count, 1 / max_arr_dim)
         max_param_loop = math.pow(5000000000, 1 / loop_depth)
-        max_param = min(max_param_arr, max_param_loop)
+        max_param = int(min(max_param_arr, max_param_loop))
 
         return max_param, max_arr_dim
 
@@ -156,19 +148,7 @@ class ProcASTParser:
                 mb = MallocBuilder(arr, self.dtypes[arr], ref)
                 self.main.body.block_items[0:0] = mb.generate()
 
-    def main_to_loop(self):
-        """
-        todo
-        """
-        self.change_loop_signature()
-        body = self.main.body
-
-        if type(body) is c_ast.Compound:
-            [exec_start, begin_clock], [end_clock, exec_stop] = papi_instr()
-
-            body.block_items.insert(0, exec_start)
-            body.block_items.insert(1, begin_clock)
-            CompoundInsertNextToVisitor('before', 'Return', [end_clock, exec_stop]).visit(body)
+        self.remove_bound_decls()
 
     def print_debug_info(self):
         print('maxs: ', self.maxs)
@@ -177,28 +157,49 @@ class ProcASTParser:
         print('dtypes: ', self.dtypes)
         print('dims: ', self.dims)
 
+    def remove_bound_decls(self):
+        """
+        todo
+        """
+        RemoveBoundDeclsVisitor(self.bounds).visit(self.ast)
+
     def remove_modifiers(self, modifiers_to_remove: Iterable[str]):
         """
         todo does it work for restrict?
         Removes all indicated modifiers from variable declarations (for example 'extern')
         :param modifiers_to_remove:
         """
-        DeclRemoveModifiersVisitor(modifiers_to_remove).visit(self.ast)
+        if self.ast is None:
+            raise ValueError('remove_modifiers called with self.ast=None')
 
-    def return_int(self):
-        """
-        todo move to change_loop_signature?
-        Changes every 'return;' to 'return 0;'
-        """
-        ReturnIntVisitor().visit(self.main)
+        DeclRemoveModifiersVisitor(modifiers_to_remove).visit(self.ast)
 
     def single_to_compound(self):
         """
         Transforms single expressions to compounds where possible to facilitate parsing
         """
+        if self.main is None:
+            raise ValueError('single_to_compound called with self.main=None')
+
         SingleToCompoundVisitor().visit(self.main)
 
     # PRIVATE MEMBERS
+
+    def __change_loop_signature(self):
+        """
+        Changes the self.main function signature to:
+            int loop(int set, long_long* values, clock_t* begin, clock_t* end)
+        """
+        decl = self.main.decl
+        decl.name = 'loop'
+
+        func_decl = decl.type
+        if type(func_decl) is c_ast.FuncDecl:
+            func_decl.args = loop_func_params()
+            func_decl.type.declname = 'loop'
+            func_decl.type.type = c_ast.IdentifierType(['int'])
+
+        self.__return_int()
 
     def __for_depth(self):
         """
@@ -208,3 +209,10 @@ class ProcASTParser:
         fdc = ForDepthCounter(1)
         fdc.visit(self.ast)
         return fdc.depth
+
+    def __return_int(self):
+        """
+        todo move to change_loop_signature?
+        Changes every 'return;' to 'return 0;'
+        """
+        ReturnIntVisitor().visit(self.main)

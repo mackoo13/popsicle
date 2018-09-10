@@ -4,7 +4,7 @@ from typing import List
 from pycparser import c_ast, c_generator
 import numpy as np
 from malloc_builder import MallocBuilder
-from proc_code_transformer import ProcCodeTransformer
+from code_transformer_str import CodeTransformerStr
 from proc_utils import exprs_sum, papi_instr, loop_func_params
 
 if 'KERNEL_PATH' not in os.environ:
@@ -95,7 +95,7 @@ class ConvCodeGenerator:
         gen = c_generator.CGenerator()
         code = gen.visit(c_ast.FileAST(self.__array_decls() + [func_loop]))
 
-        pt = ProcCodeTransformer('', code)
+        pt = CodeTransformerStr('', code)
         pt.add_includes(other_includes=['stdlib.h'])
         self.code = pt.includes + pt.code
 
