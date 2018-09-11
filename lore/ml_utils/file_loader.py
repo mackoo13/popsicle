@@ -4,6 +4,9 @@ from typing import Tuple, List
 from sklearn.preprocessing import RobustScaler
 from random import shuffle
 
+from utils import check_config
+
+check_config(['PAPI_OUT_DIR'])
 out_dir = os.environ['PAPI_OUT_DIR']
 
 
@@ -13,52 +16,6 @@ def aggregate(df: pd.DataFrame) -> pd.DataFrame:
     Minimum should be always the best approximation of the actual program characteristics without any overhead.
     """
     return df.groupby(['alg', 'run']).min()
-
-
-def aggregate_conv_rev(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    todo
-    """
-    df = df.groupby(['dims', 'n_arrays', 'rev']).mean()
-    rev_level = df.index.names.index('rev')
-
-    for index, row in df.iterrows():
-        if index[rev_level]:
-            row0_index = list(index)
-            row0_index[rev_level] = False
-            row0 = df.loc[tuple(row0_index), :]
-            df.loc[index] = row / row0        # todo 0
-
-    df = df.drop(False, level=2)
-
-    df.index = df.index.droplevel(2)
-    return df
-
-
-def print_mean_and_std(df: pd.DataFrame) -> None:
-    """
-    For each column, print its mean value and standard deviation.
-    """
-    for col in df.columns:
-        vals = df[col]
-        print(col, '\t', str(round(vals.mean(), 2)) + '+/-' + str(round(vals.std(), 2)))
-
-
-def remove_unpaired_rev(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    todo
-    """
-    for index, row in df.iterrows():
-        # noinspection PyUnresolvedReferences
-        if not (
-                (df['dims'] == row['dims']) &
-                (df['n_arrays'] == row['n_arrays']) &
-                (df['rev'] != row['rev']) &
-                (df.index.get_level_values(1) == index[1])
-        ).any():
-            df = df.drop(index)
-
-    return df
 
 
 def scale_by_tot_ins(df: pd.DataFrame) -> pd.DataFrame:
@@ -71,25 +28,6 @@ def scale_by_tot_ins(df: pd.DataFrame) -> pd.DataFrame:
     df['PAPI_TOT_INS'] = 1
     df = df.dropna()
     return df
-
-
-def unpack_conv_file_name(df: pd.DataFrame) -> None:
-    """
-    todo
-    """
-    def str_to_bool(v):
-        return v == '1'
-
-    algs = list(df.index.get_level_values(0))
-
-    df['dims'] = [q.split('_')[0][1:] for q in algs]
-    df['dims'] = df['dims']
-
-    df['rev'] = [q.split('_')[1][1:] for q in algs]
-    df['rev'] = df['rev'].apply(str_to_bool).astype(bool)
-
-    df['n_arrays'] = [q.split('_')[2][1:] for q in algs]
-    df['n_arrays'] = df['n_arrays'].astype(int)
 
 
 def df_train_test_split(df: pd.DataFrame, test_split: float=0.3) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -114,7 +52,7 @@ def df_train_test_split(df: pd.DataFrame, test_split: float=0.3) -> Tuple[pd.Dat
 
 def df_sort_cols(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Sorts the columns of a DataFrame
+    Sorts the columns of a DataFrame (by column name)
     """
     cols = sorted(list(df.columns.values))
     return df[cols]
@@ -142,6 +80,8 @@ def get_df_meta() -> pd.DataFrame:
     Loads metadata to a DataFrame, which then can be merged with the rest of data.
     :return: DataFrame
     """
+    check_config('LORE_PROC_PATH')
+
     proc_dir = os.environ['LORE_PROC_PATH']
     return pd.read_csv(os.path.join(proc_dir, 'metadata.csv'), index_col='alg')
 
@@ -173,11 +113,6 @@ class FileLoader:
             self.mode = 'unroll'
             self.drop_cols = ['time_ur', 'time_nour', 'max_dim']
             self.y_col = 'speedup'
-        elif mode in ('conv', 'c'):
-            self.load = self.load_conv
-            self.mode = 'conv'
-            self.drop_cols = ['dims', 'time', 'n_arrays']
-            self.y_col = 'rev'
         else:
             raise Exception('Unknown feature selection mode')
             
@@ -270,18 +205,4 @@ class FileLoader:
         df['speedup'] = df['time_nour'] / df['time_ur']
 
         df = df_sort_cols(df)
-        self.df = df
-
-    def load_conv(self):
-        df = self.csv_to_df()
-
-        df = df.loc[df['time'] > 100]
-        df = scale_by_tot_ins(df)
-
-        df = df_sort_cols(df)
-        unpack_conv_file_name(df)
-
-        df = remove_unpaired_rev(df)
-        df = aggregate_conv_rev(df)
-
         self.df = df
