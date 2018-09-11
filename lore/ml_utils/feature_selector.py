@@ -1,7 +1,8 @@
+#!/usr/bin/env python3
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsRegressor
-from ml_utils.learn_coeffs import CoeffsLearner
+from ml_utils.coeffs_learner import CoeffsLearner
 from ml_utils.ml_utils import calc_score
 from ml_utils.nca import NCA
 import numpy as np
@@ -108,7 +109,7 @@ def feature_importance(x, y, df, n_iter=100):
 class FeatureSelector:
     def __init__(self, how, n_neighbors_list={6}):
         self.feats = None
-        self.coeffs = None
+        self.coeffs_learner = None
         self.n_neighbors = None
         self.pca = None
         self.nca = None
@@ -147,7 +148,7 @@ class FeatureSelector:
             clf = KNeighborsRegressor(n_neighbors=n_neighbors, weights='distance')
 
             for i in range(n_iter):
-                print('Iteration ' + str(i + 1) + '/' + str(n_iter) + ' for ' + str(n_neighbors) + ' neighbours')
+                print('\tIteration ' + str(i + 1) + '/' + str(n_iter) + ' for ' + str(n_neighbors) + ' neighbours')
                 _, feats = make_step_search(x, y, df, step, clf)
                 score, _ = remove_feats(x, y, df, feats, clf)
 
@@ -168,11 +169,9 @@ class FeatureSelector:
         self.feats = feats_list
         self.n_neighbors = best_n_neighbors
 
-        cl = CoeffsLearner(x[:, feats_list], y, df,
-                           KNeighborsRegressor(n_neighbors=self.n_neighbors, weights='distance'))
-        cl.fit()
-        self.coeffs = cl.coeffs
-        print(self.coeffs)
+        self.coeffs_learner = CoeffsLearner(x[:, feats_list], y, df,
+                                            KNeighborsRegressor(n_neighbors=self.n_neighbors, weights='distance'))
+        self.coeffs_learner.fit()
 
     def transform_pca(self, x):
         return self.pca.transform(x)
@@ -181,4 +180,4 @@ class FeatureSelector:
         return self.nca.transform(x)
 
     def transform_step(self, x):
-        return np.multiply(x[:, self.feats], self.coeffs)
+        return self.coeffs_learner.transform(x[:, self.feats])
