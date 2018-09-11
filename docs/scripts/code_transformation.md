@@ -4,16 +4,20 @@ Scripts `wombat-transform-lore`, `wombat-transform-lore-unroll` and `wombat-tran
 
 Remember to run `source config/lore.cfg` prior to executong this scripts. It will populate following environment variables:
 
-- `LORE_ORIG_PATH` - original LORE programs (our input)
-- `PIPS_ORIG_PATH` - original PIPS programs (our input)
+- `LORE_ORIG_PATH` - original LORE programs (input)
+- `PIPS_ORIG_PATH` - original PIPS programs (input)
 - `LORE_PROC_PATH` - output directory for `wombat-transform-lore`
 - `LORE_PROC_CLANG_PATH` - output directory for `wombat-transform-lore-unroll`
 - `PIPS_PROC_PATH` - output directory for `wombat-transform-pips`
 
 
-### `wombat-transform-lore`
+### LORE transformation
+
+Usage: `wombat-transform-lore`
 
 Source code: `transform_lore.py`
+
+---
 
 The input code is expected to be in the format used in LORE repository.
 
@@ -77,9 +81,13 @@ void loop(int set, long_long* values, clock_t* begin, clock_t* end)
 ```
 
 
-### `wombat-transform-lore-unroll`
+### LORE transformation (with loop unrolling)
+
+Usage: `wombat-transform-lore-unroll`
 
 Source code: `transform_lore_unroll.py`
+
+---
 
 This script is a modification of `wombat-transform-lore-unroll`. Besides, it inserts a `#pragma` statement above the innermost loop.
 
@@ -113,7 +121,9 @@ for (i = 0; i < n; i++) {
 ```
 
 
-### `wombat-transform-pips`
+### PIPS transformation
+
+Usage: `wombat-transform-pips`
 
 Source code: `transform_pips.py`
 
