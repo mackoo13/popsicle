@@ -1,10 +1,10 @@
-# Wombat
+# LORE programs preprocessing
 
 ## LORE repository
 
 Programs from [LORE repository](https://vectorization.computer) are used as the input for Machine Learning 
 
-## Lore Parser
+## LORE Parser
 
 LORE source codes are missing array allocation and initialization. This script attempts to generate missing code and make it runnable by Wombat. This includes:
 
@@ -17,11 +17,11 @@ LORE source codes are missing array allocation and initialization. This script a
 
 A number of assumptions has been made on the supported programs. They are not sufficient to correctly parse all LORE programs, but cover a vast majority.
 
-Files which do not satisfy these conditions are skipped in order to prevent incorrect code generation
+Files which do not satisfy these conditions are skipped in order to prevent incorrect code generation.
 
-* simple `for` loops conditions, i.e. variable name, operator (`<`, `<=`, `>` or `>=`) and an expression
-* simple `for` loops increments: `++`, `--`, `+=` and `-=` operators are supported
-* no struct declarations
+* simple format of loops is preferred (`for(i=0; i<N; i++)` or alike)
+* operators `++`, `--`, `+=` and `-=` are also supported in loop increment
+* no `struct` declarations are allowed
 
 #### LORE file format
 
@@ -39,7 +39,7 @@ void loop()
 }
 ```
 
-#### Output format
+#### After transformation
 
 ```$xslt
 // includes

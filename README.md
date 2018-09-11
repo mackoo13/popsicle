@@ -100,7 +100,7 @@ The script will train a ML model to predict speedup between `-O3` and `-O0` and 
 
 Use these scripts to predict the execution time for new programs.
 
-The code should conform to [this format](docs/file_format.md). An example is available in `examples/kernel.c`.
+The code should conform to [this format](docs/scripts/input_code.md). An example is available in `examples/kernel.c`.
 
 
 ### `predict`
