@@ -13,7 +13,7 @@ class CoeffsLearner:
 
         self.population = []
         self.best_coeffs = None
-        self.n_generations = 10
+        self.n_generations = 3
         self.population_size = 10
         self.alpha = 0.2
         self.init_mean = 1
@@ -40,9 +40,6 @@ class CoeffsLearner:
             self.__natural_selection()
 
         self.best_coeffs = self.__ith_coeffs(0)
-
-    def transform(self, x):
-        return np.multiply(x, self.best_coeffs)
 
     # PRIVATE MEMBERS
 
@@ -80,7 +77,7 @@ class CoeffsLearner:
         return np.random.uniform(low, high)
 
     def __random_init(self):
-        coeffs = [1] * self.x.shape[1]
+        coeffs = np.array([1] * self.x.shape[1])
         self.population = [(self.__coeff_score(coeffs), coeffs)]
 
         for i in range(10 * self.population_size):

@@ -87,16 +87,29 @@ def get_df_meta() -> pd.DataFrame:
 
 
 class FileLoader:
-    def __init__(self, files, mode='speedup', dim={1, 2}):
+    def __init__(self, files, mode='speedup', purpose='train', dim={1, 2}, scaler=None):
+        if purpose not in ('train', 'predict'):
+            raise ValueError        # todo
+
+        if purpose == 'predict' and scaler is None:
+            raise ValueError        # todo
+
+        self.x = []
         self.x_train = []
         self.x_test = []
+
+        self.y = []
         self.y_train = []
         self.y_test = []
+
         self.df = None
         self.df_train = None
         self.df_test = None
+
         self.files = files
-        self.dim = list(dim)
+        self.dim = dim
+        self.scaler = scaler
+        self.purpose = purpose
 
         if mode in ('time', 't'):
             self.load = self.load_time
@@ -117,6 +130,10 @@ class FileLoader:
             raise Exception('Unknown feature selection mode')
             
         self.load()
+
+        if purpose == 'predict':
+            self.x, _, self.df = df_to_xy(self.df, self.drop_cols, self.y_col)
+            self.scale()
 
     def csv_to_df(self, name_suffix: str='', cols: List[str]=None) -> pd.DataFrame:
         """
@@ -144,14 +161,20 @@ class FileLoader:
         Scales each column of data.
         See http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.RobustScaler.html for more details.
         """
-        scaler = RobustScaler(quantile_range=(10, 90))
-        self.x_train = scaler.fit_transform(self.x_train)
-        self.x_test = scaler.transform(self.x_test)
+        if self.purpose == 'train':
+            self.scaler = RobustScaler(quantile_range=(10, 90))
+            self.x_train = self.scaler.fit_transform(self.x_train)
+            self.x_test = self.scaler.transform(self.x_test)
 
-        print('Train:', self.df_train.shape)
-        print('Test: ', self.df_test.shape)
+            print('Train:', self.df_train.shape)
+            print('Test: ', self.df_test.shape)
+        else:
+            self.x = self.scaler.transform(self.x)
 
     def split(self) -> None:
+        if self.purpose == 'predict':
+            raise ValueError        # todo
+
         df_train, df_test = df_train_test_split(self.df)
 
         self.x_train, self.y_train, self.df_train = df_to_xy(df_train, self.drop_cols, self.y_col)

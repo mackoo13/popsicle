@@ -109,7 +109,7 @@ def feature_importance(x, y, df, n_iter=100):
 class FeatureSelector:
     def __init__(self, how, n_neighbors_list={6}):
         self.feats = None
-        self.coeffs_learner = None
+        self.coeffs = None
         self.n_neighbors = None
         self.pca = None
         self.nca = None
@@ -169,9 +169,20 @@ class FeatureSelector:
         self.feats = feats_list
         self.n_neighbors = best_n_neighbors
 
-        self.coeffs_learner = CoeffsLearner(x[:, feats_list], y, df,
+        coeffs_learner = CoeffsLearner(x[:, feats_list], y, df,
                                             KNeighborsRegressor(n_neighbors=self.n_neighbors, weights='distance'))
-        self.coeffs_learner.fit()
+        coeffs_learner.fit()
+        self.coeffs = coeffs_learner.best_coeffs
+
+    def set_pca(self, pca):
+        self.pca = pca
+
+    def set_nca(self, nca):
+        self.nca = nca
+
+    def set_step(self, feats, coeffs):
+        self.feats = feats
+        self.coeffs = coeffs
 
     def transform_pca(self, x):
         return self.pca.transform(x)
@@ -180,4 +191,4 @@ class FeatureSelector:
         return self.nca.transform(x)
 
     def transform_step(self, x):
-        return self.coeffs_learner.transform(x[:, self.feats])
+        return np.multiply(x[:, self.feats], self.coeffs)

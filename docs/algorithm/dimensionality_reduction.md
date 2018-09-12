@@ -13,7 +13,6 @@ The advantage of Wombat's dimensionality reduction is twofold:
 1. Feature selection
 2. Coefficients tuning
 
-
 ### Feature selection
 
 In the first stage, we want to select a subset of features that provide most useful information for prediction.
