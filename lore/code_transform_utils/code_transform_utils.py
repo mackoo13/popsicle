@@ -490,16 +490,15 @@ def estimate(expr: any,
              maxs: Mapping[str, Set[str]]=None,
              var: str=None,
              deps: Mapping[str, Set[str]]=None,
-             parent_calls: List[str]=None
+             parent_calls: List[any]=None
              ) -> Set[str]:
     """
     Attempts to find a set of expressions which *might* represent the maximal value of expr. The primary use of this
     function is determining the size of an array based on its uses in the code.
-    If there is more than one expression that might be the maximum (e.g. variable-dependent or too complicated to be
-    calculated here), all possible options are enclosed in MAX macro and left to be determined by C compiler.
+
     :param expr: An expression to estimate
     :param maxs: A map containing possible upper bounds for variables
-    :param var:
+    :param var: Which variable is estimated. Used
     :param deps:
     :param parent_calls: History of expressions from previous recurrent calls  - prevents infinite loop
     :return: Set of C expressions whose maximum would evaluate to the maximal possible value of the input expression.
@@ -513,18 +512,23 @@ def estimate(expr: any,
     if parent_calls is None:
         parent_calls = []
 
+    # prevent infinite loop
     if expr in parent_calls:
         return set()
+    # noinspection PyUnresolvedReferences
     parent_calls.append(expr)
 
+    # multiple options => take into account all of them
     if type(expr) is set or type(expr) is list:
         options = []
-        for ni in expr:
-            options.extend(estimate(ni, maxs, var, deps, parent_calls))
+        for e in expr:
+            options.extend(estimate(e, maxs, var, deps, parent_calls))
 
+    # variable name => check maxs (possible upper bounds)
     elif type(expr) is str:
         options = maxs[expr] if expr in maxs else [expr]
 
+    # variable => subsequent call with type(expr)=str
     elif type(expr) is c_ast.ID:
         if var is not None and expr.name not in maxs:
             if var in deps:
@@ -534,14 +538,17 @@ def estimate(expr: any,
 
         options = estimate(expr.name, maxs, var, deps, parent_calls)
 
+    # binary operation => try to evaluate if possible
     elif type(expr) is c_ast.BinaryOp:
         ls = estimate(expr.left, maxs, var, deps, parent_calls)
         rs = estimate(expr.right, maxs, var, deps, parent_calls)
         options = [eval_basic_op(l, expr.op, r) for l in ls for r in rs]
 
+    # constant => take value
     elif type(expr) is c_ast.Constant:
         options = [expr.value]
 
+    # unsupported object
     else:
         options = []
 

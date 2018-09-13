@@ -36,7 +36,7 @@ def df_aggregate(df: pd.DataFrame) -> pd.DataFrame:
 
 def df_get_index_col(df: pd.DataFrame, col: str) -> List:
     """
-    todo
+    Finds a column with given name in DataFrame's index.
     """
     col_level = df.index.names.index(col)
     return df.index.get_level_values(col_level)

@@ -4,7 +4,7 @@ from typing import List
 from pycparser import c_ast, c_generator
 import numpy as np
 from code_transform_utils.malloc_builder import MallocBuilder
-from code_transform.code_transformer_str import CodeTransformerStr
+from code_transform_utils.code_transformer_str import CodeTransformerStr
 from code_transform_utils.code_transform_utils import exprs_sum, papi_instr, loop_func_params
 
 if 'KERNEL_PATH' not in os.environ:
@@ -113,7 +113,7 @@ class ConvCodeGenerator:
         max_param_file_name = dir_name + '_max_param.txt'
         params_names_file_name = dir_name + '_params_names.txt'
 
-        shutil.rmtree(dir_path)     # todo check
+        shutil.rmtree(dir_path)
 
         if not os.path.isdir(dir_path):
             os.makedirs(dir_path)

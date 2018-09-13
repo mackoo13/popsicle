@@ -1,3 +1,4 @@
+from typing import Set, Tuple
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsRegressor
@@ -8,11 +9,14 @@ from ml_utils.nca import NCA
 import numpy as np
 
 
-def dim_sign(data: DataSet):
+def dim_sign(data: DataSet) -> np.array:
     """
-    todo
-    :param data:
-    :return:
+    Orders the features by their importance according to RandomForestRegressor.
+    RandomForestRegressor is not deterministic, so generating the list multiple times is recommended for better results.
+    See http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html
+    :param data: DataSet to train
+    :return: A list of tuples ordered by the importance (descendingly):
+        (feature index, feature name, importance)
     """
     regr = RandomForestRegressor()
     regr.fit(data.x, data.y)
@@ -22,12 +26,12 @@ def dim_sign(data: DataSet):
     return np.array(res)
 
 
-def make_step_search(data: DataSet, step: int, clf):
+def make_step_search(data: DataSet, step: int, regr):
     """
     todo
     :param data:
     :param step:
-    :param clf:
+    :param regr:
     :return:
     """
     feats = set()
@@ -50,7 +54,7 @@ def make_step_search(data: DataSet, step: int, clf):
                 data.x_labels[list(new_feats)]
             )
 
-            score = calc_score(new_data, clf)
+            score = calc_score(new_data, regr)
             if score > best:
                 new_best = score
                 to_add = i
@@ -65,8 +69,16 @@ def make_step_search(data: DataSet, step: int, clf):
     return best, feats
 
 
-def remove_feats(data: DataSet, feats, clf):
-    best = calc_score(data, clf)
+def remove_feats(data: DataSet, feats: Set[int], regr) -> Tuple[int, Set[int]]:
+    """
+    This is the second phase of selecting the optimal subset of features. It takes the existing subset and tries to
+    remove redundant features as long as the score does not decrease.
+    :param data: Dataset to learn
+    :param feats: Existing subset of features (as a set of indices)
+    :param regr: Regressor to evaluate solutions
+    :return: The best achieved score and the subset of features
+    """
+    best = calc_score(data, regr)
 
     while True:
         to_remove = None
@@ -85,7 +97,7 @@ def remove_feats(data: DataSet, feats, clf):
                 data.x_labels[list(new_feats)]
             )
 
-            score = calc_score(new_data, clf)
+            score = calc_score(new_data, regr)
             if score >= best:
                 best = score
                 to_remove = f
@@ -99,6 +111,14 @@ def remove_feats(data: DataSet, feats, clf):
 
 
 def feature_importance(data: DataSet, n_iter=100):
+    """
+    Creates a ranking of features by how often they are selected as useful.
+    Basically, feature selection is performed n_iter times and the results are aggregated.
+    Warning: the result might be misleading. Use with care.
+    :param data: DataSet to learn
+    :param n_iter: Number of times to perform feature selection
+    :return:
+    """
     res = {}
     for c in data.df.columns:
         res[c] = 0
@@ -118,6 +138,14 @@ def feature_importance(data: DataSet, n_iter=100):
 
 class DimReducer:
     def __init__(self, how, n_neighbors_list={6}):
+        """
+        For description of 'step' strategy, see docs/algorithm/dimensionality_reduction.md.
+        KNeighborsRegressor is assumed as the regressor, but can be easily changed to a different model.
+
+        :param how: Which algorithm to use. Available: 'step', 'pca', 'nca'
+        :param n_neighbors_list: What n_neighbors values to test in the regressor
+        """
+
         self.feats = None
         self.coeffs = None
         self.n_neighbors = None
@@ -155,12 +183,12 @@ class DimReducer:
         print('Performing step feature selection (step=%d, n_iter=%d)' % (step, n_iter))
 
         for n_neighbors in self.n_neighbors_list:
-            clf = KNeighborsRegressor(n_neighbors=n_neighbors, weights='distance')
+            regr = KNeighborsRegressor(n_neighbors=n_neighbors, weights='distance')
 
             for i in range(n_iter):
                 print('\tIteration ' + str(i + 1) + '/' + str(n_iter) + ' for ' + str(n_neighbors) + ' neighbours')
-                _, feats = make_step_search(data, step, clf)
-                score, _ = remove_feats(data, feats, clf)
+                _, feats = make_step_search(data, step, regr)
+                score, _ = remove_feats(data, feats, regr)
 
                 if score > best:
                     best = score
@@ -177,23 +205,13 @@ class DimReducer:
         print('\n'.join(['\t' + data.df.columns[f] for f in feats_list]))
 
         selected_data = DataSet(data.x[:, feats_list], data.y, data.df, data.x_labels)
-        clf = KNeighborsRegressor(n_neighbors=best_n_neighbors, weights='distance')
-        coeffs_learner = CoeffsLearner(selected_data, clf)
+        regr = KNeighborsRegressor(n_neighbors=best_n_neighbors, weights='distance')
+        coeffs_learner = CoeffsLearner(selected_data, regr)
         coeffs_learner.fit()
 
         self.feats = feats_list
         self.n_neighbors = best_n_neighbors
         self.coeffs = coeffs_learner.best_coeffs
-
-    def set_pca(self, pca):
-        self.pca = pca
-
-    def set_nca(self, nca):
-        self.nca = nca
-
-    def set_step(self, feats, coeffs):
-        self.feats = feats
-        self.coeffs = coeffs
 
     def transform_pca(self, x):
         return self.pca.transform(x)

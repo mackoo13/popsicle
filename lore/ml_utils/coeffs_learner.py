@@ -6,9 +6,9 @@ from ml_utils.ml_utils import calc_score
 
 
 class CoeffsLearner:
-    def __init__(self, data: DataSet, clf):
+    def __init__(self, data: DataSet, regr):
         self.data = data
-        self.clf = clf
+        self.regr = regr
 
         self.population = []
         self.best_coeffs = None
@@ -52,7 +52,7 @@ class CoeffsLearner:
             self.data.df,
             self.data.x_labels
         )
-        return calc_score(multiplied_data, clone(self.clf))
+        return calc_score(multiplied_data, clone(self.regr))
 
     def __ith_coeffs(self, i):
         return self.population[i][1]

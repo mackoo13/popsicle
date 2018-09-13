@@ -45,7 +45,8 @@ class FileLoader:
     def csv_to_df(self, name_suffix: str='', cols: List[str]=None) -> pd.DataFrame:
         """
         Loads csv file(s) to a DataFrame
-        :param name_suffix: Suffix which will be added to each file name. Useful when todo
+        :param name_suffix: Suffix which will be added to each file name. For example, in 'speedup' mode it can load
+            file_name_O0.csv and file_name_O3.csv.
         :param cols: Which columns to load
         :return: DataFrame
         """

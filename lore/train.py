@@ -14,16 +14,18 @@ out_dir = os.environ['PAPI_OUT_DIR']
 model_dir = os.environ['LORE_MODELS_DIR']
 
 
-def save_models(scaler, dim_reducer, clf):
+def save_models(scaler, dim_reducer, regr):
     print('Finished training. Saving the models to ' + model_dir + '...')
     joblib.dump(scaler, os.path.join(model_dir, 'scaler.pkl'))
     joblib.dump(dim_reducer, os.path.join(model_dir, 'dim_reducer.pkl'))
-    joblib.dump(clf, os.path.join(model_dir, 'clf.pkl'))
+    joblib.dump(regr, os.path.join(model_dir, 'regr.pkl'))
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('mode', type=str, help='todo')
+    parser.add_argument('mode', type=str, help='Use \'time\'/\'t\' for execution time prediction, '
+                                               '\'speedup\'/\'s\' for predicting speedup after gcc optimisation or '
+                                               '\'unroll\'/\'u\' for predicting speedup after clang loop unrolling.')
     parser.add_argument('-i', '--input', action='append', required=True,
                         help='<Required> input files in CSV format (names without extensions). You can provide multiple'
                              ' files (-i file1 -i file2...).')
@@ -51,13 +53,13 @@ def main():
         x_test = dr.transform(fl.data.test_set.x)
         y, y_test = fl.data.train_set.y, fl.data.test_set.y
 
-        clf = KNeighborsRegressor(n_neighbors=dr.n_neighbors, weights='distance')
-        clf.fit(x, y)
-        score = clf.score(x_test, y_test)
+        regr = KNeighborsRegressor(n_neighbors=dr.n_neighbors, weights='distance')
+        regr.fit(x, y)
+        score = regr.score(x_test, y_test)
         adjusted = adjust_r2(score, x_test.shape[0], x_test.shape[1])
 
         print('r2:', round(score, 2), round(adjusted, 2))
-        save_models(fl.data.scaler, dr, clf)
+        save_models(fl.data.scaler, dr, regr)
 
 
 if __name__ == "__main__":

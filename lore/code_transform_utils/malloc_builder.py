@@ -88,6 +88,9 @@ class MallocBuilder:
     def __array_ref(self, subs: List[c_ast.Node]) -> c_ast.Node:
         """
         A helper function to construct an ArrayRef with given subscripts.
+
+        Example: A[sub0][sub1][sub2]
+
         :param subs: List of subs for subsequent dimensions.
         :return: c_ast.ArrayRef or c_ast.ID if subs is empty
         """
@@ -99,9 +102,13 @@ class MallocBuilder:
 
     def __for_loop(self, depth: int) -> c_ast.For:
         """
-        todo
+        A helper function to construct a for loop corresponding to allocating one dimension of an array.
+        Recursively calls itself to generate next levels or generates an initialisation line if it is the last level.
+
+        Example: for(i_2 = 0; i_2 < N; i_2++) { ... }
+
         :param depth:
-        :return:
+        :return: C-ast.For
         """
         i = self.counter_prefix + str(depth)
         init = c_ast.DeclList([c_ast.Decl(
@@ -114,17 +121,27 @@ class MallocBuilder:
         stmt = c_ast.Compound([])
 
         if depth < len(self.sizes) - 1:
-            stmt.block_items = [self.__malloc_assign(depth + 1), self.__for_loop(depth + 1)]
+            stmt.block_items = [
+                self.__malloc_assign(depth + 1),
+                self.__for_loop(depth + 1)
+            ]
         else:
-            stmt.block_items = [self.initialiser(depth + 1)]
+            stmt.block_items = [
+                self.initialiser(depth + 1)
+            ]
 
         return c_ast.For(init, cond, nxt, stmt)
 
     def __malloc(self, depth: int) -> c_ast.FuncCall:
         """
-        todo
-        :param depth:
-        :return:
+        A helper function to generate the call of malloc function with proper arguments.
+        Note that a constant of 2 is added to the number of allocated cells. This is meant to compensate minor errors in
+        size estimation.
+
+        Example: malloc((N + 2) * sizeof(int*))
+
+        :param depth: Which dimension of the array we want to allocate. Used to generate the argument of sizeof().
+        :return: c_ast.FuncCall
         """
         size_expr = \
             c_ast.BinaryOp(
@@ -136,7 +153,7 @@ class MallocBuilder:
         sizeof = \
             c_ast.FuncCall(
                 c_ast.ID('sizeof'),
-                c_ast.ExprList([c_ast.ID(self.dtype.name + '*' * (len(self.sizes) - depth - 1))])   # todo proper Ptr
+                c_ast.ExprList([c_ast.ID(self.dtype.name + '*' * (len(self.sizes) - depth - 1))])
             )
 
         arg = c_ast.BinaryOp('*', size_expr, sizeof)
@@ -145,7 +162,10 @@ class MallocBuilder:
 
     def __malloc_assign(self, depth: int) -> c_ast.Node:
         """
-        todo
+        A helper function to construct a malloc function call with assigment
+
+        Example: A[i_0] = malloc((N + 2) * sizeof(int*));
+
         :param depth:
         :return:
         """
@@ -157,8 +177,7 @@ class MallocBuilder:
         Generates a polybench-style array element initialisation.
         :param depth:
 
-        Example:
-            todo
+        Example: A[i_0][i_1] = (double) (i_0 * i_1 + 1) / N;
         """
         subs = self.__subs(depth)
         left = self.__array_ref(subs)
@@ -180,7 +199,7 @@ class MallocBuilder:
         :param depth:
 
         Example:
-            todo
+            A[i_0][i_1] = (double) rand();
         """
         subs = self.__subs(depth)
         left = self.__array_ref(subs)
@@ -196,9 +215,12 @@ class MallocBuilder:
 
         return c_ast.Assignment('=', left, right)
 
-    def __subs(self, depth):
+    def __subs(self, depth) -> List[c_ast.ID]:
         """
-        todo
+        Generates a list of c_ast.ID corresponding to all iterator variables until depth.
+
+        Example: [i_0, i_1, i_2]
+
         :param depth:
         :return:
         """
