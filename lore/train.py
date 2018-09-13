@@ -3,7 +3,7 @@ import argparse
 import os
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.externals import joblib
-from ml_utils.feature_selector import FeatureSelector
+from ml_utils.dim_reducer import DimReducer
 from ml_utils.file_loader import FileLoader
 from ml_utils.ml_utils import adjust_r2
 from utils import check_config
@@ -36,28 +36,29 @@ def main():
 
     n_neighbors_list = [8]
     # fs_mode_list = ['step', 'pca', 'nca']
-    fs_mode_list = ['step']
-    fs_step = 5
-    fs_n_iter = 1
+    dr_mode_list = ['step']
+    dr_step = 5
+    dr_n_iter = 1
 
     fl = FileLoader(files, mode=mode)
 
-    for fs_mode in fs_mode_list:
-        fl.split()
+    for fs_mode in dr_mode_list:
+        fl.data.split()
 
-        fs = FeatureSelector(fs_mode, n_neighbors_list=n_neighbors_list)
-        fs.fit(fl.x_train, fl.y_train, fl.df_train, step=fs_step, n_iter=fs_n_iter)
-        x = fs.transform(fl.x_train)
-        x_test = fs.transform(fl.x_test)
-        y, y_test = fl.y_train, fl.y_test
+        dr = DimReducer(fs_mode, n_neighbors_list=n_neighbors_list)
+        dr.fit(fl.data.train_set, step=dr_step, n_iter=dr_n_iter)
+        x = dr.transform(fl.data.train_set.x)
+        x_test = dr.transform(fl.data.test_set.x)
+        y, y_test = fl.data.train_set.y, fl.data.test_set.y
 
-        clf = KNeighborsRegressor(n_neighbors=fs.n_neighbors, weights='distance')
+        print(x[0])
+        clf = KNeighborsRegressor(n_neighbors=dr.n_neighbors, weights='distance')
         clf.fit(x, y)
         score = clf.score(x_test, y_test)
         adjusted = adjust_r2(score, x_test.shape[0], x_test.shape[1])
 
         print('r2:', round(score, 2), round(adjusted, 2))
-        save_models(fl.scaler, fs, clf)
+        save_models(fl.data.scaler, dr, clf)
 
 
 if __name__ == "__main__":

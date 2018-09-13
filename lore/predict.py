@@ -30,15 +30,18 @@ def main():
     files = args.input
 
     if mode not in ('time', 't', 'speedup', 's', 'unroll', 'u'):
-        raise ValueError('Unsupported mode')
+        raise ValueError('Unsupported mode: ' + mode)
 
     scaler, dim_reducer, clf = load_models()
     fl = FileLoader(files, mode=mode, purpose='predict', scaler=scaler)
 
-    x = dim_reducer.transform(fl.x)
+    x = dim_reducer.transform(fl.data.full_set.x)
     y = clf.predict(x)
+    print(x[0])
+    print(y[0], fl.data.full_set.y[0])
 
-    print('Prediction:', y)
+    # for yp, yr in zip(y, fl.data.full_set.y):
+    #     print(round(yp, 2), '\t', round(yr, 2))
 
 
 if __name__ == "__main__":

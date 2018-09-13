@@ -1,14 +1,13 @@
 from sklearn.base import clone
 import numpy as np
 
+from ml_utils.df_utils import DataSet
 from ml_utils.ml_utils import calc_score
 
 
 class CoeffsLearner:
-    def __init__(self, x, y, df, clf):
-        self.x = x
-        self.y = y
-        self.df = df
+    def __init__(self, data: DataSet, clf):
+        self.data = data
         self.clf = clf
 
         self.population = []
@@ -47,7 +46,12 @@ class CoeffsLearner:
         self.population.append((self.__coeff_score(coeffs), coeffs))
 
     def __coeff_score(self, coeffs):
-        return calc_score(np.multiply(self.x, coeffs), self.y, self.df, clone(self.clf))
+        multiplied_data = DataSet(
+            np.multiply(self.data.x, coeffs),
+            self.data.y,
+            self.data.df
+        )
+        return calc_score(multiplied_data, clone(self.clf))
 
     def __ith_coeffs(self, i):
         return self.population[i][1]
@@ -77,11 +81,11 @@ class CoeffsLearner:
         return np.random.uniform(low, high)
 
     def __random_init(self):
-        coeffs = np.array([1] * self.x.shape[1])
+        coeffs = np.array([1] * self.data.x.shape[1])
         self.population = [(self.__coeff_score(coeffs), coeffs)]
 
         for i in range(10 * self.population_size):
-            coeffs = np.random.normal(self.init_mean, self.init_std, size=self.x.shape[1])
+            coeffs = np.random.normal(self.init_mean, self.init_std, size=self.data.x.shape[1])
             self.__append_chromosome(coeffs)
 
         self.__natural_selection()

@@ -1,6 +1,8 @@
 from sklearn import clone
 from sklearn.model_selection import GroupKFold, cross_val_score
 
+from ml_utils.df_utils import df_get_index_col, DataSet
+
 
 def adjust_r2(r2, n, k):
     """
@@ -19,19 +21,17 @@ def adjust_r2(r2, n, k):
     return 1 - (nom/denom)
 
 
-def calc_score(x, y, df, clf):
+def calc_score(data: DataSet, clf):
     """
     todo
-    :param x:
-    :param y:
-    :param df:
+    :param data:
     :param clf:
     :return:
     """
     clf = clone(clf)
-    clf.fit(x, y)
+    clf.fit(data.x, data.y)
 
-    groups = list(df.index.get_level_values(0))
-    cv = GroupKFold(n_splits=3).split(x, y, groups)
-    score = cross_val_score(clf, x, y, cv=cv).mean()
-    return adjust_r2(score, x.shape[0], x.shape[1])
+    groups = list(df_get_index_col(data.df, 'alg'))
+    cv = GroupKFold(n_splits=3).split(data.x, data.y, groups)
+    score = cross_val_score(clf, data.x, data.y, cv=cv).mean()
+    return adjust_r2(score, data.x.shape[0], data.x.shape[1])
