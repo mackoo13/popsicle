@@ -37,11 +37,9 @@ def main():
 
     x = dim_reducer.transform(fl.data.full_set.x)
     y = clf.predict(x)
-    print(x[0])
-    print(y[0], fl.data.full_set.y[0])
 
-    # for yp, yr in zip(y, fl.data.full_set.y):
-    #     print(round(yp, 2), '\t', round(yr, 2))
+    for yp, yr in zip(y, fl.data.full_set.y):
+        print(round(yp, 2), '\t', round(yr, 2))
 
 
 if __name__ == "__main__":

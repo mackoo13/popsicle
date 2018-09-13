@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsRegressor
@@ -18,7 +17,7 @@ def dim_sign(data: DataSet):
     regr = RandomForestRegressor()
     regr.fit(data.x, data.y)
     res = [(i, col, imp)
-           for i, (col, imp) in enumerate(zip(data.df.columns, regr.feature_importances_))]
+           for i, (col, imp) in enumerate(zip(data.x_labels, regr.feature_importances_))]
     res = sorted(res, key=lambda q: q[2], reverse=True)
     return np.array(res)
 
@@ -47,7 +46,8 @@ def make_step_search(data: DataSet, step: int, clf):
             new_data = DataSet(
                 data.x[:, list(new_feats)],
                 data.y,
-                data.df
+                data.df,
+                data.x_labels[list(new_feats)]
             )
 
             score = calc_score(new_data, clf)
@@ -81,7 +81,8 @@ def remove_feats(data: DataSet, feats, clf):
             new_data = DataSet(
                 data.x[:, list(new_feats)],
                 data.y,
-                data.df
+                data.df,
+                data.x_labels[list(new_feats)]
             )
 
             score = calc_score(new_data, clf)
@@ -175,13 +176,13 @@ class DimReducer:
         print('Selected %d features:' % len(feats_list))
         print('\n'.join(['\t' + data.df.columns[f] for f in feats_list]))
 
+        selected_data = DataSet(data.x[:, feats_list], data.y, data.df, data.x_labels)
+        clf = KNeighborsRegressor(n_neighbors=best_n_neighbors, weights='distance')
+        coeffs_learner = CoeffsLearner(selected_data, clf)
+        coeffs_learner.fit()
+
         self.feats = feats_list
         self.n_neighbors = best_n_neighbors
-
-        selected_data = DataSet(data.x[:, feats_list], data.y, data.df)
-        coeffs_learner = CoeffsLearner(selected_data,
-                                       KNeighborsRegressor(n_neighbors=self.n_neighbors, weights='distance'))
-        coeffs_learner.fit()
         self.coeffs = coeffs_learner.best_coeffs
 
     def set_pca(self, pca):

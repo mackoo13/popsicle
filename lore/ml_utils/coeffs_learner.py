@@ -49,7 +49,8 @@ class CoeffsLearner:
         multiplied_data = DataSet(
             np.multiply(self.data.x, coeffs),
             self.data.y,
-            self.data.df
+            self.data.df,
+            self.data.x_labels
         )
         return calc_score(multiplied_data, clone(self.clf))
 

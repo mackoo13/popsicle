@@ -2,6 +2,7 @@ import os
 from typing import Tuple, List
 from random import shuffle
 import pandas as pd
+import numpy as np
 from utils import check_config
 
 check_config(['LORE_PROC_PATH'])
@@ -9,7 +10,7 @@ proc_dir = os.environ['LORE_PROC_PATH']
 
 
 class DataSet:
-    def __init__(self, x=None, y=None, df=None):
+    def __init__(self, x=None, y=None, df=None, x_labels=None):
         if x is None:
             x = []
 
@@ -19,6 +20,10 @@ class DataSet:
         self.x = x
         self.y = y
         self.df = df
+        self.x_labels = x_labels
+
+    def copy(self):
+        return DataSet(self.x, self.y, self.df, self.x_labels)
 
 
 def df_aggregate(df: pd.DataFrame) -> pd.DataFrame:
@@ -65,8 +70,10 @@ def df_to_xy(df: pd.DataFrame, drop_cols: List[str], y_col: str) -> DataSet:
     """
     y = df[y_col].values
     df = df.drop(drop_cols, axis='columns')
-    x = df.values
-    return DataSet(x, y, df)
+    df_x = df.drop([y_col], axis='columns')
+    x = df_x.values
+    x_labels = np.array(df_x.columns)
+    return DataSet(x, y, df, x_labels)
 
 
 def df_train_test_split(df: pd.DataFrame, test_split: float=0.3) -> Tuple[pd.DataFrame, pd.DataFrame]:

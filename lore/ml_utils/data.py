@@ -20,19 +20,17 @@ class Data:
         else:
             raise Exception('Unknown feature selection mode')
 
-        self.full_set = DataSet()
-        self.train_set = DataSet()
-        self.test_set = DataSet()
+        self.full_set = None
+        self.train_set = None
+        self.test_set = None
 
         self.scaler = scaler
         self.set_df(df)
 
     def scale_full(self):
-        print('scf')
         self.full_set.x = self.scaler.transform(self.full_set.x)
 
     def scale_train_test(self) -> None:
-        print('sctt')
         """
         Scales each column of data.
         See http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.RobustScaler.html for more details.
@@ -48,7 +46,6 @@ class Data:
         self.full_set = df_to_xy(df, self.drop_cols, self.y_col)
 
     def split(self) -> None:
-        print('spl')
         df_train, df_test = df_train_test_split(self.full_set.df)
 
         self.train_set = df_to_xy(df_train, [], self.y_col)

@@ -51,7 +51,6 @@ def main():
         x_test = dr.transform(fl.data.test_set.x)
         y, y_test = fl.data.train_set.y, fl.data.test_set.y
 
-        print(x[0])
         clf = KNeighborsRegressor(n_neighbors=dr.n_neighbors, weights='distance')
         clf.fit(x, y)
         score = clf.score(x_test, y_test)
