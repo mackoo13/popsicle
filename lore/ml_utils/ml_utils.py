@@ -22,7 +22,7 @@ def adjust_r2(r2, n, k):
     return 1 - (nom/denom)
 
 
-def calc_score(data: DataSet, regr) -> float:
+def regr_score(data: DataSet, regr) -> float:
     """
     Calculates adjusted R2 score of a regressor for given data.
     """

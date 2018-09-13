@@ -3,27 +3,11 @@ from typing import Tuple, List
 from random import shuffle
 import pandas as pd
 import numpy as np
+from ml_utils.data_set import DataSet
 from utils import check_config
 
 check_config(['LORE_PROC_PATH'])
 proc_dir = os.environ['LORE_PROC_PATH']
-
-
-class DataSet:
-    def __init__(self, x=None, y=None, df=None, x_labels=None):
-        if x is None:
-            x = []
-
-        if y is None:
-            y = []
-
-        self.x = x
-        self.y = y
-        self.df = df
-        self.x_labels = x_labels
-
-    def copy(self):
-        return DataSet(self.x, self.y, self.df, self.x_labels)
 
 
 def df_aggregate(df: pd.DataFrame) -> pd.DataFrame:

@@ -1,8 +1,8 @@
 from sklearn.base import clone
 import numpy as np
 
-from ml_utils.df_utils import DataSet
-from ml_utils.ml_utils import calc_score
+from ml_utils.data_set import DataSet
+from ml_utils.ml_utils import regr_score
 
 
 class CoeffsLearner:
@@ -52,7 +52,7 @@ class CoeffsLearner:
             self.data.df,
             self.data.x_labels
         )
-        return calc_score(multiplied_data, clone(self.regr))
+        return regr_score(multiplied_data, clone(self.regr))
 
     def __ith_coeffs(self, i):
         return self.population[i][1]

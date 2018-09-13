@@ -2,10 +2,10 @@ from typing import Iterable
 
 from pycparser import c_ast, c_parser
 
+from code_transform_utils.expr_estimator import ExprEstimator, remove_non_extreme_numbers
 from code_transform_utils.malloc_builder import MallocBuilder
-from code_transform_utils.code_transform_utils import remove_non_extreme_numbers, estimate, \
-    ArrayRefVisitor, ForVisitor, AssignmentVisitor, PtrDeclVisitor, StructVisitor, \
-    ArrayDeclVisitor, VarTypeVisitor, ForPragmaUnrollVisitor, DeclRemoveModifiersVisitor, \
+from code_transform_utils.code_transform_utils import ArrayRefVisitor, ForVisitor, AssignmentVisitor, PtrDeclVisitor, \
+    StructVisitor, ArrayDeclVisitor, VarTypeVisitor, ForPragmaUnrollVisitor, DeclRemoveModifiersVisitor, \
     FuncDefFindVisitor, CompoundInsertNextToVisitor, ForDepthCounter, SingleToCompoundVisitor, \
     ParseException, ReturnIntVisitor, ArrayDeclToPtrVisitor, papi_instr, pragma_unroll, loop_func_params, \
     RemoveBoundDeclsVisitor
@@ -102,7 +102,7 @@ class CodeTransformerAST:
         for arr in self.refs:
             new_refs = []
             for ref in self.refs[arr]:
-                new_refs.append(estimate(ref, self.maxs, arr))
+                new_refs.append(ExprEstimator(self.maxs, arr).estimate(ref))
             self.refs[arr] = new_refs
 
         PtrDeclVisitor(self.dtypes).visit(self.ast)

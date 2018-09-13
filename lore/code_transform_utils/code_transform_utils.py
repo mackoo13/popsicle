@@ -4,13 +4,11 @@ import numpy as np
 import re
 import os
 # noinspection PyPep8Naming
-from typing import List, Mapping, Set, Iterable, Tuple
-
+from typing import List, Mapping, Tuple
 from pycparser import c_ast
 
-
-class ParseException(Exception):
-    pass
+from code_transform_utils.exceptions import ParseException
+from code_transform_utils.expr_estimator import ExprEstimator
 
 
 # noinspection PyPep8Naming
@@ -92,7 +90,7 @@ class ArrayRefVisitor(c_ast.NodeVisitor):
         refs = [{sub}]
 
         while type(node.name) is c_ast.ArrayRef:
-            s_eval = estimate(node.name.subscript)
+            s_eval = ExprEstimator().estimate(node.name.subscript)
             if len(s_eval) > 0:
                 refs.insert(0, s_eval)
             node = node.name
@@ -146,7 +144,7 @@ class AssignmentVisitor(c_ast.NodeVisitor):
             right = node.rvalue
 
             if type(left) is c_ast.ID:
-                right_est = estimate(right, self.maxs)
+                right_est = ExprEstimator(self.maxs).estimate(right)
                 if len(right_est) > 0:
                     if left.name in self.maxs:
                         self.maxs[left.name].update(right_est)
@@ -311,7 +309,7 @@ class ForVisitor(c_ast.NodeVisitor):
 
         counter = cond.left
         bound = cond.right
-        bound_eval = estimate(bound)
+        bound_eval = ExprEstimator().estimate(bound)
 
         if type(counter) is not c_ast.ID:
             return
@@ -486,101 +484,6 @@ def build_decl(var_name: str, var_type: str) -> c_ast.Decl:
     return c_ast.Decl(var_name, [], [], [], type_decl, None, None)
 
 
-def estimate(expr: any,
-             maxs: Mapping[str, Set[str]]=None,
-             var: str=None,
-             deps: Mapping[str, Set[str]]=None,
-             parent_calls: List[any]=None
-             ) -> Set[str]:
-    """
-    Attempts to find a set of expressions which *might* represent the maximal value of expr. The primary use of this
-    function is determining the size of an array based on its uses in the code.
-
-    :param expr: An expression to estimate
-    :param maxs: A map containing possible upper bounds for variables
-    :param var: Which variable is estimated. Used
-    :param deps:
-    :param parent_calls: History of expressions from previous recurrent calls  - prevents infinite loop
-    :return: Set of C expressions whose maximum would evaluate to the maximal possible value of the input expression.
-    """
-    if maxs is None:
-        maxs = {}
-
-    if deps is None:
-        deps = {}
-
-    if parent_calls is None:
-        parent_calls = []
-
-    # prevent infinite loop
-    if expr in parent_calls:
-        return set()
-    # noinspection PyUnresolvedReferences
-    parent_calls.append(expr)
-
-    # multiple options => take into account all of them
-    if type(expr) is set or type(expr) is list:
-        options = []
-        for e in expr:
-            options.extend(estimate(e, maxs, var, deps, parent_calls))
-
-    # variable name => check maxs (possible upper bounds)
-    elif type(expr) is str:
-        options = maxs[expr] if expr in maxs else [expr]
-
-    # variable => subsequent call with type(expr)=str
-    elif type(expr) is c_ast.ID:
-        if var is not None and expr.name not in maxs:
-            if var in deps:
-                deps[var].add(expr.name)
-            else:
-                deps[var] = {expr.name}
-
-        options = estimate(expr.name, maxs, var, deps, parent_calls)
-
-    # binary operation => try to evaluate if possible
-    elif type(expr) is c_ast.BinaryOp:
-        ls = estimate(expr.left, maxs, var, deps, parent_calls)
-        rs = estimate(expr.right, maxs, var, deps, parent_calls)
-        options = [eval_basic_op(l, expr.op, r) for l in ls for r in rs]
-
-    # constant => take value
-    elif type(expr) is c_ast.Constant:
-        options = [expr.value]
-
-    # unsupported object
-    else:
-        options = []
-
-    if len(deps) > 0:
-        deps_values = reduce(lambda a, b: a | b, deps.values())
-        raise ParseException('Variable-dependent array size detected: ' + ','.join(deps_values))
-
-    options = remove_non_extreme_numbers(options)
-    return set(options)
-
-
-def eval_basic_op(l: str, op: str, r: str) -> str:
-    """
-    Evaluate a basic arithmetic operation
-    :param l: Left operand
-    :param op: Operator
-    :param r: Right operand
-    :return: Result or a string representing the operation if it cannot be calculated
-    """
-    if l.isdecimal() and r.isdecimal():
-        l_num = int(l)
-        r_num = int(r)
-        if op == '+':
-            return str(l_num + r_num)
-        if op == '-':
-            return str(l_num - r_num)
-        if op == '*':
-            return str(l_num * r_num)
-
-    return l + op + r
-
-
 def exprs_prod(exprs: List[c_ast.Node]) -> c_ast.Node:
     """
     Product of a list of c_ast expressions
@@ -646,37 +549,6 @@ def pragma_unroll() -> c_ast.FuncCall:
         PRAGMA(PRAGMA_UNROLL);
     """
     return c_ast.FuncCall(c_ast.ID('PRAGMA'), c_ast.ExprList([c_ast.ID('PRAGMA_UNROLL')]))
-
-
-def remove_non_extreme_numbers(s: Iterable[str], leave_min=True) -> Iterable[str]:
-    """
-    Removes from an iterable all numbers which are neither minimal or maximal.
-    All non-numeric elements are left untouched.
-    The order of elements might be different in the output.
-
-    Example: ['3', '6', 'N', '7'] -> ['N', '3', '7']
-    :param s: Iterable of expressions as strings
-    :param leave_min: If set to True, preserve minimal and maximum value from s. Otherwise, only maximum is preserved.
-    :return: Transformed iterable
-    """
-    max_num = float('-inf')
-    min_num = 0
-    res = []
-
-    for el in s:
-        if type(el) is str and el.isdecimal():
-            el_num = int(el)
-            min_num = min(min_num, el_num)
-            max_num = max(max_num, el_num)
-        elif el is not None:
-            res.append(el)
-
-    if max_num > 0:
-        res.append(str(max_num))
-    if leave_min and min_num > 0 and min_num != max_num:
-        res.append(str(min_num))
-
-    return res
 
 
 def remove_comments(code: str) -> str:

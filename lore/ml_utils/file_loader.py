@@ -42,7 +42,9 @@ class FileLoader:
         if purpose == 'predict':
             self.data.scale_full()
 
-    def csv_to_df(self, name_suffix: str='', cols: List[str]=None) -> pd.DataFrame:
+    # PRIVATE MEMBERS
+
+    def __csv_to_df(self, name_suffix: str= '', cols: List[str]=None) -> pd.DataFrame:
         """
         Loads csv file(s) to a DataFrame
         :param name_suffix: Suffix which will be added to each file name. For example, in 'speedup' mode it can load
@@ -65,7 +67,7 @@ class FileLoader:
         return df
 
     def load_time(self):
-        df = self.csv_to_df()
+        df = self.__csv_to_df()
 
         # df_meta = pd.read_csv('/home/maciej/ftb/kernels_lore/proc/metadata.csv', index_col='alg')  # todo
         # df['max_dim'] = df.index.get_level_values(0)
@@ -77,8 +79,8 @@ class FileLoader:
         self.data = Data(self.mode, df, self.scaler)
 
     def load_speedup(self):
-        df_o0 = self.csv_to_df(name_suffix='_O0')
-        df_o3 = self.csv_to_df(name_suffix='_O3', cols=['alg', 'run', 'time_O3'])
+        df_o0 = self.__csv_to_df(name_suffix='_O0')
+        df_o3 = self.__csv_to_df(name_suffix='_O3', cols=['alg', 'run', 'time_O3'])
         df = df_o0.merge(df_o3, left_index=True, right_index=True)
 
         df_meta = get_df_meta()
@@ -95,8 +97,8 @@ class FileLoader:
         self.data = Data(self.mode, df, self.scaler)
 
     def load_unroll(self):
-        df_nour = self.csv_to_df(name_suffix='_nour')
-        df_ur = self.csv_to_df(name_suffix='_ur', cols=['alg', 'run', 'time_ur'])
+        df_nour = self.__csv_to_df(name_suffix='_nour')
+        df_ur = self.__csv_to_df(name_suffix='_ur', cols=['alg', 'run', 'time_ur'])
         df = df_nour.merge(df_ur, left_index=True, right_index=True)
 
         df_meta = get_df_meta()

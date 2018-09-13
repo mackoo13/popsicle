@@ -3,8 +3,8 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsRegressor
 from ml_utils.coeffs_learner import CoeffsLearner
-from ml_utils.df_utils import DataSet
-from ml_utils.ml_utils import calc_score
+from ml_utils.data_set import DataSet
+from ml_utils.ml_utils import regr_score
 from ml_utils.nca import NCA
 import numpy as np
 
@@ -54,7 +54,7 @@ def make_step_search(data: DataSet, step: int, regr):
                 data.x_labels[list(new_feats)]
             )
 
-            score = calc_score(new_data, regr)
+            score = regr_score(new_data, regr)
             if score > best:
                 new_best = score
                 to_add = i
@@ -69,7 +69,7 @@ def make_step_search(data: DataSet, step: int, regr):
     return best, feats
 
 
-def remove_feats(data: DataSet, feats: Set[int], regr) -> Tuple[int, Set[int]]:
+def remove_feats(data: DataSet, feats: Set[int], regr) -> Tuple[float, Set[int]]:
     """
     This is the second phase of selecting the optimal subset of features. It takes the existing subset and tries to
     remove redundant features as long as the score does not decrease.
@@ -78,7 +78,7 @@ def remove_feats(data: DataSet, feats: Set[int], regr) -> Tuple[int, Set[int]]:
     :param regr: Regressor to evaluate solutions
     :return: The best achieved score and the subset of features
     """
-    best = calc_score(data, regr)
+    best = regr_score(data, regr)
 
     while True:
         to_remove = None
@@ -97,7 +97,7 @@ def remove_feats(data: DataSet, feats: Set[int], regr) -> Tuple[int, Set[int]]:
                 data.x_labels[list(new_feats)]
             )
 
-            score = calc_score(new_data, regr)
+            score = regr_score(new_data, regr)
             if score >= best:
                 best = score
                 to_remove = f
