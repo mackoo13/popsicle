@@ -62,13 +62,14 @@ class CodeTransformer:
 
         if self.gen_mallocs:
             pp.analyse()
+
+            self.max_param, self.max_arr_dim = pp.find_max_param()
+
             pp.arr_to_ptr_decl()
             pp.gen_mallocs()
             
             if not self.rename_bounds:
                 pp.remove_bound_decls()
-            
-            self.max_param, self.max_arr_dim = pp.find_max_param()
 
         if self.add_pragma_unroll:
             pp.add_pragma_unroll()

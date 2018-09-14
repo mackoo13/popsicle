@@ -208,9 +208,9 @@ class CodeTransformerAST:
         Finds the maximal depth of nested for loops.
         :return: Max depth
         """
-        fdc = ForDepthCounter(1)
+        fdc = ForDepthCounter(0)
         fdc.visit(self.ast)
-        return fdc.depth
+        return fdc.result
 
     def __return_int(self):
         """

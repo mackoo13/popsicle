@@ -235,11 +235,13 @@ class ForDepthCounter(c_ast.NodeVisitor):   # todo check
     """
     def __init__(self, depth=0):
         self.depth = depth
+        self.result = depth
 
     def visit_For(self, node):
+        # node.show()
         fdc = ForDepthCounter(self.depth + 1)
         fdc.visit(node.stmt)
-        self.depth = max(self.depth, fdc.depth)
+        self.result = max(self.result, fdc.result)
 
 
 # noinspection PyPep8Naming,PyMethodMayBeStatic
