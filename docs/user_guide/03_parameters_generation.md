@@ -1,9 +1,9 @@
-## Parameters generation
+# Parameters generation
 
 In many programs it is possible to provide loop bounds on compilation time. In this step you can 
 
 
-### Prerequisites
+## Prerequisites
 
 _Previous step: [code transformation](02_code_transformation.md)_
 
@@ -22,11 +22,11 @@ $LORE_PROC_DIR/
 the results will be saved to `_params.txt` file in the same directory.
 
 
-### Usage
+## Usage
 
 
 
-### Example
+## Example
 
 Input (`_params_names.txt` and `_max_param.txt`)
 
@@ -46,9 +46,9 @@ Output (`_params.txt`)
 ```
 
 
-### Implementation details
+## Implementation details
 
-#### Values interpolation
+### Values interpolation
 
 The script attempts to generate such parameters values, that the execution time grows linearly. It is assumed that the number of variables corresponds to the complexity of the program.
 
@@ -57,6 +57,6 @@ For example, if there is only one parameter, we might expect linear time complex
 If two parameters are found, we might expect square time complexity. The output might be `50, 71, 87, 100]`, resulting in execution time approximately `[2500, 5000, 7500, 10000]`.
 
 
-### Next step
+## Next step
 
 You are now ready to [run your programs](04_code_execution.md) in batch and collect results.

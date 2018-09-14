@@ -1,9 +1,9 @@
-## Prediction
+# Prediction
 
 The script 
 
 
-### Prerequisites
+## Prerequisites
 
 _Previous step: [training a model transformation](05_training.md)_
 
@@ -12,19 +12,19 @@ Remember to run `source config/lore.cfg` first. It will populate the following e
 - `$LORE_MODELS_DIR` - directory containing `.pkl` files with the [trained model](05_training.md)
 
 
-### Usage: 
+## Usage: 
 
-#### `wombat-predict [mode] [file_TODO]`
+### `wombat-predict [mode] [file_TODO]`
 
-####`mode`
+###`mode`
 * `time` or `t` to predict execution time
 * `speedup` or `s` to predict speedup between `-O0` and `-O3` 
 * `unroll` or `u` to predict speedup after loop unrolling 
 
-#### `file_TODO`
+### `file_TODO`
 TODO to your file. The required file format is presented below. Please make sure you conform to it or your file might be handled incorrectly by Wombat.
 
-### Input code format
+## Input code format
 
 There is no need to manually insert PAPI code into the file - Wombat will take care of this! You only need keep in mind a couple of rules.
 
@@ -50,7 +50,7 @@ void loop()
 ```
 
 
-### Example
+## Example
 
 ```$xslt
 #include <stdio.h>
@@ -73,7 +73,7 @@ void loop()
 }
 ```
 
-### Execution scheme
+## Execution scheme
 
 A simplified scheme of the execution of your file is presented below:
 

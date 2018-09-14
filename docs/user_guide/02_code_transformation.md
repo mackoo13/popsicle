@@ -1,9 +1,9 @@
-## Code transformation
+# Code transformation
 
 Scripts `wombat-transform-lore`, `wombat-transform-lore-unroll` and `wombat-transform-pips` prepare C source code to be executed and to perform measurements with PAPI.
 
 
-### Configuration
+## Configuration
 
 _Previous step: [source code download](01_lore_download.md)_
 
@@ -16,7 +16,7 @@ Remember to run `source config/lore.cfg` first. It will populate following envir
 - `PIPS_PROC_PATH` - output directory for `wombat-transform-pips`
 
 
-### LORE transformation
+## LORE transformation
 
 Usage: `wombat-transform-lore`
 
@@ -29,7 +29,7 @@ The input code is expected to be in the format used in LORE repository.
 * Inserts PAPI instructions in places indicated by `#pragma scop` and `#pragma endscop`
 * Attempts to generate array allocation and initialisation code, which is missing in LORE
 
-##### Example
+### Example
 Before:
 ```$xslt
 #include <stdio.h>
@@ -86,7 +86,7 @@ void loop(int set, long_long* values, clock_t* begin, clock_t* end)
 ```
 
 
-### LORE transformation (with loop unrolling)
+## LORE transformation (with loop unrolling)
 
 Usage: `wombat-transform-lore-unroll`
 
@@ -100,7 +100,7 @@ TODO list possible options for unrolling
 
 The output code is meant to be compiled with Clang (see more about its [unrolling support](https://clang.llvm.org/docs/AttributeReference.html#pragma-unroll-pragma-nounroll)).
 
-##### Example
+#### Example
 Before:
 ```$xslt
 ...
@@ -126,7 +126,7 @@ for (i = 0; i < n; i++) {
 ```
 
 
-### PIPS transformation
+## PIPS transformation
 
 Usage: `wombat-transform-pips`
 
@@ -135,6 +135,6 @@ Source code: `transform_pips.py`
 TODO
 
 
-### Next step
+## Next step
 
 Once your programs are transformed, you can [generate the parameters](03_parameters_generation.md) and run them.
