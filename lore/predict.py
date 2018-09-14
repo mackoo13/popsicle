@@ -2,7 +2,6 @@ from __future__ import print_function
 import argparse
 import os
 from sklearn.externals import joblib
-
 from ml_utils.file_loader import FileLoader
 from utils import check_config
 

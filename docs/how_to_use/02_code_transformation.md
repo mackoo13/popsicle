@@ -2,7 +2,10 @@
 
 Scripts `wombat-transform-lore`, `wombat-transform-lore-unroll` and `wombat-transform-pips` prepare C source code to be executed and to perform measurements with PAPI.
 
-Remember to run `source config/lore.cfg` prior to executong this scripts. It will populate following environment variables:
+
+### Configuration
+
+Remember to run `source config/lore.cfg` first. It will populate following environment variables:
 
 - `LORE_ORIG_PATH` - original LORE programs (input)
 - `PIPS_ORIG_PATH` - original PIPS programs (input)
@@ -55,10 +58,10 @@ After:
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 int i;
 double *x;
-double fn;
 void loop(int set, long_long* values, clock_t* begin, clock_t* end)
 {
   n = PARAM_N;
+  
   x = malloc((n + 2) * sizeof(double));
   for (int i_0 = 0; i_0 < n; i_0 ++ )
   {

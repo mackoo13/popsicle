@@ -1,19 +1,36 @@
 ## Code execution
 
-### Simple execution
+_Note: code execution should be preceded by [code transformation](02_code_transformation.md)!_
 
-Used to collect data for execution time prediction.
+Different scripts are used to execute the programs, depending on the purpose of collecting the data.
+
+`$LORE_PROC_DIR` should point to the input directory. Each of its subdirectories contains the files needed to run the program:
+
+```$xslt
+$LORE_PROC_DIR/
+├-- program1/  
+|   ├-- program1.c
+|   ├-- program1_max_params.txt
+|   └-- program1_params_names.txt
+├-- program2/  
+├-- program3/
+├   ...  
+```
+
+The results will be saved in `$PAPI_OUT_DIR`.
+
+### Execution for time prediction
 
 Usage: `./exec/exec.sh [output_file_name]`
 
-Compiler used: gcc
+Compiler: gcc
 
 `output_file_name` should be provided without extension. The output will be saved to `$PAPI_OUT_DIR/time/[output_file_name].csv`.
 
 
-### `-O0` and `-O3` execution
+### Execution for speedup prediction (GCC optimisation)
 
-Used to collect data for speedup prediction (comparing `-O0` vs `-O3`).
+Runs the programs compiled with `-O0` and `-O3` [optimisation flags](https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html).
 
 Usage: `./exec/exec_opt.sh [output_file_name]`
 
@@ -25,7 +42,7 @@ Compiler used: gcc
 * `$PAPI_OUT_DIR/speedup/[output_file_name]_O3.csv` (compiled with `-O3`)
 
 
-### `#pragma unroll` and `#pragma nounroll` execution
+### Execution for speedup prediction (loop unrolling)
 
 Used to collect data for speedup prediction (comparing the same programs with or without loop unrolling).
 

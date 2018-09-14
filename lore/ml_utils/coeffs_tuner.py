@@ -5,7 +5,7 @@ from ml_utils.data_set import DataSet
 from ml_utils.ml_utils import regr_score
 
 
-class CoeffsLearner:
+class CoeffsTuner:
     def __init__(self, data: DataSet, regr):
         self.data = data
         self.regr = regr

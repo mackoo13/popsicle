@@ -74,7 +74,7 @@ class FileLoader:
         # df_meta = pd.read_csv('/home/maciej/ftb/kernels_lore/proc/metadata.csv', index_col='alg')  # todo
         # df['max_dim'] = df.index.get_level_values(0)
         # df['max_dim'] = df['max_dim'].apply(lambda q: df_meta.loc[q]['max_dim'])
-        df = df.loc[df['time'] > 10]
+        df = df.loc[df['time'] > 100]
         # df = df.loc[df['max_dim'].isin(self.dim)]
 
         df = df_sort_cols(df)

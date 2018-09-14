@@ -24,59 +24,33 @@ If you don't have `pip3` installed, you can try a workaround:
 python3 -m pip install .
 ```
 
-## LORE download
+## Usage
 
-To obtain the set of programs from LORE repository, you must first download a CSV file with a list of currently available loops. Use [LOOP website](https://vectorization.computer/query.html) and the following query:
+Training a model requires completing a couple of steps. Most of them need to be performed only once.
 
-`SELECT id, application, benchmark, file, line, function, version FROM loops`
+#### 0. Configuration ([read more](docs/how_to_use/01_lore_download.md)) 
+> Specify paths to 
 
-A pre-downloaded file is available in `config/lore_loops.csv`.
+#### 1. Downloading source codes ([read more](docs/how_to_use/01_lore_download.md)) 
+> Source codes from LORE repository are used to train a model.
 
-Usage: `python3 lore/download.py <path_to_csv_file>`
+#### 2. Code transformation ([read more](docs/how_to_use/02_code_transformation.md)) 
+> The source codes need to be [transformed](docs/algorithm/lore_preprocessing.md) to enable PAPI measurements and generate missing code.
 
-## Preprocessing
+#### 3. Parameters generation ([read more](docs/how_to_use/03_parameters_generation.md)) 
+> Many programs accept the loop bound as a parameter. Running the same program with different loop bounds lets us obtain more reliable data. 
+>
+> In this step you determine how many different values should be tested.
 
-The following scripts can be used to prepare data from LORE, train the model and persist it for future use.
+#### 4. Code execution ([read more](docs/how_to_use/04_code_execution.md)) 
+> All programs can be executed in batch a number of times to collect as much data as you need. 
 
+#### 5. Training the model ([read more](docs/how_to_use/05_training.md)) 
+> The collected data is used to train a prediction model. 
 
-### `proc`
+#### 6. Prediction ([read more](docs/how_to_use/06_prediction.md)) 
+> Once you obtain a model, you can provide your own program to make predictions on.
 
-Usage: `python3 lore/proc.py`
-
-Transforms the source code of files from LORE repository to a runnable form, inserts PAPI instructions and execution time measurement.
-
-The input files are taken from `LORE_ORIG_PATH` specified in config. Output will be saved in `LORE_PROC_PATH`.
-
-
-### `params`
-
-Usage: `python3 lore/params.py <n_params>`
-
-Generates a range of parameters for LORE programs. This step needs to be applied after `proc`.
-
-`<n_params>` is the number of distinct parameters to generate (thus, the number of samples that will be produced by this program).
-
-The directory containing files to process is specified in `LORE_PROC_PATH`. Result is saved in `<program_name>_params.txt` for each program.
-
-
-## Programs execution
-
-### `exec`
-
-Usage: `./scripts/exec/exec.sh <output_file_name>`
-
-This script executes all programs from `LORE_PROC_PATH` for all sets of parameters specified in `<program_name>_params.txt`.
-
-The result, being a list of all runs with measured PAPI events, will be saved to `$PAPI_OUT_DIR/<output_file_name>.csv`.
-
-Please be aware that for large number of programs and distinct parameters, it may take a few hours for this script to complete.
-
-
-### `exec_opt`
-
-The usage is the same as `exec`, but this script executes two versions of each program with different optimization flags: `-O0` and `-O3`.
-
-The result will be saved to `$PAPI_OUT_DIR/<output_file_name>_O0.csv` and `$PAPI_OUT_DIR/<output_file_name>_O3.csv` for the two versions independently.
 
 
 ## Model training

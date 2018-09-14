@@ -2,7 +2,7 @@ from typing import Set, Tuple
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsRegressor
-from ml_utils.coeffs_learner import CoeffsLearner
+from ml_utils.coeffs_tuner import CoeffsTuner
 from ml_utils.data_set import DataSet
 from ml_utils.ml_utils import regr_score
 from ml_utils.nca import NCA
@@ -202,7 +202,7 @@ class DimReducer:
 
         selected_data = DataSet(data.x[feats_list], data.y)
         regr = KNeighborsRegressor(n_neighbors=best_n_neighbors, weights='distance')
-        coeffs_learner = CoeffsLearner(selected_data, regr)
+        coeffs_learner = CoeffsTuner(selected_data, regr)
         coeffs_learner.fit()
 
         self.feats = feats_list
