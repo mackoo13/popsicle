@@ -5,6 +5,8 @@ Scripts `wombat-transform-lore`, `wombat-transform-lore-unroll` and `wombat-tran
 
 ### Configuration
 
+_Previous step: [source code download](01_lore_download.md)_
+
 Remember to run `source config/lore.cfg` first. It will populate following environment variables:
 
 - `LORE_ORIG_PATH` - original LORE programs (input)
@@ -131,3 +133,8 @@ Usage: `wombat-transform-pips`
 Source code: `transform_pips.py`
 
 TODO
+
+
+### Next step
+
+Once your programs are transformed, you can [generate the parameters](03_parameters_generation.md) and run them.

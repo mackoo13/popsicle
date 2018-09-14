@@ -16,3 +16,8 @@ To get an up-to-date list, you can download it from [LORE website](https://vecto
 ### Downloading the source codes
 
 Usage: `python3 lore/download.py <path_to_csv_file>`
+
+
+### Next step
+
+Once you have downloaded the source codes, you can proceed to [code transformation](02_code_transformation.md).

@@ -1,5 +1,7 @@
 ## CodeTransformer
 
+See user guide section: [code transformation](../user_guide/02_code_transformation.md).
+
 ### Constructor
 
 #### `includes`
