@@ -2,7 +2,6 @@ import os
 from typing import Tuple, List
 from random import shuffle
 import pandas as pd
-import numpy as np
 from ml_utils.data_set import DataSet
 from utils import check_config
 
@@ -52,12 +51,12 @@ def df_to_xy(df: pd.DataFrame, drop_cols: List[str], y_col: str) -> DataSet:
         drop_cols: Columns to remove from df
         y_col: Output column (skipped in x, included in y)
     """
+    if y_col not in drop_cols:
+        drop_cols.append(y_col)
+
+    x = df.drop(drop_cols, axis='columns')
     y = df[y_col].values
-    df = df.drop(drop_cols, axis='columns')
-    df_x = df.drop([y_col], axis='columns')
-    x = df_x.values
-    x_labels = np.array(df_x.columns)
-    return DataSet(x, y, df, x_labels)
+    return DataSet(x, y)
 
 
 def df_train_test_split(df: pd.DataFrame, test_split: float=0.3) -> Tuple[pd.DataFrame, pd.DataFrame]:

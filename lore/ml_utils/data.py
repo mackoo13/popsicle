@@ -1,6 +1,5 @@
-import pandas as pd
 from sklearn.preprocessing import RobustScaler
-from ml_utils.df_utils import df_to_xy, df_train_test_split, DataSet
+from ml_utils.df_utils import df_to_xy, df_train_test_split
 
 
 class Data:
@@ -20,15 +19,17 @@ class Data:
         else:
             raise Exception('Unknown feature selection mode')
 
-        self.full_set = None
+        self.full_set = df_to_xy(df, self.drop_cols, self.y_col)
         self.train_set = None
         self.test_set = None
 
+        self.df = df
         self.scaler = scaler
-        self.set_df(df)
 
     def scale_full(self):
-        self.full_set.x = self.scaler.transform(self.full_set.x)
+        self.full_set.x.update(
+            self.scaler.transform(self.full_set.x)
+        )
 
     def scale_train_test(self) -> None:
         """
@@ -36,17 +37,18 @@ class Data:
         See http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.RobustScaler.html for more details.
         """
         self.scaler = RobustScaler(quantile_range=(10, 90))
-        self.train_set.x = self.scaler.fit_transform(self.train_set.x)
-        self.test_set.x = self.scaler.transform(self.test_set.x)
+        self.train_set.x.update(
+            self.scaler.fit_transform(self.train_set.x)
+        )
+        self.test_set.x.update(
+            self.scaler.transform(self.test_set.x)
+        )
 
         print('Train:', self.train_set.x.shape)
         print('Test: ', self.test_set.x.shape)
 
-    def set_df(self, df: pd.DataFrame) -> None:
-        self.full_set = df_to_xy(df, self.drop_cols, self.y_col)
-
     def split(self) -> None:
-        df_train, df_test = df_train_test_split(self.full_set.df)
+        df_train, df_test = df_train_test_split(self.df)
 
         self.train_set = df_to_xy(df_train, [], self.y_col)
         self.test_set = df_to_xy(df_test, [], self.y_col)

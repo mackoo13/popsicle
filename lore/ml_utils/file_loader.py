@@ -41,6 +41,8 @@ class FileLoader:
 
         if purpose == 'predict':
             self.data.scale_full()
+        else:
+            self.data.split()
 
     # PRIVATE MEMBERS
 

@@ -21,12 +21,12 @@ def dim_sign(data: DataSet) -> np.array:
     regr = RandomForestRegressor()
     regr.fit(data.x, data.y)
     res = [(i, col, imp)
-           for i, (col, imp) in enumerate(zip(data.x_labels, regr.feature_importances_))]
+           for i, (col, imp) in enumerate(zip(data.x.columns, regr.feature_importances_))]
     res = sorted(res, key=lambda q: q[2], reverse=True)
     return np.array(res)
 
 
-def make_step_search(data: DataSet, step: int, regr):
+def make_step_search(data: DataSet, step: int, regr) -> Tuple[float, Set[str]]:
     """
     todo
     :param data:
@@ -34,42 +34,40 @@ def make_step_search(data: DataSet, step: int, regr):
     :param regr:
     :return:
     """
-    feats = set()
-    left = dim_sign(data)[:, 0].astype(int)
-    best = float('-infinity')
+    feats_selected = set()
+    feats_left = dim_sign(data)[:, 1]
+    best_score = float('-infinity')
 
-    while len(left) > 0:
-        to_check = left[:step]
-        to_add = None
-        new_best = best
+    while len(feats_left) > 0:
+        feats_to_check = feats_left[:step]
+        feat_to_add = None
+        new_best_score = best_score
 
-        for i in to_check:
-            new_feats = feats.copy()
-            new_feats.add(i)
+        for feat in feats_to_check:
+            new_feats = feats_selected.copy()
+            new_feats.add(feat)
 
             new_data = DataSet(
-                data.x[:, list(new_feats)],
-                data.y,
-                data.df,
-                data.x_labels[list(new_feats)]
+                data.x[list(new_feats)],
+                data.y
             )
 
             score = regr_score(new_data, regr)
-            if score > best:
-                new_best = score
-                to_add = i
+            if score > best_score:
+                new_best_score = score
+                feat_to_add = feat
 
-        if to_add is not None:
-            best = new_best
-            feats.add(to_add)
-            left = [q for q in left if q != to_add]
+        if feat_to_add is not None:
+            best_score = new_best_score
+            feats_selected.add(feat_to_add)
+            feats_left = [q for q in feats_left if q != feat_to_add]
         else:
-            left = left[step:]
+            feats_left = feats_left[step:]
 
-    return best, feats
+    return best_score, feats_selected
 
 
-def remove_feats(data: DataSet, feats: Set[int], regr) -> Tuple[float, Set[int]]:
+def remove_feats(data: DataSet, feats: Set[str], regr) -> Tuple[float, Set[str]]:
     """
     This is the second phase of selecting the optimal subset of features. It takes the existing subset and tries to
     remove redundant features as long as the score does not decrease.
@@ -91,10 +89,8 @@ def remove_feats(data: DataSet, feats: Set[int], regr) -> Tuple[float, Set[int]]
             new_feats.remove(f)
 
             new_data = DataSet(
-                data.x[:, list(new_feats)],
-                data.y,
-                data.df,
-                data.x_labels[list(new_feats)]
+                data.x[list(new_feats)],
+                data.y
             )
 
             score = regr_score(new_data, regr)
@@ -120,13 +116,13 @@ def feature_importance(data: DataSet, n_iter=100):
     :return:
     """
     res = {}
-    for c in data.df.columns:
+    for c in data.x.columns:
         res[c] = 0
 
     for i in range(n_iter):
         fs = DimReducer('step')
         fs.fit(data)
-        feats = [data.df.columns[q] for q in fs.feats]
+        feats = [data.x.columns[q] for q in fs.feats]
         for f in feats:
             res[f] += 1
 
@@ -176,7 +172,7 @@ class DimReducer:
         self.nca = nca
 
     def fit_step(self, data: DataSet, n_iter=10, step=5, require_tot_ins=True):
-        best = float('-infinity')
+        best_score = float('-infinity')
         best_feats = None
         best_n_neighbors = None
 
@@ -190,21 +186,21 @@ class DimReducer:
                 _, feats = make_step_search(data, step, regr)
                 score, _ = remove_feats(data, feats, regr)
 
-                if score > best:
-                    best = score
+                if score > best_score:
+                    best_score = score
                     best_feats = feats
                     best_n_neighbors = n_neighbors
 
         feats_list = sorted(best_feats)
         if require_tot_ins and 'PAPI_TOT_INS' not in feats_list:
-            feats_list.insert(0, list(data.df.columns).index('PAPI_TOT_INS'))
+            feats_list.insert(0, 'PAPI_TOT_INS')
 
-        print('Best score in training set:', round(best, 2))
+        print('Best score in training set:', round(best_score, 2))
         print('Best value of n_neighbors:', best_n_neighbors)
         print('Selected %d features:' % len(feats_list))
-        print('\n'.join(['\t' + data.df.columns[f] for f in feats_list]))
+        print('\n'.join(['\t' + f for f in feats_list]))
 
-        selected_data = DataSet(data.x[:, feats_list], data.y, data.df, data.x_labels)
+        selected_data = DataSet(data.x[feats_list], data.y)
         regr = KNeighborsRegressor(n_neighbors=best_n_neighbors, weights='distance')
         coeffs_learner = CoeffsLearner(selected_data, regr)
         coeffs_learner.fit()
@@ -220,4 +216,4 @@ class DimReducer:
         return self.nca.transform(x)
 
     def transform_step(self, x):
-        return np.multiply(x[:, self.feats], self.coeffs)
+        return np.multiply(x[self.feats], self.coeffs)

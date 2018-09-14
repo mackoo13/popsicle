@@ -48,9 +48,7 @@ class CoeffsLearner:
     def __coeff_score(self, coeffs):
         multiplied_data = DataSet(
             np.multiply(self.data.x, coeffs),
-            self.data.y,
-            self.data.df,
-            self.data.x_labels
+            self.data.y
         )
         return regr_score(multiplied_data, clone(self.regr))
 

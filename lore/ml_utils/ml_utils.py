@@ -29,7 +29,7 @@ def regr_score(data: DataSet, regr) -> float:
     regr = clone(regr)
     regr.fit(data.x, data.y)
 
-    groups = list(df_get_index_col(data.df, 'alg'))
+    groups = list(df_get_index_col(data.x, 'alg'))
     cv = GroupKFold(n_splits=3).split(data.x, data.y, groups)
     score = cross_val_score(regr, data.x, data.y, cv=cv).mean()
     return adjust_r2(score, data.x.shape[0], data.x.shape[1])
