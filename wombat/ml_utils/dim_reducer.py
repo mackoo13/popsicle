@@ -2,10 +2,10 @@ from typing import Set, Tuple
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsRegressor
-from ml_utils.weights_tuner import WeightsTuner
-from ml_utils.data_set import DataSet
-from ml_utils.ml_utils import regr_score
-from ml_utils.nca import NCA
+from wombat.ml_utils.weights_tuner import WeightsTuner
+from wombat.ml_utils.data_set import DataSet
+from wombat.ml_utils.ml_utils import regr_score
+from wombat.ml_utils.nca import NCA
 import numpy as np
 
 

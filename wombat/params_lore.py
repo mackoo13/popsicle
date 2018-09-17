@@ -2,7 +2,7 @@ import math
 import argparse
 import os
 
-from utils import check_config
+from wombat.utils import check_config
 
 
 def intermediate_value(k, k_max, n_params, max_param):
@@ -41,7 +41,7 @@ def main():
                 else:
                     fout.write('\n')
         except FileNotFoundError:
-            print('\t' + file_name + '_params_names.txt or ' + file_name + '_max_param.txt is missing.')
+            print('\tFile (...)_params_names.txt or (...)_max_param.txt is missing.')
 
 
 if __name__ == "__main__":

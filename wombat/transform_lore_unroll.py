@@ -1,10 +1,9 @@
 from __future__ import print_function
-from code_transform_utils.code_transformer import CodeTransformer
-from code_transform_utils.code_transform_utils import split_code, save_max_dims
+from wombat.code_transform_utils.code_transformer import CodeTransformer
+from wombat.code_transform_utils.code_transform_utils import split_code, save_max_dims
 import os
 import argparse
-
-from utils import check_config
+from wombat.utils import check_config
 
 
 def main():

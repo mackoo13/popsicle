@@ -7,8 +7,8 @@ import os
 from typing import List, Mapping, Tuple
 from pycparser import c_ast
 
-from code_transform_utils.exceptions import ParseException
-from code_transform_utils.expr_estimator import ExprEstimator
+from wombat.code_transform_utils.exceptions import ParseException
+from wombat.code_transform_utils.expr_estimator import ExprEstimator
 
 
 # noinspection PyPep8Naming

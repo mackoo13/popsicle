@@ -1,7 +1,7 @@
 from pycparser import c_generator
-from code_transform_utils.code_transformer_ast import CodeTransformerAST
-from code_transform_utils.code_transformer_str import CodeTransformerStr
-from code_transform_utils.code_transform_utils import remove_comments
+from wombat.code_transform_utils.code_transformer_ast import CodeTransformerAST
+from wombat.code_transform_utils.code_transformer_str import CodeTransformerStr
+from wombat.code_transform_utils.code_transform_utils import remove_comments
 
 
 class CodeTransformer:

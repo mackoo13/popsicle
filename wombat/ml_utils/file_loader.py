@@ -1,10 +1,9 @@
 import os
 import pandas as pd
 from typing import List
-
-from ml_utils.data import Data
-from ml_utils.df_utils import df_aggregate, df_sort_cols, df_scale_by_tot_ins, get_df_meta
-from utils import check_config
+from wombat.ml_utils.data import Data
+from wombat.ml_utils.df_utils import df_aggregate, df_sort_cols, df_scale_by_tot_ins, get_df_meta
+from wombat.utils import check_config
 
 check_config(['PAPI_OUT_DIR', 'LORE_PROC_PATH'])
 out_dir = os.environ['PAPI_OUT_DIR']

@@ -1,7 +1,6 @@
 from sklearn import clone
 from sklearn.model_selection import GroupKFold, cross_val_score
-
-from ml_utils.df_utils import df_get_index_col, DataSet
+from wombat.ml_utils.df_utils import df_get_index_col, DataSet
 
 
 def adjust_r2(r2, n, k):

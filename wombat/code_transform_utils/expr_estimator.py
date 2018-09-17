@@ -1,7 +1,7 @@
 from typing import Set, Mapping, List, Iterable
 from pycparser import c_ast
 
-from code_transform_utils.exceptions import ParseException
+from wombat.code_transform_utils.exceptions import ParseException
 
 
 def remove_non_extreme_numbers(s: Iterable[str], leave_min=True) -> Iterable[str]:

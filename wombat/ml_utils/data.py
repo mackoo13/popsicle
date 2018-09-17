@@ -1,5 +1,5 @@
 from sklearn.preprocessing import RobustScaler
-from ml_utils.df_utils import df_to_xy, df_train_test_split
+from wombat.ml_utils.df_utils import df_to_xy, df_train_test_split
 
 
 class Data:

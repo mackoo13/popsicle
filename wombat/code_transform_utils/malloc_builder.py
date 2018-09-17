@@ -1,8 +1,7 @@
 from typing import List
-
 from pycparser import c_ast
-from code_transform_utils.code_transform_utils import exprs_prod
-from code_transform_utils.expr_estimator import remove_non_extreme_numbers
+from wombat.code_transform_utils.code_transform_utils import exprs_prod
+from wombat.code_transform_utils.expr_estimator import remove_non_extreme_numbers
 
 
 def max_set(exprs):
