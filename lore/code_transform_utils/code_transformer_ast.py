@@ -135,8 +135,8 @@ class CodeTransformerAST:
         arr_count = len(self.refs)
         loop_depth = self.__for_depth()
 
-        max_param_arr = math.pow(50000000 / arr_count, 1 / max_arr_dim)
-        max_param_loop = math.pow(5000000000, 1 / loop_depth)
+        max_param_arr = math.pow(200000000 / arr_count, 1 / max_arr_dim)
+        max_param_loop = math.pow(20000000000, 1 / loop_depth)
         max_param = int(min(max_param_arr, max_param_loop))
 
         return max_param, max_arr_dim

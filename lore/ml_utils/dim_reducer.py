@@ -2,7 +2,7 @@ from typing import Set, Tuple
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsRegressor
-from ml_utils.coeffs_tuner import CoeffsTuner
+from ml_utils.weights_tuner import WeightsTuner
 from ml_utils.data_set import DataSet
 from ml_utils.ml_utils import regr_score
 from ml_utils.nca import NCA
@@ -143,7 +143,7 @@ class DimReducer:
         """
 
         self.feats = None
-        self.coeffs = None
+        self.weights = None
         self.n_neighbors = None
         self.pca = None
         self.nca = None
@@ -202,12 +202,12 @@ class DimReducer:
 
         selected_data = DataSet(data.x[feats_list], data.y)
         regr = KNeighborsRegressor(n_neighbors=best_n_neighbors, weights='distance')
-        coeffs_learner = CoeffsTuner(selected_data, regr)
-        coeffs_learner.fit()
+        wt = WeightsTuner(selected_data, regr)
+        wt.fit()
 
         self.feats = feats_list
         self.n_neighbors = best_n_neighbors
-        self.coeffs = coeffs_learner.best_coeffs
+        self.weights = wt.best_weights
 
     def transform_pca(self, x):
         return self.pca.transform(x)
@@ -216,4 +216,4 @@ class DimReducer:
         return self.nca.transform(x)
 
     def transform_step(self, x):
-        return np.multiply(x[self.feats], self.coeffs)
+        return np.multiply(x[self.feats], self.weights)

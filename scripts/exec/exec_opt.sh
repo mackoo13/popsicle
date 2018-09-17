@@ -12,7 +12,7 @@ root_dir=${scripts_dir}/../
 if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!"; exit 1; fi
 if [ ! $# -eq 1 ]; then echo "Usage: ./exec_opt.sh <output file name>"; exit 1; fi
 
-readonly trials=1
+readonly trials=5
 readonly out_file_O0=${PAPI_OUT_DIR}/speedup/$1_O0.csv
 readonly out_file_O3=${PAPI_OUT_DIR}/speedup/$1_O3.csv
 readonly papi_events_list=$2

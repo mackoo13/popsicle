@@ -3,7 +3,7 @@
 Scripts `wombat-transform-lore`, `wombat-transform-lore-unroll` and `wombat-transform-pips` prepare C source code to be executed and to perform measurements with PAPI.
 
 
-## Configuration
+## Prerequisites
 
 _Previous step: [source code download](01_lore_download.md)_
 
@@ -18,11 +18,7 @@ Remember to run `source config/lore.cfg` first. It will populate following envir
 
 ## LORE transformation
 
-Usage: `wombat-transform-lore`
-
-Source code: `transform_lore.py`
-
----
+`wombat-transform-lore`
 
 The input code is expected to be in the format used in LORE repository.
 
@@ -88,13 +84,9 @@ void loop(int set, long_long* values, clock_t* begin, clock_t* end)
 
 ## LORE transformation (with loop unrolling)
 
-Usage: `wombat-transform-lore-unroll`
+`wombat-transform-lore-unroll`
 
-Source code: `transform_lore_unroll.py`
-
----
-
-This script is a modification of `wombat-transform-lore-unroll`. Besides, it inserts a `#pragma` statement above the innermost loop.
+The effect of this script is the same as of `wombat-transform-lore-unroll`. Besides, it inserts a `#pragma` statement above the innermost loop.
 
 TODO list possible options for unrolling
 
