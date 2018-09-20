@@ -41,7 +41,7 @@ class MallocBuilder:
     """
     Generates C code for array memory allocation and random initialization.
     For multidimensional arrays, the function is called recursively for each dimension.
-    A constant of 2 is added to the size for safety.
+    A constant of 2 is added to the size just in case of minor imprecision.
 
     Example 1:
         malloc('A', 'int', ['N+42'], 0)
@@ -61,8 +61,6 @@ class MallocBuilder:
                 A[i_0][i_1] = (int)rand();
             }
         }
-
-    todo check
 
     :param name: Array name
     :param dtype: Array data type
@@ -189,7 +187,7 @@ class MallocBuilder:
                                c_ast.BinaryOp('+', exprs_prod(subs), c_ast.Constant('int', '1')),
                                self.sizes[0]
                                )
-            )    # todo 0?
+            )
 
         return c_ast.Assignment('=', left, right)
 

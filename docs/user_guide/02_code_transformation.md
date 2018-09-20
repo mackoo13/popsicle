@@ -118,15 +118,6 @@ for (i = 0; i < n; i++) {
 ```
 
 
-## PIPS transformation
-
-Usage: `wombat-transform-pips`
-
-Source code: `transform_pips.py`
-
-TODO
-
-
 ## Next step
 
 Once your programs are transformed, you can [generate the parameters](03_parameters_generation.md) and run them.

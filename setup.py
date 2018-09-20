@@ -7,12 +7,13 @@ setup(name='wombat',
       author='Maciej Kocot',
       author_email='mkocot@op.pl',
       license='MIT',
-      packages=['wombat'],
+      packages=['wombat', 'wombat.code_transform_utils', 'wombat.ml_utils'],
       install_requires=[
           'pandas',
           'pycparser',
           'scipy',
           'sklearn',
+          'matplotlib',
           'numpy'
       ],
       entry_points={

@@ -52,6 +52,7 @@ def df_to_xy(df: pd.DataFrame, drop_cols: List[str], y_col: str) -> DataSet:
         y_col: Output column (skipped in x, included in y)
     """
     if y_col not in drop_cols:
+        drop_cols = drop_cols.copy()
         drop_cols.append(y_col)
 
     x = df.drop(drop_cols, axis='columns')

@@ -216,7 +216,7 @@ class DeclRemoveModifiersVisitor(c_ast.NodeVisitor):
 
 
 # noinspection PyPep8Naming
-class ForDepthCounter(c_ast.NodeVisitor):   # todo check
+class ForDepthCounter(c_ast.NodeVisitor):
     """
     Determines the maximal depth of nested for loops.
 

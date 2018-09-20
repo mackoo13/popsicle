@@ -5,15 +5,16 @@ from sklearn.neighbors import KNeighborsRegressor
 from wombat.ml_utils.weights_tuner import WeightsTuner
 from wombat.ml_utils.data_set import DataSet
 from wombat.ml_utils.ml_utils import regr_score
-from wombat.ml_utils.nca import NCA
 import numpy as np
+import pandas as pd
 
 
-def dim_sign(data: DataSet) -> np.array:
+def feature_ranking(data: DataSet) -> np.array:
     """
     Orders the features by their importance according to RandomForestRegressor.
     RandomForestRegressor is not deterministic, so generating the list multiple times is recommended for better results.
     See http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html
+
     :param data: DataSet to train
     :return: A list of tuples ordered by the importance (descendingly):
         (feature index, feature name, importance)
@@ -26,16 +27,19 @@ def dim_sign(data: DataSet) -> np.array:
     return np.array(res)
 
 
-def make_step_search(data: DataSet, step: int, regr) -> Tuple[float, Set[str]]:
+def add_feats(data: DataSet, step: int, regr) -> Tuple[float, Set[str]]:
     """
-    todo
-    :param data:
-    :param step:
-    :param regr:
+    Applies a greedy algorithm to construct a subset of features giving a good score for the given regressor.
+    In each iteration, it will select the 'best' feature of top 'step' features in the ranking.
+
+    :param data: DataSet
+    :param step: How many features from the top of the ranking will we considered in each iteration. Increasing the
+                 step can improve the score, but takes considerably more time
+    :param regr: Regressor
     :return:
     """
     feats_selected = set()
-    feats_left = dim_sign(data)[:, 1]
+    feats_left = feature_ranking(data)[:, 1]
     best_score = float('-infinity')
 
     while len(feats_left) > 0:
@@ -106,39 +110,13 @@ def remove_feats(data: DataSet, feats: Set[str], regr) -> Tuple[float, Set[str]]
     return best, feats
 
 
-def feature_importance(data: DataSet, n_iter=100):
-    """
-    Creates a ranking of features by how often they are selected as useful.
-    Basically, feature selection is performed n_iter times and the results are aggregated.
-    Warning: the result might be misleading. Use with care.
-    :param data: DataSet to learn
-    :param n_iter: Number of times to perform feature selection
-    :return:
-    """
-    res = {}
-    for c in data.x.columns:
-        res[c] = 0
-
-    for i in range(n_iter):
-        fs = DimReducer('step')
-        fs.fit(data)
-        feats = [data.x.columns[q] for q in fs.feats]
-        for f in feats:
-            res[f] += 1
-
-    resl = [(k, v) for k, v in res.items()]
-    resl = sorted(resl, key=lambda q: q[1], reverse=True)
-    for k, v in resl:
-        print(k, '\t', v)
-
-
 class DimReducer:
-    def __init__(self, how, n_neighbors_list={6}):
+    def __init__(self, how, n_neighbors_list={4, 8, 12}):
         """
-        For description of 'step' strategy, see docs/algorithm/dimensionality_reduction.md.
+        For description of 'greedy' strategy, see docs/algorithm/dimensionality_reduction.md.
         KNeighborsRegressor is assumed as the regressor, but can be easily changed to a different model.
 
-        :param how: Which algorithm to use. Available: 'step', 'pca', 'nca'
+        :param how: Which algorithm to use. Available: 'greedy', 'pca'
         :param n_neighbors_list: What n_neighbors values to test in the regressor
         """
 
@@ -146,32 +124,55 @@ class DimReducer:
         self.weights = None
         self.n_neighbors = None
         self.pca = None
-        self.nca = None
         self.n_neighbors_list = list(n_neighbors_list)
 
         if how == 'pca': 
             self.fit = self.fit_pca
             self.transform = self.transform_pca
-        elif how == 'nca':
-            self.fit = self.fit_nca
-            self.transform = self.transform_nca
-        elif how == 'step':
-            self.fit = self.fit_step
-            self.transform = self.transform_step
+        elif how == 'greedy':
+            self.fit = self.fit_greedy
+            self.transform = self.transform_greedy
         else:
             raise ValueError('Unknown feature selection mode')
 
-    def fit_pca(self, data: DataSet, pca_comp=14):
-        pca = PCA(n_components=pca_comp)
-        pca.fit(data.x)
-        self.pca = pca
+    def fit_pca(self, data: DataSet, pca_comp_list=None):
+        if pca_comp_list is None:
+            pca_comp_list = [8, 12, 16, 20]
 
-    def fit_nca(self, data: DataSet, nca_dim=6, nca_optimizer='gd'):
-        nca = NCA(dim=nca_dim, optimizer=nca_optimizer)
-        nca.fit(data.x, data.y)
-        self.nca = nca
+        best_score = float('-infinity')
+        best_pca = None
+        best_n_neighbors = None
 
-    def fit_step(self, data: DataSet, n_iter=10, step=5, require_tot_ins=True):
+        print('Performing PCA')
+
+        for pca_comp in pca_comp_list:
+
+            pca = PCA(n_components=pca_comp)
+            x = pca.fit_transform(data.x)
+            x = pd.DataFrame(x)
+            x.index = data.x.index
+            new_data = DataSet(x, data.y)
+
+            for n_neighbors in self.n_neighbors_list:
+                regr = KNeighborsRegressor(n_neighbors=n_neighbors, weights='distance')
+                regr.fit(x, data.y)
+
+                score = regr_score(new_data, regr)
+                if score > best_score:
+                    best_score = score
+                    best_pca = pca
+                    best_n_neighbors = n_neighbors
+
+        print()
+        print('\tBest score in training set:', round(best_score, 2))
+        print('\tBest value of n_components:', best_pca.n_components)
+        print('\tBest value of n_neighbors:', best_n_neighbors)
+        print()
+
+        self.pca = best_pca
+        self.n_neighbors = best_n_neighbors
+
+    def fit_greedy(self, data: DataSet, n_iter=10, step=5, require_tot_ins=True):
         best_score = float('-infinity')
         best_feats = None
         best_n_neighbors = None
@@ -183,7 +184,7 @@ class DimReducer:
 
             for i in range(n_iter):
                 print('\tIteration ' + str(i + 1) + '/' + str(n_iter) + ' for ' + str(n_neighbors) + ' neighbours')
-                _, feats = make_step_search(data, step, regr)
+                _, feats = add_feats(data, step, regr)
                 score, _ = remove_feats(data, feats, regr)
 
                 if score > best_score:
@@ -195,10 +196,12 @@ class DimReducer:
         if require_tot_ins and 'PAPI_TOT_INS' not in feats_list:
             feats_list.insert(0, 'PAPI_TOT_INS')
 
-        print('Best score in training set:', round(best_score, 2))
-        print('Best value of n_neighbors:', best_n_neighbors)
-        print('Selected %d features:' % len(feats_list))
-        print('\n'.join(['\t' + f for f in feats_list]))
+        print()
+        print('\tBest score in training set:', round(best_score, 2))
+        print('\tBest value of n_neighbors:', best_n_neighbors)
+        print('\tSelected %d features:' % len(feats_list))
+        print('\n'.join(['\t\t' + f for f in feats_list]))
+        print()
 
         selected_data = DataSet(data.x[feats_list], data.y)
         regr = KNeighborsRegressor(n_neighbors=best_n_neighbors, weights='distance')
@@ -212,8 +215,5 @@ class DimReducer:
     def transform_pca(self, x):
         return self.pca.transform(x)
 
-    def transform_nca(self, x):
-        return self.nca.transform(x)
-
-    def transform_step(self, x):
+    def transform_greedy(self, x):
         return np.multiply(x[self.feats], self.weights)

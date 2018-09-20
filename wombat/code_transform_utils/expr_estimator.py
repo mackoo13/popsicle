@@ -60,7 +60,6 @@ class ExprEstimator:
     def __init__(self,
                  maxs: Mapping[str, Set[str]]=None,
                  var: str=None,
-                 deps: Mapping[str, Set[str]]=None,
                  parent_calls: List[any]=None):
 
         """
@@ -69,12 +68,10 @@ class ExprEstimator:
 
         :param maxs: A map containing possible upper bounds for variables
         :param var: Which variable is estimated. Used
-        :param deps:
         :param parent_calls: History of expressions from previous recurrent calls  - prevents infinite loop
         """
         
         self.maxs = {} if maxs is None else maxs
-        self.deps = {} if deps is None else deps
         self.parent_calls = [] if parent_calls is None else parent_calls
         self.var = var
 

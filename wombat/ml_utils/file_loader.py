@@ -40,8 +40,6 @@ class FileLoader:
 
         if purpose == 'predict':
             self.data.scale_full()
-        else:
-            self.data.split()
 
     # PRIVATE MEMBERS
 
@@ -84,11 +82,11 @@ class FileLoader:
         df_o3 = self.__csv_to_df(name_suffix='_O3', cols=['alg', 'run', 'time_O3'])
         df = df_o0.merge(df_o3, left_index=True, right_index=True)
 
-        df_meta = get_df_meta()
-        df['max_dim'] = df.index.get_level_values(0)
-        df['max_dim'] = df['max_dim'].apply(lambda q: df_meta.loc[q]['max_dim'])
-        df = df.loc[df['time_O3'] > 10]
-        df = df.loc[df['max_dim'].isin(self.dim)]
+        # df_meta = get_df_meta()
+        # df['max_dim'] = df.index.get_level_values(0)
+        # df['max_dim'] = df['max_dim'].apply(lambda q: df_meta.loc[q]['max_dim'])
+        df = df.loc[df['time_O3'] > 100]
+        # df = df.loc[df['max_dim'].isin(self.dim)]
 
         df = df_scale_by_tot_ins(df)
 

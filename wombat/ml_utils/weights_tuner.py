@@ -11,7 +11,7 @@ class WeightsTuner:
 
         self.population = []
         self.best_weights = None
-        self.n_generations = 3
+        self.n_generations = 10
         self.population_size = 10
         self.alpha = 0.2
         self.init_mean = 1
@@ -20,8 +20,9 @@ class WeightsTuner:
         self.__random_init()
 
     def fit(self):
+        print('Weights tuning (using genetic algorithm)')
         for gen in range(self.n_generations):
-            print('gen', gen)
+            print('\tGeneration ' + str(gen) + '/' + str(self.n_generations))
 
             for i in range(self.population_size):
                 for j in range(i):
@@ -71,7 +72,7 @@ class WeightsTuner:
 
     def __mutate(self, weights):
         """
-        todo
+        Apply a random mutation to a chromosome
         """
         new_weights = weights.copy()
         for nmut in range(2):
@@ -82,7 +83,7 @@ class WeightsTuner:
 
     def __natural_selection(self):
         """
-        todo
+        Eliminate weaker chromosomes from the population
         """
         self.population = sorted(self.population, key=lambda q: q[0], reverse=True)[:self.population_size]
 

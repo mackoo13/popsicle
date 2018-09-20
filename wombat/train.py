@@ -36,18 +36,18 @@ def main():
     if mode not in ('time', 't', 'speedup', 's', 'unroll', 'u'):
         raise ValueError('Unsupported mode')
 
-    n_neighbors_list = [8]
-    # fs_mode_list = ['step', 'pca', 'nca']
-    dr_mode_list = ['step']
+    n_neighbors_list = [4, 8, 12]
+    # dr_mode_list = ['greedy', 'pca']
+    dr_mode_list = ['greedy']
     dr_step = 5
-    dr_n_iter = 1
+    dr_n_iter = 3
 
     fl = FileLoader(files, mode=mode)
 
-    for fs_mode in dr_mode_list:
+    for dr_mode in dr_mode_list:
         fl.data.split()
 
-        dr = DimReducer(fs_mode, n_neighbors_list=n_neighbors_list)
+        dr = DimReducer(dr_mode, n_neighbors_list=n_neighbors_list)
         dr.fit(fl.data.train_set, step=dr_step, n_iter=dr_n_iter)
         x = dr.transform(fl.data.train_set.x)
         x_test = dr.transform(fl.data.test_set.x)
@@ -58,7 +58,7 @@ def main():
         score = regr.score(x_test, y_test)
         adjusted = adjust_r2(score, x_test.shape[0], x_test.shape[1])
 
-        print('r2:', round(score, 2), round(adjusted, 2))
+        print('Score in test set:', round(adjusted, 2))
         save_models(fl.data.scaler, dr, regr)
 
 
