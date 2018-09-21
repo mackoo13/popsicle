@@ -23,25 +23,21 @@ Using this ranking, we will apply a greedy algorithm to select a group of featur
 
 This pseudocode assumes checking only top 5 components in each iteration. This parameter can be changed, but increasing it might significantly increase training time.
 
-```$xslt
-1. selected_features = []
-2. for each of the top 5 features:
-      calculate kNN score if we added this feature to selected_features
-3. let best_feature be the one potentially giving highest score 
-4. if score(selected_features + best_feature) > score(selected_features):
-      selected_features.append(best_feature)
-      remove best_feature from ranking
-  else:
-      remove all 5 features from ranking
-5. repeat (2-4) while ranking is not empty
-```
+    1. selected_features = []
+    2. for each of the top 5 features:
+          calculate kNN score if we added this feature to selected_features
+    3. let best_feature be the one potentially giving highest score 
+    4. if score(selected_features + best_feature) > score(selected_features):
+          selected_features.append(best_feature)
+          remove best_feature from ranking
+      else:
+          remove all 5 features from ranking
+    5. repeat (2-4) while ranking is not empty
 
 Afterwards, we run a quick check to remove redundant features:
 
-```$xslt
-1. Find a feature whose removal increases kNN score
-2. Repeat (1) while possible
-```
+    1. Find a feature whose removal increases kNN score
+    2. Repeat (1) while possible
 
 In Wombat this usually leads to a reduction from about 50 to 10-20 features. 
 

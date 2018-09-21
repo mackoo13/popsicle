@@ -35,70 +35,64 @@ The desired code structure is based on files from LORE. It should always contain
 
 Other functions can be defined if they are called inside `loop` (avoid using `main` though, as this will conflict with the `main` function in Wombat).
 
-```$xslt
-// includes
-// variables and arrays declaration
-
-void loop()
-{
-    #pragma scop
-
-    // loop kernel to be measured
-
-    #pragma endscop
-}
-```
+    // includes
+    // variables and arrays declaration
+    
+    void loop()
+    {
+        #pragma scop
+    
+        // loop kernel to be measured
+    
+        #pragma endscop
+    }
 
 
 ## Example
 
-```$xslt
-#include <stdio.h>
-#include <stdlib.h>
-int N;
-int* A;
-
-void loop()
-{
-
-    N = 42;
-    A = malloc(nr * sizeof(int));
-
-    #pragma scop
+    #include <stdio.h>
+    #include <stdlib.h>
+    int N;
+    int* A;
     
-    for(int i = 0; i < N; i++)
-        A[i] += i;
-            
-    #pragma endscop
-}
-```
+    void loop()
+    {
+    
+        N = 42;
+        A = malloc(nr * sizeof(int));
+    
+        #pragma scop
+        
+        for(int i = 0; i < N; i++)
+            A[i] += i;
+                
+        #pragma endscop
+    }
 
 ## Execution scheme
 
-A simplified scheme of the execution of your file is presented below:
+Your program will be wrapped in the following scheme:
 
-```$xslt
-void loop() {
-    ...
+    void loop() {
+        ...
+        
+        // start time counter
+        // start PAPI counters
+        # pragma scop
+        
+        ...
+        
+        # pragma endscop
+        // stop and read PAPI counters
+        // stop and read time counter
+        
+        ...
+    }
     
-    // start time counter
-    // start PAPI counters
-    # pragma scop
+    int main() {
+        // initialise PAPI
     
-    ...
+        loop();
     
-    # pragma endscop
-    // stop and read PAPI counters
-    // stop and read time counter
-    
-    ...
-}
-
-int main() {
-    // initialise PAPI
-
-    loop();
-
-    // print the execution time and PAPI events 
-}
-```
+        // print the execution time and PAPI events 
+    }

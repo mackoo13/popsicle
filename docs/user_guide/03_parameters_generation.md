@@ -7,43 +7,47 @@ In many programs it is possible to provide loop bounds on compilation time. In t
 
 _Previous step: [code transformation](02_code_transformation.md)_
 
-`$LORE_PROC_DIR` should point to the input directory. Each of its subdirectories contains the files needed to generate the parameters for one program (`_params_names.txt` and `_max_param.txt`):
+`$LORE_PROC_DIR` should point to the input directory. Each of its subdirectories contains the files needed to generate the parameters for one program (`(...)_params_names.txt` and `(...)_max_param.txt`):
 
-```$xslt
-$LORE_PROC_DIR/
-├-- program1/  
-|   ├-- program1.c
-|   ├-- program1_max_params.txt
-|   └-- program1_params_names.txt
-├-- program2/  
-└-- program3/
-```
+    $LORE_PROC_DIR/
+    ├-- program1/  
+    |   ├-- program1.c
+    |   ├-- program1_max_params.txt
+    |   └-- program1_params_names.txt
+    ├-- program2/  
+    └-- program3/
 
-the results will be saved to `_params.txt` file in the same directory.
+the results will be saved to `(...)_params.txt` file in the same directory.
 
 
 ## Usage
 
+### `wombat-params-lore`
 
 
 ## Example
 
-Input (`_params_names.txt` and `_max_param.txt`)
+Input
 
-```$xslt
+```
+// (...)_params_names.txt
+
 PARAM_COUNT
 ```
 
-```$xslt
+```
+// (...)_max_param.txt
+
 265
 ```
 
-Output (`_params.txt`)
-```$xslt
--D PARAM_COUNT=88
--D PARAM_COUNT=176
--D PARAM_COUNT=265
-```
+Output
+
+    // (...)_params.txt
+    
+    -D PARAM_COUNT=88
+    -D PARAM_COUNT=176
+    -D PARAM_COUNT=265
 
 
 ## Implementation details

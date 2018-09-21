@@ -25,39 +25,35 @@ Files which do not satisfy these conditions are skipped in order to prevent inco
 
 #### LORE file format
 
-```$xslt
-// includes
-// variables and arrays declaration
-
-void loop()
-{
-#pragma scop
-
-    // loop kernel to be measured
-
-#pragma endscop
-}
-```
+    // includes
+    // variables and arrays declaration
+    
+    void loop()
+    {
+    #pragma scop
+    
+        // loop kernel to be measured
+    
+    #pragma endscop
+    }
 
 #### After transformation
 
-```$xslt
-// includes
-// variables and arrays declaration
-
-int loop(int set, long_long* values, clock_t* begin, clock_t* end)
-{
-    // global parameters initialization
-    // arrays allocation and initialization
-
-#pragma scop
-exec(PAPI_start(set));
-*begin = clock();
-
-    // loop kernel to be measured
+    // includes
+    // variables and arrays declaration
     
-*end = clock();
-exec(PAPI_stop(set, values));
-#pragma endscop
-}
-```
+    int loop(int set, long_long* values, clock_t* begin, clock_t* end)
+    {
+        // global parameters initialization
+        // arrays allocation and initialization
+    
+    #pragma scop
+    exec(PAPI_start(set));
+    *begin = clock();
+    
+        // loop kernel to be measured
+        
+    *end = clock();
+    exec(PAPI_stop(set, values));
+    #pragma endscop
+    }

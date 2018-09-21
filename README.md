@@ -6,30 +6,31 @@
 * [GCC](https://gcc.gnu.org/)
 * [PAPI](http://icl.utk.edu/papi/software/)
 
-Note: if you encounter `perf_event support disabled by Linux with paranoid=3` using PAPI, run the following command to change the settings:
- 
+To run IPython notebooks, you might also need `matplotlib` and `plotly` libraries (easily installed with `pip`).
+
+#### Known issues
+
+If you encounter `perf_event support disabled by Linux with paranoid=3` error, run the following command to enable PAPI:
+  
 `sudo sh -c 'echo kernel.perf_event_paranoid=1 > /etc/sysctl.d/local.conf'`
 
 ## Installation
 
-```
-git clone https://github.com/mackoo13/wombat.git
-cd wombat
-pip3 install .
-```
+    git clone https://github.com/mackoo13/wombat.git
+    cd wombat
+    pip3 install .
 
 If you don't have `pip3` installed, you can try a workaround:
 
-```
-python3 -m pip install .
-```
+    python3 -m pip install .
+
 
 ## Usage
 
-Training a model requires completing a couple of steps. Most of them need to be performed only once.
+Training a model requires completing a couple of steps. Most of them do not need to be performed more than once.
 
 #### 0. Configuration ([read more](docs/user_guide/01_lore_download.md)) 
-Specify paths to 
+Specify paths to all files used in next steps.
 
 #### 1. Downloading source codes ([read more](docs/user_guide/01_lore_download.md)) 
 Source codes from LORE repository are used to train a model.
@@ -50,3 +51,23 @@ The collected data is used to train a prediction model.
 
 #### 6. Prediction ([read more](docs/user_guide/06_prediction.md)) 
 Once you obtain a model, you can provide your own program to make predictions on.
+
+
+## Jupyter notebooks
+
+[Jupyter](http://jupyter.org/) notebooks are recommended for playing with data, testing and evaluating the model. Some examples are included in the repository:
+
+    source config/lore.cfg
+    cd notebooks
+    jupyter notebook
+
+
+## About
+
+Wombat framework is a result of an internship in [CRI, Mines ParisTech](https://www.cri.mines-paristech.fr/) in Fontainebleau, France.
+
+Contact: [Github](https://github.com/mackoo13)
+
+## License
+
+The project is available under [MIT](https://opensource.org/licenses/MIT) license.

@@ -10,19 +10,29 @@ def intermediate_value(k, k_max, n_params, max_param):
 
 
 def main():
-    check_config(['LORE_PROC_PATH'])
-
     parser = argparse.ArgumentParser()
     parser.add_argument("k", type=int, help="Number of distinct parameters")
+    parser.add_argument('-u', '--unroll', action='store_true', help='Verbose')
     args = parser.parse_args()
     k_max = args.k
-    proc_dir = os.environ['LORE_PROC_PATH']
+    unroll = args.unroll
 
-    for file_name in os.listdir(proc_dir):
+    var_name = 'LORE_PROC_CLANG_PATH' if unroll else 'LORE_PROC_PATH'
+    check_config([var_name])
+    proc_dir = os.environ[var_name]
+
+    dirs = os.listdir(proc_dir)
+    n_dirs = len(dirs)
+
+    parsed = 0
+    failed = 0
+
+    for i, file_name in enumerate(dirs):
         if not os.path.isdir(os.path.join(proc_dir, file_name)):
+            failed += 1
             continue
 
-        print('Generating params for ' + file_name)
+        print('[' + str(i) + '/' + str(n_dirs) + '] Generating params for ' + file_name)
 
         try:
             with open(os.path.join(proc_dir, file_name, file_name + '_params.txt'), 'w') as fout, \
@@ -40,8 +50,15 @@ def main():
                         fout.write(' '.join(defines) + '\n')
                 else:
                     fout.write('\n')
+
+                parsed += 1
+
         except FileNotFoundError:
+            failed += 1
             print('\tFile (...)_params_names.txt or (...)_max_param.txt is missing.')
+
+    print('========')
+    print(str(parsed) + ' parsed, ' + str(failed) + ' skipped')
 
 
 if __name__ == "__main__":

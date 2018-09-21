@@ -6,16 +6,14 @@ Different scripts are used to execute the programs, depending on the purpose of 
 
 `$LORE_PROC_DIR` should point to the input directory. Each of its subdirectories contains all files needed to run one program:
 
-```$xslt
-$LORE_PROC_DIR/
-├-- program1/  
-|   ├-- program1.c
-|   ├-- program1_max_params.txt
-|   ├-- program1_params.txt
-|   └-- program1_params_names.txt
-├-- program2/  
-└-- program3/
-```
+    $LORE_PROC_DIR/
+    ├-- program1/  
+    |   ├-- program1.c
+    |   ├-- program1_max_params.txt
+    |   ├-- program1_params.txt
+    |   └-- program1_params_names.txt
+    ├-- program2/  
+    └-- program3/
 
 The results will be saved in `$PAPI_OUT_DIR`.
 
