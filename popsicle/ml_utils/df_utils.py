@@ -2,8 +2,8 @@ import os
 from typing import Tuple, List
 from random import shuffle
 import pandas as pd
-from wombat.ml_utils.data_set import DataSet
-from wombat.utils import check_config
+from popsicle.ml_utils.data_set import DataSet
+from popsicle.utils import check_config
 
 check_config(['LORE_PROC_PATH'])
 proc_dir = os.environ['LORE_PROC_PATH']

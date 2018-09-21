@@ -1,6 +1,6 @@
 # Code transformation
 
-Scripts `wombat-transform-lore`, `wombat-transform-lore-unroll` and `wombat-transform-pips` prepare C source code to be executed and to perform measurements with PAPI.
+Scripts `popsicle-transform-lore`, `popsicle-transform-lore-unroll` and `popsicle-transform-pips` prepare C source code to be executed and to perform measurements with PAPI.
 
 The input is meant to be in a format used in LORE.
 
@@ -13,14 +13,14 @@ Remember to run `source config/lore.cfg`. It will populate following environment
 
 - `LORE_ORIG_PATH` - original LORE programs (input)
 - `PIPS_ORIG_PATH` - original PIPS programs (input)
-- `LORE_PROC_PATH` - output directory for `wombat-transform-lore`
-- `LORE_PROC_CLANG_PATH` - output directory for `wombat-transform-lore-unroll`
-- `PIPS_PROC_PATH` - output directory for `wombat-transform-pips`
+- `LORE_PROC_PATH` - output directory for `popsicle-transform-lore`
+- `LORE_PROC_CLANG_PATH` - output directory for `popsicle-transform-lore-unroll`
+- `PIPS_PROC_PATH` - output directory for `popsicle-transform-pips`
 
 
 ## Usage (LORE programs)
 
-`wombat-transform-lore`
+`popsicle-transform-lore`
 
 The input code is expected to be in the format used in LORE repository.
 
@@ -53,7 +53,7 @@ After:
     #include <stdlib.h>
     #include <papi.h>
     #include <time.h>
-    #include "/home/maciej/ftb/wombat/papi/papi_utils.h"
+    #include "/home/maciej/ftb/popsicle/papi/papi_utils.h"
     #define MAX(x, y) (((x) > (y)) ? (x) : (y))
     int i;
     double *x;
@@ -83,9 +83,9 @@ After:
 
 ## Usage (LORE programs with loop unrolling)
 
-`wombat-transform-lore-unroll`
+`popsicle-transform-lore-unroll`
 
-The effect of this script is the same as of `wombat-transform-lore-unroll`. Besides, it inserts a `#pragma` statement above the innermost loop.
+The effect of this script is the same as of `popsicle-transform-lore-unroll`. Besides, it inserts a `#pragma` statement above the innermost loop.
 
 TODO list possible options for unrolling
 

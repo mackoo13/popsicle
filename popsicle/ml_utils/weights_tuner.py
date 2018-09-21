@@ -1,7 +1,7 @@
 from sklearn.base import clone
 import numpy as np
-from wombat.ml_utils.data_set import DataSet
-from wombat.ml_utils.ml_utils import regr_score
+from popsicle.ml_utils.data_set import DataSet
+from popsicle.ml_utils.ml_utils import regr_score
 
 
 class WeightsTuner:

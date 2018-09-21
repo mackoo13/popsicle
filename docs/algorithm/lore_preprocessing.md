@@ -6,7 +6,7 @@ Programs from [LORE repository](https://vectorization.computer) are used as the 
 
 ## LORE Parser
 
-LORE source codes are missing array allocation and initialization. This script attempts to generate missing code and make it runnable by Wombat. This includes:
+LORE source codes are missing array allocation and initialization. This script attempts to generate missing code and make it runnable by Popsicle. This includes:
 
 * finding global parameters which need to be initialized to run the program, i.e. number of loop iterations. Their values are meant to be specified at compilation time.
 * estimating necessary array sizes based on array references in code

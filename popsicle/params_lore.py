@@ -2,7 +2,7 @@ import math
 import argparse
 import os
 
-from wombat.utils import check_config
+from popsicle.utils import check_config
 
 
 def intermediate_value(k, k_max, n_params, max_param):

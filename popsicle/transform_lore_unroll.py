@@ -1,20 +1,20 @@
 from __future__ import print_function
-from wombat.code_transform_utils.code_transformer import CodeTransformer
-from wombat.code_transform_utils.code_transform_utils import split_code, save_max_dims
-import argparse
+from popsicle.code_transform_utils.code_transformer import CodeTransformer
+from popsicle.code_transform_utils.code_transform_utils import split_code, save_max_dims
 import os
-from wombat.utils import check_config
+import argparse
+from popsicle.utils import check_config
 
 
 def main():
-    check_config(['LORE_ORIG_PATH', 'LORE_PROC_PATH'])
+    check_config(['LORE_ORIG_PATH', 'LORE_PROC_CLANG_PATH'])
 
     argparser = argparse.ArgumentParser()
     argparser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
     args = argparser.parse_args()
     verbose = args.verbose
     orig_path = os.environ['LORE_ORIG_PATH']
-    proc_path = os.environ['LORE_PROC_PATH']
+    proc_path = os.environ['LORE_PROC_CLANG_PATH']
 
     max_arr_dims = {}
 
@@ -31,13 +31,12 @@ def main():
             if not file_name.endswith(".c"):
                 continue
 
-            print('[' + str(i + 1) + '/' + str(n_dirs) + '] Parsing %s' % file_name)
+            print('[' + str(i) + '/' + str(n_dirs) + '] Parsing %s' % file_name)
 
-            file_path = os.path.join(orig_path, file_name)
             file_name = str(file_name[:-2])
             out_dir = os.path.join(proc_path, file_name)
 
-            with open(file_path, 'r') as fin:
+            with open(os.path.join(orig_path, file_name + '.c'), 'r') as fin:
                 code = fin.read()
                 includes, code = split_code(code)
 
@@ -45,11 +44,11 @@ def main():
                     includes=includes,
                     code=code,
                     papi_scope='pragma',
-                    verbose=verbose,
                     main_name='loop',
+                    verbose=verbose,
                     modifiers_to_remove=['extern', 'restrict'],
+                    add_pragma_unroll=True,
                     gen_mallocs=True,
-                    rename_bounds=True,
                 )
 
                 code = ct.transform()
@@ -64,7 +63,7 @@ def main():
                     fout.write(str(ct.max_param))
 
                 with open(os.path.join(out_dir, file_name + '_params_names.txt'), 'w') as fout:
-                    fout.write(','.join(['PARAM_' + b.upper() for b in ct.pp.bounds]))
+                    fout.write(','.join(ct.pp.bounds))
 
                 max_arr_dims[file_name] = ct.max_arr_dim
 

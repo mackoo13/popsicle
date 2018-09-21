@@ -6,7 +6,7 @@ Programs from [LORE repository](https://vectorization.computer) must be download
 
 To obtain the source codes from LORE, you will need the IDs of all available loops.
 
-Wombat comes with a bundled list in `config/lore_loops.csv`.
+Popsicle comes with a bundled list in `config/lore_loops.csv`.
 
 To get an up-to-date list, please use [LORE website](https://vectorization.computer/query.html) and the following query:
 
@@ -15,7 +15,7 @@ To get an up-to-date list, please use [LORE website](https://vectorization.compu
 
 ## Usage
 
-### `wombat-lore-download [path_to_csv_file]`
+### `popsicle-lore-download [path_to_csv_file]`
 
 
 ## Implementation details

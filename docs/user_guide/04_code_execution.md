@@ -32,7 +32,7 @@ Runs the programs compiled with `-O0` and `-O3` [optimisation flags](https://gcc
 
 ### `./exec/exec_opt.sh [output_file_name]`
 
-###`[output_file_name]`
+####`[output_file_name]`
 File name without extension. The output will be saved as two files: 
 
 * `$PAPI_OUT_DIR/speedup/[output_file_name]_O0.csv` (compiled with `-O0`)
@@ -47,7 +47,7 @@ Used to collect data for speedup prediction (comparing the same programs with or
 
 ### `./exec_clang/exec.sh [output_file_name]`
 
-### `output_file_name` 
+#### `[output_file_name]` 
 File name without extension. The output will be saved as two files: 
 
 * `$PAPI_OUT_DIR/speedup/[output_file_name]_ur.csv` (unrolling enabled)

@@ -2,7 +2,7 @@
 
 ### Why?
 
-The advantage of Wombat's dimensionality reduction is twofold:
+The advantage of Popsicle's dimensionality reduction is twofold:
 
 * It improves the *speed* and *accuracy* of prediction - less features means less painful computational complexity. Also, it helps us avoid the [curse of dimensionality](http://www.visiondummy.com/2014/04/curse-dimensionality-affect-classification/).
 * It's *informative* - after feature selection stage, the algorithm will show which features proved most useful (in contrast to methods like PCA, which create completely new abstract features).
@@ -39,7 +39,7 @@ Afterwards, we run a quick check to remove redundant features:
     1. Find a feature whose removal increases kNN score
     2. Repeat (1) while possible
 
-In Wombat this usually leads to a reduction from about 50 to 10-20 features. 
+In Popsicle this usually leads to a reduction from about 50 to 10-20 features. 
 
 
 ### Coefficients tuning

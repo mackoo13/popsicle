@@ -14,7 +14,7 @@ As an input, you should provide one or more `.csv` files obtained by [executing]
 
 ## Usage
 
-### `wombat-train [mode] -i [file_name]`
+### `popsicle-train [mode] -i [file_name]`
 
 ### `[mode]`
  * `time` or `t` for execution time prediction
@@ -32,7 +32,7 @@ Please note that a name _without_ exception is expected. Providing an extension 
 
 ## Example
 
-`wombat-train speedup -i file1` will load data from `$PAPI_OUT_DIR/file1_O0.csv` and `$PAPI_OUT_DIR/file1_O3.csv` and train a model to predict a speedup between `-O0` and `-O3`.
+`popsicle-train speedup -i file1` will load data from `$PAPI_OUT_DIR/file1_O0.csv` and `$PAPI_OUT_DIR/file1_O3.csv` and train a model to predict a speedup between `-O0` and `-O3`.
 
 
 ## Next step

@@ -1,13 +1,13 @@
 from setuptools import setup
 
-setup(name='wombat',
+setup(name='popsicle',
       version='0.1',
       description='A framework for prediction of program speedup after code optimisation.',
-      url='http://github.com/mackoo13/wombat',
+      url='http://github.com/mackoo13/popsicle',
       author='Maciej Kocot',
       author_email='mkocot@op.pl',
       license='MIT',
-      packages=['wombat', 'wombat.code_transform_utils', 'wombat.ml_utils'],
+      packages=['popsicle', 'popsicle.code_transform_utils', 'popsicle.ml_utils'],
       install_requires=[
           'pandas',
           'pycparser',
@@ -17,12 +17,12 @@ setup(name='wombat',
           'numpy'
       ],
       entry_points={
-          'console_scripts': ['wombat-download-lore = wombat.download_lore:main',
-                              'wombat-transform-lore = wombat.transform_lore:main',
-                              'wombat-transform-lore-unroll = wombat.transform_lore_unroll:main',
-                              'wombat-transform-pips = wombat.transform_pips:main',
-                              'wombat-params-lore = wombat.params_lore:main',
-                              'wombat-train = wombat.train:main',
-                              'wombat-predict = wombat.predict:main']
+          'console_scripts': ['popsicle-download-lore = popsicle.download_lore:main',
+                              'popsicle-transform-lore = popsicle.transform_lore:main',
+                              'popsicle-transform-lore-unroll = popsicle.transform_lore_unroll:main',
+                              'popsicle-transform-pips = popsicle.transform_pips:main',
+                              'popsicle-params-lore = popsicle.params_lore:main',
+                              'popsicle-train = popsicle.train:main',
+                              'popsicle-predict = popsicle.predict:main']
       },
       zip_safe=False)

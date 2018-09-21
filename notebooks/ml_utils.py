@@ -5,7 +5,10 @@ from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsRegressor
 
 
-def graph(clf, x2, y, labels=[], xlim=(None, None), ylim=(None, None)):
+def graph(clf, x2, y, labels=None, xlim=(None, None), ylim=(None, None)):
+    if labels is None:
+        labels = []
+
     if x2.shape[1] != 2:
         pca = PCA(n_components=2)
         x2 = pca.fit_transform(x2)
@@ -19,8 +22,8 @@ def graph(clf, x2, y, labels=[], xlim=(None, None), ylim=(None, None)):
     plt.xlabel('Dimension 1')
     plt.ylabel('Dimension 2')
     
-    x0 = x2[:,0]
-    x1 = x2[:,1]
+    x0 = x2[:, 0]
+    x1 = x2[:, 1]
 
     # grid
     xmin = min(x0)
@@ -40,7 +43,7 @@ def graph(clf, x2, y, labels=[], xlim=(None, None), ylim=(None, None)):
     xx_grid, yy_grid = np.meshgrid(xrange_grid, yrange_grid)
 
     ypred = clf.predict(list(zip(xx.ravel(), yy.ravel()))).flatten()
-    ypred = [q if q>0 else y.min() for q in ypred]
+    ypred = [q if q > 0 else y.min() for q in ypred]
     ypred = np.array(ypred).reshape(len(yrange_grid)-1, len(xrange_grid)-1)
     
     pcm = ax.pcolor(xx_grid, yy_grid, ypred, norm=norm)
@@ -55,4 +58,4 @@ def graph(clf, x2, y, labels=[], xlim=(None, None), ylim=(None, None)):
     
     # labels
     for i, txt in enumerate(labels):
-        ax.annotate(txt, (x0[i],x1[i]))
+        ax.annotate(txt, (x0[i], x1[i]))

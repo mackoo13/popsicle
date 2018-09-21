@@ -14,7 +14,7 @@ Remember to run `source config/lore.cfg` first. It will populate the following e
 
 ## Usage: 
 
-### `wombat-predict [mode] [file_TODO]`
+### `popsicle-predict [mode] [file_TODO]`
 
 ###`mode`
 * `time` or `t` to predict execution time
@@ -22,18 +22,18 @@ Remember to run `source config/lore.cfg` first. It will populate the following e
 * `unroll` or `u` to predict speedup after loop unrolling 
 
 ### `file_TODO`
-TODO to your file. The required file format is presented below. Please make sure you conform to it or your file might be handled incorrectly by Wombat.
+TODO to your file. The required file format is presented below. Please make sure you conform to it or your file might be handled incorrectly by Popsicle.
 
 ## Input code format
 
-There is no need to manually insert PAPI code into the file - Wombat will take care of this! You only need keep in mind a couple of rules.
+There is no need to manually insert PAPI code into the file - Popsicle will take care of this! You only need keep in mind a couple of rules.
 
 The desired code structure is based on files from LORE. It should always contain:
-* `void loop()` function, which will be called by Wombat during execution. 
+* `void loop()` function, which will be called by Popsicle during execution. 
 * `#pragma scop` and `#pragma endscop` enclosing the code fragment you want to make measurements on.
 * no libraries requiring special compilation flags (only `-lm` is supported)
 
-Other functions can be defined if they are called inside `loop` (avoid using `main` though, as this will conflict with the `main` function in Wombat).
+Other functions can be defined if they are called inside `loop` (avoid using `main` though, as this will conflict with the `main` function in Popsicle).
 
     // includes
     // variables and arrays declaration

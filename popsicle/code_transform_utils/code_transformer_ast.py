@@ -1,8 +1,8 @@
 from typing import Iterable
 from pycparser import c_ast, c_parser
-from wombat.code_transform_utils.expr_estimator import ExprEstimator, remove_non_extreme_numbers
-from wombat.code_transform_utils.malloc_builder import MallocBuilder
-from wombat.code_transform_utils.code_transform_utils import ArrayRefVisitor, ForVisitor, AssignmentVisitor, PtrDeclVisitor, \
+from popsicle.code_transform_utils.expr_estimator import ExprEstimator, remove_non_extreme_numbers
+from popsicle.code_transform_utils.malloc_builder import MallocBuilder
+from popsicle.code_transform_utils.code_transform_utils import ArrayRefVisitor, ForVisitor, AssignmentVisitor, PtrDeclVisitor, \
     StructVisitor, ArrayDeclVisitor, VarTypeVisitor, ForPragmaUnrollVisitor, DeclRemoveModifiersVisitor, \
     FuncDefFindVisitor, CompoundInsertNextToVisitor, ForDepthCounter, SingleToCompoundVisitor, \
     ParseException, ReturnIntVisitor, ArrayDeclToPtrVisitor, papi_instr, pragma_unroll, loop_func_params, \

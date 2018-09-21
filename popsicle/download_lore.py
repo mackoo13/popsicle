@@ -5,7 +5,7 @@ import urllib.parse
 # noinspection PyCompatibility
 import urllib.request
 import os
-from wombat.utils import check_config
+from popsicle.utils import check_config
 
 check_config(['LORE_ORIG_PATH'])
 

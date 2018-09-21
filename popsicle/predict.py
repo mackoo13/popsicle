@@ -2,8 +2,8 @@ from __future__ import print_function
 import argparse
 import os
 from sklearn.externals import joblib
-from wombat.ml_utils.file_loader import FileLoader
-from wombat.utils import check_config
+from popsicle.ml_utils.file_loader import FileLoader
+from popsicle.utils import check_config
 
 check_config(['PAPI_OUT_DIR', 'LORE_MODELS_DIR'])
 

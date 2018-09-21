@@ -14,6 +14,6 @@ The set of available events might depend on your architecture. For more informat
 
 PAPI is only able to collect data for a couple of events at the same time (the exact number is architecture-dependent).
 
-To obtain more events, Wombat uses [multiplexing](http://icl.cs.utk.edu/projects/papi/wiki/Multiplexing). In this mode, PAPI switches between different events during execution and returns approximate results. Of course, loss of precision is inevitable when using this strategy - especially when a program runs for a short time. 
+To obtain more events, Popsicle uses [multiplexing](http://icl.cs.utk.edu/projects/papi/wiki/Multiplexing). In this mode, PAPI switches between different events during execution and returns approximate results. Of course, loss of precision is inevitable when using this strategy - especially when a program runs for a short time. 
 
 In this project, all data with short execution time (typically under 100ms) is discarded to overcome this problem. Thus, prediction is also accurate for such programs only.

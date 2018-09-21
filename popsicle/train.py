@@ -3,10 +3,10 @@ import argparse
 import os
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.externals import joblib
-from wombat.ml_utils.dim_reducer import DimReducer
-from wombat.ml_utils.file_loader import FileLoader
-from wombat.ml_utils.ml_utils import adjust_r2
-from wombat.utils import check_config
+from popsicle.ml_utils.dim_reducer import DimReducer
+from popsicle.ml_utils.file_loader import FileLoader
+from popsicle.ml_utils.ml_utils import adjust_r2
+from popsicle.utils import check_config
 
 check_config(['PAPI_OUT_DIR', 'LORE_MODELS_DIR'])
 

@@ -2,9 +2,9 @@ from typing import Set, Tuple
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsRegressor
-from wombat.ml_utils.weights_tuner import WeightsTuner
-from wombat.ml_utils.data_set import DataSet
-from wombat.ml_utils.ml_utils import regr_score
+from popsicle.ml_utils.weights_tuner import WeightsTuner
+from popsicle.ml_utils.data_set import DataSet
+from popsicle.ml_utils.ml_utils import regr_score
 import numpy as np
 import pandas as pd
 

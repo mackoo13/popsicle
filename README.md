@@ -1,4 +1,4 @@
-# Wombat
+# Popsicle
 
 ## Prerequisites
 
@@ -16,8 +16,8 @@ If you encounter `perf_event support disabled by Linux with paranoid=3` error, r
 
 ## Installation
 
-    git clone https://github.com/mackoo13/wombat.git
-    cd wombat
+    git clone https://github.com/mackoo13/popsicle.git
+    cd popsicle
     pip3 install .
 
 If you don't have `pip3` installed, you can try a workaround:
@@ -64,7 +64,7 @@ Once you obtain a model, you can provide your own program to make predictions on
 
 ## About
 
-Wombat framework is a result of an internship in [CRI, Mines ParisTech](https://www.cri.mines-paristech.fr/) in Fontainebleau, France.
+Popsicle framework is a result of an internship in [CRI, Mines ParisTech](https://www.cri.mines-paristech.fr/) in Fontainebleau, France.
 
 Contact: [Github](https://github.com/mackoo13)
 

@@ -22,7 +22,15 @@ the results will be saved to `(...)_params.txt` file in the same directory.
 
 ## Usage
 
-### `wombat-params-lore`
+### `popsicle-params-lore [n_params] [-u]`
+
+#### `[n_params]`
+
+Number of different parameters to generate
+
+#### `[-u]`
+
+Use this flag to use programs with loop unrolling (`$LORE_PROC_CLANG_PATH` directory). Otherwise, programs from `$LORE_PROC_PATH` will be used.
 
 
 ## Example

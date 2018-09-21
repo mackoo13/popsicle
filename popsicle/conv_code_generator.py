@@ -3,9 +3,9 @@ import shutil
 from typing import List
 from pycparser import c_ast, c_generator
 import numpy as np
-from wombat.code_transform_utils.malloc_builder import MallocBuilder
-from wombat.code_transform_utils.code_transformer_str import CodeTransformerStr
-from wombat.code_transform_utils.code_transform_utils import exprs_sum, papi_instr, loop_func_params
+from popsicle.code_transform_utils.malloc_builder import MallocBuilder
+from popsicle.code_transform_utils.code_transformer_str import CodeTransformerStr
+from popsicle.code_transform_utils.code_transform_utils import exprs_sum, papi_instr, loop_func_params
 
 if 'KERNEL_PATH' not in os.environ:
     raise EnvironmentError
