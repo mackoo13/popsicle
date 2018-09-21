@@ -15,13 +15,13 @@ Different scripts are used to execute the programs, depending on the purpose of 
     ├-- program2/  
     └-- program3/
 
-The results will be saved in `$PAPI_OUT_DIR`.
+The results will be saved in `$OUT_DIR`.
 
 ## Usage (for time prediction)
 
 ###`./exec/exec.sh [output_file_name]`
 
-`output_file_name` should be provided without extension. The output will be saved to `$PAPI_OUT_DIR/time/[output_file_name].csv`.
+`output_file_name` should be provided without extension. The output will be saved to `$OUT_DIR/time/[output_file_name].csv`.
 
 Compiler: gcc
 
@@ -35,8 +35,8 @@ Runs the programs compiled with `-O0` and `-O3` [optimisation flags](https://gcc
 ####`[output_file_name]`
 File name without extension. The output will be saved as two files: 
 
-* `$PAPI_OUT_DIR/speedup/[output_file_name]_O0.csv` (compiled with `-O0`)
-* `$PAPI_OUT_DIR/speedup/[output_file_name]_O3.csv` (compiled with `-O3`)
+* `$OUT_DIR/gcc/[output_file_name]_O0.csv` (compiled with `-O0`)
+* `$OUT_DIR/gcc/[output_file_name]_O3.csv` (compiled with `-O3`)
 
 Compiler: gcc
 
@@ -50,8 +50,8 @@ Used to collect data for speedup prediction (comparing the same programs with or
 #### `[output_file_name]` 
 File name without extension. The output will be saved as two files: 
 
-* `$PAPI_OUT_DIR/speedup/[output_file_name]_ur.csv` (unrolling enabled)
-* `$PAPI_OUT_DIR/speedup/[output_file_name]_nour.csv` (unrolling disabled)
+* `$OUT_DIR/unroll/[output_file_name]_ur.csv` (unrolling enabled)
+* `$OUT_DIR/unroll/[output_file_name]_nour.csv` (unrolling disabled)
 
 Compiler: clang
 

@@ -5,12 +5,12 @@ from popsicle.ml_utils.data import Data
 from popsicle.ml_utils.df_utils import df_aggregate, df_sort_cols, df_scale_by_tot_ins, get_df_meta
 from popsicle.utils import check_config
 
-check_config(['PAPI_OUT_DIR', 'LORE_PROC_PATH'])
-out_dir = os.environ['PAPI_OUT_DIR']
+check_config(['OUT_DIR', 'LORE_PROC_PATH'])
+out_dir = os.environ['OUT_DIR']
 
 
 class FileLoader:
-    def __init__(self, files, mode='speedup', purpose='train', dim={1, 2}, scaler=None):
+    def __init__(self, files, mode='gcc', purpose='train', dim={1, 2}, scaler=None):
         if purpose not in ('train', 'predict'):
             raise ValueError('Parameter \'purpose\' must be either \'train\' or \'predict\'.')
 
@@ -27,9 +27,9 @@ class FileLoader:
         if mode in ('time', 't'):
             self.load = self.load_time
             self.mode = 'time'
-        elif mode in ('speedup', 's'):
-            self.load = self.load_speedup
-            self.mode = 'speedup'
+        elif mode in ('gcc', 'g'):
+            self.load = self.load_gcc
+            self.mode = 'gcc'
         elif mode in ('unroll', 'u'):
             self.load = self.load_unroll
             self.mode = 'unroll'
@@ -46,7 +46,7 @@ class FileLoader:
     def __csv_to_df(self, name_suffix: str= '', cols: List[str]=None) -> pd.DataFrame:
         """
         Loads csv file(s) to a DataFrame
-        :param name_suffix: Suffix which will be added to each file name. For example, in 'speedup' mode it can load
+        :param name_suffix: Suffix which will be added to each file name. For example, in 'gcc' mode it can load
             file_name_O0.csv and file_name_O3.csv.
         :param cols: Which columns to load
         :return: DataFrame
@@ -77,7 +77,7 @@ class FileLoader:
         df = df_sort_cols(df)
         self.data = Data(self.mode, df, self.scaler)
 
-    def load_speedup(self):
+    def load_gcc(self):
         df_o0 = self.__csv_to_df(name_suffix='_O0')
         df_o3 = self.__csv_to_df(name_suffix='_O3', cols=['alg', 'run', 'time_O3'])
         df = df_o0.merge(df_o3, left_index=True, right_index=True)

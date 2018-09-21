@@ -13,7 +13,6 @@ setup(name='popsicle',
           'pycparser',
           'scipy',
           'sklearn',
-          'matplotlib',
           'numpy'
       ],
       entry_points={
@@ -25,4 +24,8 @@ setup(name='popsicle',
                               'popsicle-train = popsicle.train:main',
                               'popsicle-predict = popsicle.predict:main']
       },
+      scripts=['scripts/exec-time/popsicle-exec-time.sh',
+               'scripts/exec-gcc/popsicle-exec-gcc.sh',
+               'scripts/exec-unroll/popsicle-exec-unroll.sh',
+               'scripts/ml/popsicle-predict.sh'],
       zip_safe=False)

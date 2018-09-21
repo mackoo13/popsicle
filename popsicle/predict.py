@@ -5,10 +5,10 @@ from sklearn.externals import joblib
 from popsicle.ml_utils.file_loader import FileLoader
 from popsicle.utils import check_config
 
-check_config(['PAPI_OUT_DIR', 'LORE_MODELS_DIR'])
+check_config(['OUT_DIR', 'MODELS_DIR'])
 
-out_dir = os.environ['PAPI_OUT_DIR']
-model_dir = os.environ['LORE_MODELS_DIR']
+out_dir = os.environ['OUT_DIR']
+model_dir = os.environ['MODELS_DIR']
 
 
 def load_models():
@@ -21,7 +21,7 @@ def load_models():
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('mode', type=str, help='Use \'time\'/\'t\' for execution time prediction, '
-                                               '\'speedup\'/\'s\' for predicting speedup after gcc optimisation or '
+                                               '\'gcc\'/\'g\' for predicting speedup after gcc optimisation or '
                                                '\'unroll\'/\'u\' for predicting speedup after clang loop unrolling.')
     parser.add_argument('-i', '--input', action='append', required=True,
                         help='<Required> input files in CSV format (names without extensions). You can provide multiple'
@@ -30,7 +30,7 @@ def main():
     mode = args.mode
     files = args.input
 
-    if mode not in ('time', 't', 'speedup', 's', 'unroll', 'u'):
+    if mode not in ('time', 't', 'gcc', 'g', 'unroll', 'u'):
         raise ValueError('Unsupported mode: ' + mode)
 
     scaler, dim_reducer, regr = load_models()

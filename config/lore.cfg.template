@@ -1,6 +1,7 @@
-export PAPI_UTILS_PATH=~/ftb/popsicle/papi_utils/
-export PAPI_OUT_DIR=~/ftb/papi_output/
-export KERNEL_PATH=~/ftb/kernels_lore/
+export PAPI_UTILS_PATH=
+export OUT_DIR=
+export KERNEL_PATH=
 export LORE_ORIG_PATH=${KERNEL_PATH}orig/
 export LORE_PROC_PATH=${KERNEL_PATH}proc/
-export LORE_MODELS_DIR=~/ftb/popsicle/models
+export LORE_PROC_CLANG_PATH=${KERNEL_PATH}unroll/
+export MODELS_DIR=

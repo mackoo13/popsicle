@@ -8,8 +8,8 @@ class Data:
             self.mode = 'time'
             self.drop_cols = []
             self.y_col = 'time'
-        elif mode in ('speedup', 's'):
-            self.mode = 'speedup'
+        elif mode in ('gcc', 'g'):
+            self.mode = 'gcc'
             self.drop_cols = ['time_O0', 'time_O3']     # todo max dim
             self.y_col = 'speedup'
         elif mode in ('unroll', 'u'):

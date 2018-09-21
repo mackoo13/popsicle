@@ -10,11 +10,11 @@ root_dir=${scripts_dir}/../
 . ${root_dir}/config/lore.cfg
 
 if [ -z "$LORE_PROC_CLANG_PATH" ]; then echo "Invalid config (LORE_PROC_CLANG_PATH) missing!"; exit 1; fi
-if [ -z "$PAPI_OUT_DIR" ]; then echo "Invalid config (PAPI_OUT_DIR) missing!"; exit 1; fi
+if [ -z "$OUT_DIR" ]; then echo "Invalid config (OUT_DIR) missing!"; exit 1; fi
 
 readonly trials=3
-readonly out_file_ur=${PAPI_OUT_DIR}/unroll/$1_ur.csv
-readonly out_file_nour=${PAPI_OUT_DIR}/unroll/$1_nour.csv
+readonly out_file_ur=${OUT_DIR}/unroll/$1_ur.csv
+readonly out_file_nour=${OUT_DIR}/unroll/$1_nour.csv
 readonly papi_events_list=$2
 
 executed=0

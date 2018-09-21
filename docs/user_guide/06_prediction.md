@@ -9,7 +9,7 @@ _Previous step: [training a model transformation](05_training.md)_
 
 Remember to run `source config/lore.cfg` first. It will populate the following environment variable:
 
-- `$LORE_MODELS_DIR` - directory containing `.pkl` files with the [trained model](05_training.md)
+- `$MODELS_DIR` - directory containing `.pkl` files with the [trained model](05_training.md)
 
 
 ## Usage: 
@@ -18,7 +18,7 @@ Remember to run `source config/lore.cfg` first. It will populate the following e
 
 ###`mode`
 * `time` or `t` to predict execution time
-* `speedup` or `s` to predict speedup between `-O0` and `-O3` 
+* `gcc` or `g` to predict speedup between `-O0` and `-O3` 
 * `unroll` or `u` to predict speedup after loop unrolling 
 
 ### `file_TODO`
