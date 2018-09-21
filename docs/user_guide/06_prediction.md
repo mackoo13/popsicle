@@ -59,7 +59,7 @@ Other functions can be defined if they are called inside `loop` (avoid using `ma
     {
     
         N = 42;
-        A = malloc(nr * sizeof(int));
+        A = malloc(N * sizeof(int));
     
         #pragma scop
         

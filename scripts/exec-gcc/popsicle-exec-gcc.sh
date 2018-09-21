@@ -4,11 +4,6 @@
 #   $1 output file name (without extension)
 #   $2 path to the list of papi events to measure (optional)
 
-current_dir=$(dirname $(readlink -f $0))
-scripts_dir=${current_dir}/../
-root_dir=${scripts_dir}/../
-. ${root_dir}/config/lore.cfg
-
 if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!"; exit 1; fi
 if [ ! $# -eq 1 ]; then echo "Usage: ./popsicle-exec-gcc.sh <output file name>"; exit 1; fi
 
@@ -21,12 +16,12 @@ executed=0
 failed=0
 
 echo "Compiling..."
-${current_dir}/init.sh
+popsicle-init-gcc.sh
 
 echo -n "alg,run," > ${out_file_O0}
 echo -n "alg,run," > ${out_file_O3}
-${scripts_dir}/papi/papi_events.sh ${papi_events_list} >> ${out_file_O0}
-${scripts_dir}/papi/papi_events.sh ${papi_events_list} >> ${out_file_O3}
+papi-events.sh ${papi_events_list} >> ${out_file_O0}
+papi-events.sh ${papi_events_list} >> ${out_file_O3}
 echo ",time_O0" >> ${out_file_O0}
 echo ",time_O3" >> ${out_file_O3}
 

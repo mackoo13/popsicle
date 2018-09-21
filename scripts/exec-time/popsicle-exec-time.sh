@@ -3,21 +3,16 @@
 # PARAMS:
 #   $1 output file name (without extension)
 
-current_dir=$(dirname $(readlink -f $0))
-scripts_dir=${current_dir}/../
-root_dir=${scripts_dir}/../
-. ${root_dir}/config/lore.cfg
-
 if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!"; exit 1; fi
 if [ -z "$OUT_DIR" ]; then echo "Invalid config (OUT_DIR) missing!"; exit 1; fi
 
 readonly trials=5
 readonly out_file=${OUT_DIR}conv/$1.csv    # todo
 
-${current_dir}/init.sh
+popsicle-init-time.sh
 
 echo -n "alg,run," > ${out_file}
-${scripts_dir}/papi/papi_events.sh >> ${out_file}
+papi-events.sh >> ${out_file}
 echo ",time" >> ${out_file}
 
 for path in `find ${LORE_PROC_PATH} -iname '*.c'`; do
@@ -27,14 +22,14 @@ for path in `find ${LORE_PROC_PATH} -iname '*.c'`; do
 
     if [ -e ${file_prefix}_params.txt ]; then
         while read -r params; do
-            if ! ${current_dir}/compile.sh ${file_prefix} "${params}"; then
+            if ! popsicle-compile-time.sh ${file_prefix} "${params}"; then
                 break
             fi
 
             echo "Running $name $params ..."
 
             for trial in `seq ${trials}`; do
-                if res=$(timeout 10 ${root_dir}/exec_loop); then
+                if res=$(timeout 10 ${PAPI_UTILS_PATH}/exec_loop); then
                     echo ${name},${params},${res} >> ${out_file}
                 else
                     echo ":("

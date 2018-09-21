@@ -4,11 +4,6 @@
 #   $1 output file name (without extension)
 #   $2 path to the list of papi events to measure (optional)
 
-current_dir=$(dirname $(readlink -f $0))
-scripts_dir=${current_dir}/../
-root_dir=${scripts_dir}/../
-. ${root_dir}/config/lore.cfg
-
 if [ -z "$LORE_PROC_CLANG_PATH" ]; then echo "Invalid config (LORE_PROC_CLANG_PATH) missing!"; exit 1; fi
 if [ -z "$OUT_DIR" ]; then echo "Invalid config (OUT_DIR) missing!"; exit 1; fi
 
@@ -21,12 +16,12 @@ executed=0
 failed=0
 
 echo "Compiling..."
-${current_dir}/init.sh
+popsicle-init-unroll
 
 echo -n "alg,run," > ${out_file_ur}
 echo -n "alg,run," > ${out_file_nour}
-${scripts_dir}/papi/papi_events.sh ${papi_events_list} >> ${out_file_ur}
-${scripts_dir}/papi/papi_events.sh ${papi_events_list} >> ${out_file_nour}
+papi-events.sh ${papi_events_list} >> ${out_file_ur}
+papi-events.sh ${papi_events_list} >> ${out_file_nour}
 echo ",time_ur" >> ${out_file_ur}
 echo ",time_nour" >> ${out_file_nour}
 

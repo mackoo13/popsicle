@@ -4,10 +4,6 @@
 #   $1 input file path (without extension)
 #   $2 compilation params (e.g. -D N=42), optional
 
-current_dir=$(dirname $(readlink -f $0))
-root_dir=${current_dir}/../../
-. ${root_dir}/config/lore.cfg
-
 file_prefix=$1
 params=$2
 unroll=$3

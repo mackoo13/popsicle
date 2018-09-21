@@ -1,13 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
+int N;
+int* A;
 
-extern int max;
+void loop()
+{
 
-int loop() {
-    int q=0;
-    int* arr = malloc(max * sizeof(int));
+    N = 42;
+    A = malloc(N * sizeof(int));
 
-    for (int i = 0; i < max; ++i) {
-        q += arr[i];
-    }
+#pragma scop
+
+    for(int i = 0; i < N; i++)
+        A[i] += i;
+
+#pragma endscop
 }

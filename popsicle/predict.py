@@ -37,12 +37,9 @@ def main():
     fl = FileLoader(files, mode=mode, purpose='predict', scaler=scaler)
 
     x = dim_reducer.transform(fl.data.full_set.x)
-    y = regr.predict(x)
+    # y = regr.predict(x)
 
     print(regr.score(x, fl.data.full_set.y))
-
-    # for yp, yr in zip(y[:9], fl.data.full_set.y[:9]):
-    #     print(round(yp, 2), '\t', round(yr, 2))
 
 
 if __name__ == "__main__":
