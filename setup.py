@@ -12,7 +12,7 @@ setup(name='popsicle',
           'pandas',
           'pycparser',
           'scipy',
-          'sklearn',
+          'scikit-learn',
           'numpy'
       ],
       entry_points={
