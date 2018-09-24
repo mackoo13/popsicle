@@ -27,12 +27,13 @@ def main():
     files = args.input
 
     scaler, dim_reducer, regr = load_models()
-    fl = FileLoader(files, mode='i', scaler=scaler)
+    fl = FileLoader(files, mode='p', scaler=scaler)
 
     x = dim_reducer.transform(fl.data.full_set.x)
-    # y = regr.predict(x)
+    y = regr.predict(x)
 
-    print(regr.score(x, fl.data.full_set.y))
+    # print(regr.score(x, fl.data.full_set.y))
+    print('Predicted time/speedup: ' + str(y))
 
 
 if __name__ == "__main__":

@@ -16,8 +16,8 @@ class Data:
             self.mode = 'unroll'
             self.drop_cols = ['time_ur', 'time_nour']
             self.y_col = 'speedup'
-        elif mode in ('input', 'i'):
-            self.mode = 'input'
+        elif mode in ('predict', 'p'):
+            self.mode = 'predict'
             self.drop_cols = []
             self.y_col = 'time'
         else:

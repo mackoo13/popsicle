@@ -23,12 +23,12 @@ clang -c -Rpass=unroll -O2 \
 
 if [ -e ${file_prefix}_${u_or_n}.o ]; then
     clang ${file_prefix}_${u_or_n}.o \
-        ${root_dir}/papi/exec_loop.o \
-        ${root_dir}/papi/papi_utils.o \
+        ${PAPI_UTILS_PATH}/exec_loop.o \
+        ${PAPI_UTILS_PATH}/papi_utils.o \
         -lpfm \
         -lpapi \
         -lm \
-        -static -o ${root_dir}/exec_loop_${u_or_n}
+        -static -o ${PAPI_UTILS_PATH}/exec_loop_${u_or_n}
 else
     echo "Skipping $file_prefix (compilation error)"
     exit 1

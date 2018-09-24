@@ -526,17 +526,17 @@ def loop_func_params():
 def papi_instr() -> Tuple[List[c_ast.Node], List[c_ast.Node]]:
     """
     :return: c_ast nodes representing the following code:
-        exec-gcc(PAPI_start(set));
+        exec(PAPI_start(set));
         *begin = clock();
         ...
         *end = clock();
-        exec-gcc(PAPI_stop(set, values));
+        exec(PAPI_stop(set, values));
     """
     papi_start = c_ast.FuncCall(c_ast.ID('PAPI_start'), c_ast.ParamList([c_ast.ID('set')]))
     papi_stop = c_ast.FuncCall(c_ast.ID('PAPI_stop'),
                                c_ast.ParamList([c_ast.ID('set'), c_ast.ID('values')]))
-    exec_start = c_ast.FuncCall(c_ast.ID('exec-gcc'), c_ast.ParamList([papi_start]))
-    exec_stop = c_ast.FuncCall(c_ast.ID('exec-gcc'), c_ast.ParamList([papi_stop]))
+    exec_start = c_ast.FuncCall(c_ast.ID('exec'), c_ast.ParamList([papi_start]))
+    exec_stop = c_ast.FuncCall(c_ast.ID('exec'), c_ast.ParamList([papi_stop]))
 
     clock = c_ast.FuncCall(c_ast.ID('clock'), c_ast.ParamList([]))
     begin_clock = c_ast.Assignment('=', c_ast.UnaryOp('*', c_ast.ID('begin')), clock)

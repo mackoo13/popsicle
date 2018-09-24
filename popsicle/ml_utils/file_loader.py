@@ -11,7 +11,7 @@ out_dir = os.environ['OUT_DIR']
 
 class FileLoader:
     def __init__(self, files, mode='gcc', dim={1, 2}, scaler=None):
-        if mode == 'input' and scaler is None:
+        if mode in ('predict', 'p') and scaler is None:
             raise ValueError('Scaler must be provided to make predictions')
 
         self.data = None
@@ -37,17 +37,16 @@ class FileLoader:
         elif mode in ('unroll', 'u'):
             self.load = self.load_unroll
             self.mode = 'unroll'
-        elif mode in ('input', 'i'):
+        elif mode in ('predict', 'p'):
             self.load = self.load_input
-            self.mode = 'input'
+            self.mode = 'predict'
         else:
             raise Exception('Unknown feature selection mode')
             
         self.load()
 
-        if self.mode == 'input':
+        if self.mode == 'predict':
             self.data.scale_full()
-
 
     # PRIVATE MEMBERS
 
@@ -124,11 +123,8 @@ class FileLoader:
     def load_input(self):
         df = self.__csv_to_df()
 
-        # df_meta = pd.read_csv('/home/maciej/ftb/kernels_lore/proc/metadata.csv', index_col='alg')  # todo
-        # df['max_dim'] = df.index.get_level_values(0)
-        # df['max_dim'] = df['max_dim'].apply(lambda q: df_meta.loc[q]['max_dim'])
-        # df = df.loc[df['time'] > 100]     # todo
-        # df = df.loc[df['max_dim'].isin(self.dim)]
+        if any(df['time'] < 100):
+            raise ValueError('Execution time should be at leat 100ms to perform prediction!')
 
         df = df_sort_cols(df)
         self.data = Data(self.mode, df, self.scaler)

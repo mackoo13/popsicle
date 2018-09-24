@@ -37,13 +37,13 @@ for path in `find ${LORE_PROC_PATH} -iname '*.c'`; do
 
     if [ -e ${file_prefix}_params.txt ]; then
         while read -r params; do
-            if ! ${current_dir}/compile_opt.sh ${file_prefix} "${params}" 0; then break; fi
-            if ! ${current_dir}/compile_opt.sh ${file_prefix} "${params}" 3; then break; fi
+            if ! popsicle-compile-gcc.sh ${file_prefix} "${params}" 0; then break; fi
+            if ! popsicle-compile-gcc.sh ${file_prefix} "${params}" 3; then break; fi
 
             echo "[$file_i/$file_count] Running $name $params ..."
 
             for trial in `seq ${trials}`; do
-                if res=$(timeout 10 ${root_dir}/exec_loop_O0 ${papi_events_list}); then
+                if res=$(timeout 10 ${PAPI_UTILS_PATH}/exec_loop_O0 ${papi_events_list}); then
                     echo ${name},${params},${res} >> ${out_file_O0}
                     ((executed++))
                 else
@@ -52,7 +52,7 @@ for path in `find ${LORE_PROC_PATH} -iname '*.c'`; do
                     break 2
                 fi
 
-                if res=$(timeout 10 ${root_dir}/exec_loop_O3 ${papi_events_list}); then
+                if res=$(timeout 10 ${PAPI_UTILS_PATH}/exec_loop_O3 ${papi_events_list}); then
                     echo ${name},${params},${res} >> ${out_file_O3}
                     ((executed++))
                 else

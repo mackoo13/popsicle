@@ -1,6 +1,9 @@
 import os
-import sys
 import re
+from popsicle.utils import check_config
+
+check_config('PAPI_UTILS_PATH')
+papi_utils_path = os.environ['PAPI_UTILS_PATH']
 
 
 class CodeTransformerStr:
@@ -22,8 +25,7 @@ class CodeTransformerStr:
         for path in other_includes:
             self.includes += '#include <' + path + '>\n'
 
-        current_dir = os.path.dirname(sys.argv[0])
-        self.includes += '#include "' + os.path.abspath(os.path.join(current_dir, '../papi/papi_utils.h')) + '"\n'
+        self.includes += '#include "' + os.path.abspath(os.path.join(papi_utils_path, 'papi_utils.h')) + '"\n'
 
     def add_max_macro(self):
         self.includes += '#define MAX(x, y) (((x) > (y)) ? (x) : (y))\n'

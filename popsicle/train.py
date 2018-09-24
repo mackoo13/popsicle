@@ -23,9 +23,10 @@ def save_models(scaler, dim_reducer, regr):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('mode', type=str, help='Use \'time\'/\'t\' for execution time prediction, '
-                                               '\'gcc\'/\'g\' for predicting speedup after gcc optimisation or '
-                                               '\'unroll\'/\'u\' for predicting speedup after clang loop unrolling.')
+    parser.add_argument('mode', type=str, help='Use \'time\'/\'t\' for training time prediction model, '
+                                               '\'gcc\'/\'g\' for speedup after gcc optimisation, '
+                                               '\'unroll\'/\'u\' for speedup after clang loop unrolling or '
+                                               '\'predict\'/\'p\' for prediction.')
     parser.add_argument('-i', '--input', action='append', required=True,
                         help='<Required> input files in CSV format (names without extensions). You can provide multiple'
                              ' files (-i file1 -i file2...).')
