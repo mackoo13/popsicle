@@ -11,8 +11,10 @@ def main():
 
     argparser = argparse.ArgumentParser()
     argparser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
+    argparser.add_argument('-u', '--unroll', action='store_true', help='If enabled prepare code for loop unrolling')
     args = argparser.parse_args()
     verbose = args.verbose
+    unroll = args.unroll
     orig_path = os.environ['LORE_ORIG_PATH']
     proc_path = os.environ['LORE_PROC_PATH']
 
@@ -47,9 +49,10 @@ def main():
                     papi_scope='pragma',
                     verbose=verbose,
                     main_name='loop',
-                    modifiers_to_remove=['extern', 'restrict'],
+                    modifiers_to_remove=['extern'],
                     gen_mallocs=True,
-                    rename_bounds=True,
+                    rename_bounds=(not unroll),
+                    add_pragma_unroll=unroll
                 )
 
                 code = ct.transform()

@@ -6,7 +6,7 @@ import argparse
 
 def main():
     argparser = argparse.ArgumentParser()
-    argparser.add_argument('file_path', type=str, help='input file todo')
+    argparser.add_argument('file_path', type=str, help='input file path')
     argparser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
     args = argparser.parse_args()
     verbose = args.verbose

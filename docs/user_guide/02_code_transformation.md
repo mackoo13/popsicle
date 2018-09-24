@@ -16,16 +16,20 @@ Remember to run `source config/lore.cfg`. It will populate following environment
 - `LORE_PROC_CLANG_PATH` - output directory for `popsicle-transform-lore-unroll`
 
 
-## Usage (LORE programs)
+## Usage
 
-`popsicle-transform-lore`
+`popsicle-transform-lore [-u] [-v]`
 
-The input code is expected to be in the format used in LORE repository.
+The input code (in `LORE_ORIG_PATH`) is expected to be in the format used in LORE repository. This command:
 
 * Inserts PAPI instructions in places indicated by `#pragma scop` and `#pragma endscop`
 * Attempts to generate array allocation and initialisation code, which is missing in LORE
+* If `-u` is specified, it also inserts a `#pragma` statement above the innermost loop. The mode of unrolling (e.g. `unroll` or `nounroll`) can be provided on compilation time (see Example 2).
+* `-v` enables verbose mode.
 
-### Example
+
+### Example 1 (without loop unrolling)
+
 Before:
 
     #include <stdio.h>
@@ -51,7 +55,7 @@ After:
     #include <stdlib.h>
     #include <papi.h>
     #include <time.h>
-    #include "/home/maciej/ftb/popsicle/papi/papi_utils.h"
+    #include "/my/path/to/papi_utils.h"
     #define MAX(x, y) (((x) > (y)) ? (x) : (y))
     int i;
     double *x;
@@ -79,17 +83,8 @@ After:
     }    
 
 
-## Usage (LORE programs with loop unrolling)
+#### Example 2 (loop unrolling)
 
-`popsicle-transform-lore-unroll`
-
-The effect of this script is the same as of `popsicle-transform-lore-unroll`. Besides, it inserts a `#pragma` statement above the innermost loop.
-
-TODO list possible options for unrolling
-
-The output code is meant to be compiled with Clang (see more about its [unrolling support](https://clang.llvm.org/docs/AttributeReference.html#pragma-unroll-pragma-nounroll)).
-
-#### Example
 Before:
 
     ...
@@ -103,14 +98,23 @@ Before:
 After:
 
     ...
+    #define PRAGMA(p) _Pragma(p)
+    ...
     for (i = 0; i < n; i++) {
-      #pragma unroll
+      PRAGMA(PRAGMA_UNROLL)
       for (j = 0; j < n; j++) {
         x[i][j] = j + 42 * i;
       }
     }
     ...
 
+You can select the mode of unrolling on compilation time by specifying the `PRAGMA_UNROLL` parameter - for example:
+
+    gcc -D PRAGMA_UNROLL=nounroll
+    
+will generate
+
+    #pragma nounroll
 
 ## Next step
 

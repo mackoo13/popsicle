@@ -29,6 +29,9 @@ If you don't have `pip3` installed, you can try a workaround:
 
 Training a model requires completing a couple of steps. Most of them do not need to be performed more than once.
 
+After successful `pip install`, all script should be added to PATH and globally available from command line.
+
+
 #### 0. Configuration ([read more](docs/user_guide/00_configuration.md)) 
 Specify paths to all files used in next steps.
 

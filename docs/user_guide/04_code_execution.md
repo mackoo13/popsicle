@@ -19,7 +19,7 @@ The results will be saved in `$OUT_DIR`.
 
 ## Usage (for time prediction)
 
-###`./exec/exec.sh [output_file_name]`
+###`popsicle-exec.sh t [output_file_name]`
 
 `output_file_name` should be provided without extension. The output will be saved to `$OUT_DIR/time/[output_file_name].csv`.
 
@@ -30,7 +30,7 @@ Compiler: gcc
 
 Runs the programs compiled with `-O0` and `-O3` [optimisation flags](https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html).
 
-### `./exec/exec_opt.sh [output_file_name]`
+### `popsicle-exec.sh g [output_file_name]`
 
 ####`[output_file_name]`
 File name without extension. The output will be saved as two files: 
@@ -45,7 +45,7 @@ Compiler: gcc
 
 Used to collect data for speedup prediction (comparing the same programs with or without loop unrolling).
 
-### `./exec_clang/exec.sh [output_file_name]`
+### `popsicle-exec.sh u [output_file_name]`
 
 #### `[output_file_name]` 
 File name without extension. The output will be saved as two files: 

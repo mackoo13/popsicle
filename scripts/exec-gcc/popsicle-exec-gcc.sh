@@ -5,7 +5,7 @@
 #   $2 path to the list of papi events to measure (optional)
 
 if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!"; exit 1; fi
-if [ ! $# -eq 1 ]; then echo "Usage: ./popsicle-exec-gcc.sh <output file name>"; exit 1; fi
+if [ ! $# -eq 1 ]; then echo "Usage: popsicle-exec-gcc.sh <output file name>"; exit 1; fi
 
 readonly trials=5
 readonly out_file_O0=${OUT_DIR}/gcc/$1_O0.csv

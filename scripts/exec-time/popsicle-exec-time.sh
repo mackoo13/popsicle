@@ -7,7 +7,7 @@ if [ -z "$LORE_PROC_PATH" ]; then echo "Invalid config (LORE_PROC_PATH) missing!
 if [ -z "$OUT_DIR" ]; then echo "Invalid config (OUT_DIR) missing!"; exit 1; fi
 
 readonly trials=5
-readonly out_file=${OUT_DIR}conv/$1.csv    # todo
+readonly out_file=${OUT_DIR}time/$1.csv
 
 popsicle-init-time.sh
 
