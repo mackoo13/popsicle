@@ -29,7 +29,7 @@ If you don't have `pip3` installed, you can try a workaround:
 
 Training a model requires completing a couple of steps. Most of them do not need to be performed more than once.
 
-#### 0. Configuration ([read more](docs/user_guide/01_lore_download.md)) 
+#### 0. Configuration ([read more](docs/user_guide/00_configuration.md)) 
 Specify paths to all files used in next steps.
 
 #### 1. Downloading source codes ([read more](docs/user_guide/01_lore_download.md)) 

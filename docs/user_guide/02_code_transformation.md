@@ -12,10 +12,8 @@ _Previous step: [source code download](01_lore_download.md)_
 Remember to run `source config/lore.cfg`. It will populate following environment variables:
 
 - `LORE_ORIG_PATH` - original LORE programs (input)
-- `PIPS_ORIG_PATH` - original PIPS programs (input)
 - `LORE_PROC_PATH` - output directory for `popsicle-transform-lore`
 - `LORE_PROC_CLANG_PATH` - output directory for `popsicle-transform-lore-unroll`
-- `PIPS_PROC_PATH` - output directory for `popsicle-transform-pips`
 
 
 ## Usage (LORE programs)

@@ -8,4 +8,4 @@ gcc ${PAPI_UTILS_PATH}/papi_events.c \
     -lpapi \
     -static -o ${PAPI_UTILS_PATH}/papi_events
 
-${PAPI_UTILS_PATH}/papi/papi_events $1
+${PAPI_UTILS_PATH}/papi_events $1

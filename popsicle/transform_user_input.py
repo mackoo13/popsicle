@@ -31,7 +31,7 @@ def main():
 
             code = ct.transform()
 
-            with open(file_path + '_papi.c', 'w') as fout:
+            with open(file_path[:-2] + '_papi.c', 'w') as fout:
                 fout.write(code)
 
     except Exception as e:

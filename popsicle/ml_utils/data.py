@@ -16,8 +16,12 @@ class Data:
             self.mode = 'unroll'
             self.drop_cols = ['time_ur', 'time_nour']
             self.y_col = 'speedup'
+        elif mode in ('input', 'i'):
+            self.mode = 'input'
+            self.drop_cols = []
+            self.y_col = 'time'
         else:
-            raise Exception('Unknown feature selection mode')
+            raise Exception('Unknown mode')
 
         self.full_set = df_to_xy(df, self.drop_cols, self.y_col)
         self.train_set = None

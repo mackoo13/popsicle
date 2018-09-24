@@ -10,19 +10,23 @@ out_dir = os.environ['OUT_DIR']
 
 
 class FileLoader:
-    def __init__(self, files, mode='gcc', purpose='train', dim={1, 2}, scaler=None):
-        if purpose not in ('train', 'predict'):
-            raise ValueError('Parameter \'purpose\' must be either \'train\' or \'predict\'.')
-
-        if purpose == 'predict' and scaler is None:
+    def __init__(self, files, mode='gcc', dim={1, 2}, scaler=None):
+        if mode == 'input' and scaler is None:
             raise ValueError('Scaler must be provided to make predictions')
 
         self.data = None
 
-        self.files = files
+        self.files = []
+        for file in files:
+            if file.endswith('.csv'):
+                print('Warning: ' + file.split('/')[-1] + ' interpreted as ' + file.split('/')[-1][:-4] +
+                      ' (file names should be provided without extensions).')
+                self.files.append(file[:-4])
+            else:
+                self.files.append(file)
+
         self.dim = dim
         self.scaler = scaler
-        self.purpose = purpose
 
         if mode in ('time', 't'):
             self.load = self.load_time
@@ -33,13 +37,17 @@ class FileLoader:
         elif mode in ('unroll', 'u'):
             self.load = self.load_unroll
             self.mode = 'unroll'
+        elif mode in ('input', 'i'):
+            self.load = self.load_input
+            self.mode = 'input'
         else:
             raise Exception('Unknown feature selection mode')
             
         self.load()
 
-        if purpose == 'predict':
+        if self.mode == 'input':
             self.data.scale_full()
+
 
     # PRIVATE MEMBERS
 
@@ -109,6 +117,18 @@ class FileLoader:
         df = df_scale_by_tot_ins(df)
 
         df['speedup'] = df['time_nour'] / df['time_ur']
+
+        df = df_sort_cols(df)
+        self.data = Data(self.mode, df, self.scaler)
+
+    def load_input(self):
+        df = self.__csv_to_df()
+
+        # df_meta = pd.read_csv('/home/maciej/ftb/kernels_lore/proc/metadata.csv', index_col='alg')  # todo
+        # df['max_dim'] = df.index.get_level_values(0)
+        # df['max_dim'] = df['max_dim'].apply(lambda q: df_meta.loc[q]['max_dim'])
+        # df = df.loc[df['time'] > 100]     # todo
+        # df = df.loc[df['max_dim'].isin(self.dim)]
 
         df = df_sort_cols(df)
         self.data = Data(self.mode, df, self.scaler)

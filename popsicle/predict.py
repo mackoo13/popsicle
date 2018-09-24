@@ -20,21 +20,14 @@ def load_models():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('mode', type=str, help='Use \'time\'/\'t\' for execution time prediction, '
-                                               '\'gcc\'/\'g\' for predicting speedup after gcc optimisation or '
-                                               '\'unroll\'/\'u\' for predicting speedup after clang loop unrolling.')
     parser.add_argument('-i', '--input', action='append', required=True,
                         help='<Required> input files in CSV format (names without extensions). You can provide multiple'
                              ' files (-i file1 -i file2...).')
     args = parser.parse_args()
-    mode = args.mode
     files = args.input
 
-    if mode not in ('time', 't', 'gcc', 'g', 'unroll', 'u'):
-        raise ValueError('Unsupported mode: ' + mode)
-
     scaler, dim_reducer, regr = load_models()
-    fl = FileLoader(files, mode=mode, purpose='predict', scaler=scaler)
+    fl = FileLoader(files, mode='i', scaler=scaler)
 
     x = dim_reducer.transform(fl.data.full_set.x)
     # y = regr.predict(x)
