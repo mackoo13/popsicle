@@ -1,4 +1,4 @@
-## Prediction
+# Prediction
 
 By default, Popsicle uses [KNeighborsRegressor](http://scikit-learn.org/stable/modules/neighbors.html#regression) with `distance` metric for prediction.
 
