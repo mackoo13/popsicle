@@ -15,7 +15,7 @@ To get an up-to-date list, please use [LORE website](https://vectorization.compu
 
 ## Usage
 
-### `popsicle-lore-download [path_to_csv_file]`
+### `popsicle-download-lore [path_to_csv_file]`
 
 
 ## Implementation details

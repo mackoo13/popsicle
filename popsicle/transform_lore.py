@@ -1,9 +1,10 @@
 from __future__ import print_function
 from popsicle.code_transform_utils.code_transformer import CodeTransformer
-from popsicle.code_transform_utils.code_transform_utils import split_code, save_max_dims
+from popsicle.code_transform_utils.code_transform_utils import split_code
 import argparse
 import os
 from popsicle.utils import check_config
+import pandas as pd
 
 
 def main():
@@ -15,10 +16,11 @@ def main():
     args = argparser.parse_args()
     verbose = args.verbose
     unroll = args.unroll
-    orig_path = os.environ['LORE_ORIG_PATH']
-    proc_path = os.environ['LORE_PROC_PATH']
+    orig_path = os.path.abspath(os.environ['LORE_ORIG_PATH'])
+    proc_path = os.path.abspath(os.environ['LORE_PROC_PATH'])
 
-    max_arr_dims = {}
+    df_meta = pd.DataFrame(columns=('alg', 'max_arr_dim', 'loop_depth'))
+    print(df_meta)
 
     if not os.path.isdir(proc_path):
         os.makedirs(proc_path)
@@ -69,7 +71,10 @@ def main():
                 with open(os.path.join(out_dir, file_name + '_params_names.txt'), 'w') as fout:
                     fout.write(','.join(['PARAM_' + b.upper() for b in ct.pp.bounds]))
 
-                max_arr_dims[file_name] = ct.max_arr_dim
+                df_meta = df_meta.append(pd.DataFrame(
+                    [[file_name, ct.max_arr_dim, ct.loop_depth]],
+                    columns=df_meta.columns
+                ), ignore_index=True)
 
                 parsed += 1
 
@@ -77,7 +82,7 @@ def main():
             failed += 1
             print('\t', e)
 
-    save_max_dims(proc_path, max_arr_dims)
+    df_meta.to_csv(os.path.join(proc_path, 'metadata.csv'), index_label=False, index=False)
 
     print('========')
     print(str(parsed) + ' parsed, ' + str(failed) + ' skipped')

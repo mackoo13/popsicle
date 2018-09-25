@@ -1,4 +1,4 @@
-# Training data
+# Training data collection
 
 ## LORE programs
 

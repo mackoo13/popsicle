@@ -6,7 +6,7 @@ from popsicle.ml_utils.data_set import DataSet
 from popsicle.utils import check_config
 
 check_config(['LORE_PROC_PATH'])
-proc_dir = os.environ['LORE_PROC_PATH']
+proc_dir = os.path.abspath(os.environ['LORE_PROC_PATH'])
 
 
 def df_aggregate(df: pd.DataFrame) -> pd.DataFrame:

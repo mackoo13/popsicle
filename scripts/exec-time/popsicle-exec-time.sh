@@ -9,6 +9,8 @@ if [ -z "$OUT_DIR" ]; then echo "Invalid config (OUT_DIR) missing!"; exit 1; fi
 readonly trials=5
 readonly out_file=${OUT_DIR}time/$1.csv
 
+mkdir -p ${OUT_DIR}/time
+
 popsicle-init-time.sh
 
 echo -n "alg,run," > ${out_file}

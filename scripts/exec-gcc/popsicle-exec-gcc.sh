@@ -12,6 +12,8 @@ readonly out_file_O0=${OUT_DIR}/gcc/$1_O0.csv
 readonly out_file_O3=${OUT_DIR}/gcc/$1_O3.csv
 readonly papi_events_list=$2
 
+mkdir -p ${OUT_DIR}/gcc
+
 executed=0
 failed=0
 

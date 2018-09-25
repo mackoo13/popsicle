@@ -12,6 +12,8 @@ readonly out_file_ur=${OUT_DIR}/unroll/$1_ur.csv
 readonly out_file_nour=${OUT_DIR}/unroll/$1_nour.csv
 readonly papi_events_list=$2
 
+mkdir -p ${OUT_DIR}/unroll
+
 executed=0
 failed=0
 

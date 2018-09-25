@@ -64,30 +64,33 @@ Other functions can be defined if they are called inside `loop` (avoid using `ma
         #pragma scop
         
         for(int i = 0; i < N; i++)
-            A[i] += i;
+            A[i] = i;
                 
         #pragma endscop
     }
 
 ## Execution scheme
 
-Your program will be wrapped in the following scheme:
+First, PAPI and time measurements will be automatically added to your program in the places indicated by `#pragma` statements.
 
     void loop() {
         ...
         
+        # pragma scop
         // start time counter
         // start PAPI counters
-        # pragma scop
         
         ...
         
-        # pragma endscop
         // stop and read PAPI counters
         // stop and read time counter
+        # pragma endscop
         
         ...
     }
+    
+    
+Then the code will be executed as follows:
     
     int main() {
         // initialise PAPI

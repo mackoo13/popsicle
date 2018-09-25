@@ -12,7 +12,7 @@ gcc -c \
     ${file_prefix}.c \
     ${params} \
     -O${optimization} \
-    -o ${PAPI_UTILS_PATH}/${file_prefix}_O${optimization}.o
+    -o ${file_prefix}_O${optimization}.o
 
 if ! [ -e ${PAPI_UTILS_PATH}/exec_loop.o ]; then
     gcc -c ${PAPI_UTILS_PATH}/exec_loop.c

@@ -9,9 +9,16 @@ The template of the configuration file can be found in `config/popsicle.cfg.temp
 
 ## Paths
 
-- `PAPI_UTILS_PATH` - absolute path to this project's `papi` directory
+Before using Popsicle, you have to provide the paths for scripts and storing the data:
+
+- `POPSICLE_ROOT` - absolute path to this project's root directory
 - `OUT_DIR` - output directory for PAPI measurements
 - `KERNEL_PATH` - root directory for `LORE_ORIG_PATH`, `LORE_PROC_PATH` and `LORE_PROC_CLANG_PATH`
-- `MODELS_DIR` - output directory for ML models
 
-It is recommended not to leave `LORE_ORIG_PATH`, `LORE_PROC_PATH` and `LORE_PROC_CLANG_PATH` unchanged, all being relative to `KERNEL_PATH`.
+Changing the remaining parameters is not recommended, but possible:
+
+* `LORE_ORIG_PATH` - directory to save downloaded LORE programs
+* `LORE_PROC_PATH` - directory to save transformed LORE programs
+* `LORE_PROC_CLANG_PATH` - directory to save transformed LORE programs for loop unrolling
+* `MODELS_DIR` - directory to save trained models
+* `PAPI_UTILS_PATH`

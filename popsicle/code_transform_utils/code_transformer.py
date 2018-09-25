@@ -41,6 +41,7 @@ class CodeTransformer:
         self.pp = None
         self.max_param = None
         self.max_arr_dim = None
+        self.loop_depth = None
 
     def transform(self, return_mode='all'):
         self.__run_preprocessing()
@@ -63,7 +64,7 @@ class CodeTransformer:
         if self.gen_mallocs:
             pp.analyse()
 
-            self.max_param, self.max_arr_dim = pp.find_max_param()
+            self.max_param, self.max_arr_dim, self.loop_depth = pp.find_max_param()
 
             pp.arr_to_ptr_decl()
             pp.gen_mallocs()

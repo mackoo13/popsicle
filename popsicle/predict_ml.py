@@ -7,8 +7,8 @@ from popsicle.utils import check_config
 
 check_config(['OUT_DIR', 'MODELS_DIR'])
 
-out_dir = os.environ['OUT_DIR']
-model_dir = os.environ['MODELS_DIR']
+out_dir = os.path.abspath(os.environ['OUT_DIR'])
+model_dir = os.path.abspath(os.environ['MODELS_DIR'])
 
 
 def load_models():

@@ -4,10 +4,7 @@
 
 _Previous step: [code execution](04_code_execution.md)_
 
-Remember to run `source config/lore.cfg` first. It will populate following environment variables:
-
-- `$OUT_DIR` - location of input `.csv` files
-- `$MODELS_DIR` - directory to save the output (`.pkl` files containing components of the model)
+Remember to run the [configuration script](00_configuration.md)!
 
 As an input, you should provide one or more `.csv` files obtained by [executing](04_code_execution.md) programs in batch.
 
@@ -16,14 +13,14 @@ As an input, you should provide one or more `.csv` files obtained by [executing]
 
 ### `popsicle-train [mode] -i [file_name]`
 
-### `[mode]`
+#### `[mode]`
  * `time` or `t` for execution time prediction
  * `gcc` or `g` for predicting speedup after gcc optimisation
  * `unroll` or `u` for predicting speedup after clang loop unrolling.
  
-### `-i [file_name]`
+#### `-i [file_name]`
 
-Input file name. You can specify multiple files by repeating this argument (i.e. `-i file1 -i file2`).
+Input file name. You can specify multiple files by repeating this argument (i.e. `-i file1 -i file2 ...`).
 
 There is no need to provide a full path, as it is loaded from the config (`$OUT_DIR`).
 

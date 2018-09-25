@@ -1,6 +1,6 @@
 # Code transformation
 
-Scripts `popsicle-transform-lore`, `popsicle-transform-lore-unroll` and `popsicle-transform-pips` prepare C source code to be executed and to perform measurements with PAPI.
+Scripts `popsicle-transform-lore` prepares C source code to be executed and to perform measurements with PAPI.
 
 The input is meant to be in a format used in LORE.
 
@@ -9,11 +9,11 @@ The input is meant to be in a format used in LORE.
 
 _Previous step: [source code download](01_lore_download.md)_
 
-Remember to run `source config/lore.cfg`. It will populate following environment variables:
+Remember to run the [configuration script](00_configuration.md)! It will populate following environment variables:
 
 - `LORE_ORIG_PATH` - original LORE programs (input)
-- `LORE_PROC_PATH` - output directory for `popsicle-transform-lore`
-- `LORE_PROC_CLANG_PATH` - output directory for `popsicle-transform-lore-unroll`
+- `LORE_PROC_PATH` - output directory (without loop unrolling)
+- `LORE_PROC_CLANG_PATH` - output directory (with loop unrolling)
 
 
 ## Usage

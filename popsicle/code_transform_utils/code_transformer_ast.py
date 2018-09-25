@@ -137,7 +137,7 @@ class CodeTransformerAST:
         max_param_loop = math.pow(20000000000, 1 / loop_depth)
         max_param = int(min(max_param_arr, max_param_loop))
 
-        return max_param, max_arr_dim
+        return max_param, max_arr_dim, loop_depth
 
     def gen_mallocs(self):
         """

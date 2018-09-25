@@ -1,7 +1,9 @@
-export PAPI_UTILS_PATH=
+export POPSICLE_ROOT=
 export OUT_DIR=
 export KERNEL_PATH=
-export LORE_ORIG_PATH=${KERNEL_PATH}/orig/
-export LORE_PROC_PATH=${KERNEL_PATH}/proc/
-export LORE_PROC_CLANG_PATH=${KERNEL_PATH}/unroll/
-export MODELS_DIR=
+
+export LORE_ORIG_PATH=${KERNEL_PATH}/orig
+export LORE_PROC_PATH=${KERNEL_PATH}/proc
+export LORE_PROC_CLANG_PATH=${KERNEL_PATH}/unroll
+export MODELS_DIR=${POPSICLE_ROOT}/models
+export PAPI_UTILS_PATH=${POPSICLE_ROOT}/papi

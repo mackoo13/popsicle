@@ -3,8 +3,9 @@ from functools import reduce
 import numpy as np
 import re
 import os
+import pandas as pd
 # noinspection PyPep8Naming
-from typing import List, Mapping, Tuple
+from typing import List, Tuple
 from pycparser import c_ast
 
 from popsicle.code_transform_utils.exceptions import ParseException
@@ -559,20 +560,6 @@ def remove_comments(code: str) -> str:
     """
     code = re.sub('//.*\n|/\*.*\*/', '', code)  # greedy *?
     return code
-
-
-def save_max_dims(proc_path: str, max_arr_dims: Mapping[str, int]) -> None:
-    """
-    Saves data about maximal array dimensions in programs to a file.
-    Can be extended by other metadata.
-    :param proc_path:
-    :param max_arr_dims:
-    :return:
-    """
-    with open(os.path.join(proc_path, 'metadata.csv'), 'w') as fout:
-        fout.write('alg,max_dim\n')
-        for alg, dim in max_arr_dims.items():
-            fout.write(alg + ',' + str(dim) + '\n')
 
 
 def split_code(code: str) -> Tuple[str, str]:

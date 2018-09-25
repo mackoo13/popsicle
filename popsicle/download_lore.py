@@ -10,7 +10,7 @@ from popsicle.utils import check_config
 check_config(['LORE_ORIG_PATH'])
 
 lore_url = 'https://vectorization.computer/AJAX/get_src.php'
-out_dir = os.environ["LORE_ORIG_PATH"]
+out_dir = os.path.abspath(os.environ["LORE_ORIG_PATH"])
 
 
 def main():
@@ -23,9 +23,9 @@ def main():
     """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("file_name", help="Path to CSV file obtained from LORE query.")
+    parser.add_argument("input_file", help="Path to CSV file obtained from LORE query.")
     args = parser.parse_args()
-    input_file = args.file_name
+    input_file = args.input_file
 
     if not os.path.isdir(out_dir):
         os.makedirs(out_dir)
@@ -36,7 +36,7 @@ def main():
     rows = x.to_dict(orient='records')
 
     for row in rows:
-        fname = out_dir + 'lore_' + row['id'] + '_' + str(row['line']) + '.c'
+        fname = 'lore_' + row['id'] + '_' + str(row['line']) + '.c'
 
         if os.path.isfile(fname):
             print('Skipping ' + fname.split('/')[-1] + ' (already exists)')
@@ -50,7 +50,7 @@ def main():
         code = res.read()
 
         if len(code) > 1:
-            with open(fname, 'w') as fout:
+            with open(os.path.join(out_dir, fname), 'w') as fout:
                 fout.write(code.decode('utf-8'))
         else:
             print('\t(Empty file)')

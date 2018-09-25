@@ -9,11 +9,11 @@ mode=$1
 file_name=$2
 
 if [[ ${mode} == "t" ]]; then
-    popsicle-exec-time $2
+    popsicle-exec-time.sh $2
 elif [[ ${mode} == "g" ]]; then
-    popsicle-exec-gcc $2
+    popsicle-exec-gcc.sh $2
 elif [[ ${mode} == "u" ]]; then
-    popsicle-exec-unroll $2
+    popsicle-exec-unroll.sh $2
 else
     echo "Available modes are: t (time), g (gcc) and u (unroll)."
 fi

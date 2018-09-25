@@ -3,7 +3,7 @@ import re
 from popsicle.utils import check_config
 
 check_config('PAPI_UTILS_PATH')
-papi_utils_path = os.environ['PAPI_UTILS_PATH']
+papi_utils_path = os.path.abspath(os.environ['PAPI_UTILS_PATH'])
 
 
 class CodeTransformerStr:
