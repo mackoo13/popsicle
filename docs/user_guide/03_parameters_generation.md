@@ -49,6 +49,12 @@ PARAM_COUNT
 265
 ```
 
+Command
+
+```
+popsicle-params-lore 3
+```
+
 Output
 
     // (...)_params.txt

@@ -1,6 +1,6 @@
 # Prediction
 
-The script 
+After training the model, you can use it for prediction for own programs. Popsicle will insert all instructions responsible for PAPI measurements, run the program and perform the prediction using persisted models.
 
 
 ## Prerequisites
