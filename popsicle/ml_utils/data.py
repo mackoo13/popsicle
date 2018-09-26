@@ -6,15 +6,15 @@ class Data:
     def __init__(self, mode, df, scaler=None):
         if mode in ('time', 't'):
             self.mode = 'time'
-            self.drop_cols = []
+            self.drop_cols = ['max_arr_dim', 'loop_depth']
             self.y_col = 'time'
         elif mode in ('gcc', 'g'):
             self.mode = 'gcc'
-            self.drop_cols = ['time_O0', 'time_O3']
+            self.drop_cols = ['time_O0', 'time_O3', 'max_arr_dim', 'loop_depth']
             self.y_col = 'speedup'
         elif mode in ('unroll', 'u'):
             self.mode = 'unroll'
-            self.drop_cols = ['time_ur', 'time_nour']
+            self.drop_cols = ['time_ur', 'time_nour', 'max_arr_dim', 'loop_depth']
             self.y_col = 'speedup'
         elif mode in ('predict', 'p'):
             self.mode = 'predict'
