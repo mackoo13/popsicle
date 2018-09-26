@@ -29,7 +29,7 @@ def feature_ranking(data: DataSet) -> np.array:
 
 def add_feats(data: DataSet, step: int, regr) -> Tuple[float, Set[str]]:
     """
-    Applies a greedy algorithm to construct a subset of features giving a good score for the given regressor.
+    Applies a greedy implementation to construct a subset of features giving a good score for the given regressor.
     In each iteration, it will select the 'best' feature of top 'step' features in the ranking.
 
     :param data: DataSet
@@ -113,10 +113,10 @@ def remove_feats(data: DataSet, feats: Set[str], regr) -> Tuple[float, Set[str]]
 class DimReducer:
     def __init__(self, how, n_neighbors_list={4, 8, 12}):
         """
-        For description of 'greedy' strategy, see docs/algorithm/dimensionality_reduction.md.
+        For description of 'greedy' strategy, see docs/implementation/dimensionality_reduction.md.
         KNeighborsRegressor is assumed as the regressor, but can be easily changed to a different model.
 
-        :param how: Which algorithm to use. Available: 'greedy', 'pca'
+        :param how: Which implementation to use. Available: 'greedy', 'pca'
         :param n_neighbors_list: What n_neighbors values to test in the regressor
         """
 

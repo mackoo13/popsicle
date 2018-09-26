@@ -1,5 +1,8 @@
 # Popsicle
 
+A framework for predicting speedup of C programs after optimisation.
+
+
 ## Prerequisites
 
 * [Python 3](https://www.python.org/)
@@ -39,7 +42,7 @@ Specify paths to all files used in next steps.
 Source codes from LORE repository are used to train a model.
 
 #### 2. Code transformation ([read more](docs/user_guide/02_code_transformation.md)) 
-The source codes need to be [transformed](docs/algorithm/training_data_collection.md) to enable PAPI measurements and generate missing code.
+The source codes need to be [transformed](docs/implementation/source_codes.md) to enable PAPI measurements and generate missing code.
 
 #### 3. Parameters generation ([read more](docs/user_guide/03_parameters_generation.md)) 
 Many programs accept the loop bound as a parameter. Running the same program with different loop bounds lets us obtain more reliable data. 

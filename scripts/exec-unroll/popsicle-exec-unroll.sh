@@ -38,7 +38,6 @@ for path in `find ${LORE_PROC_CLANG_PATH} -iname '*.c'`; do
     file_prefix=${LORE_PROC_CLANG_PATH}/${name}/${name}
     ((file_i++))
 
-    # todo else write que pasa
     if [ -e ${file_prefix}_params.txt ]; then
         while read -r params; do
             if ! popsicle-compile-unroll.sh ${file_prefix} "${params}" "unroll(8)"; then break; fi
@@ -69,6 +68,8 @@ for path in `find ${LORE_PROC_CLANG_PATH} -iname '*.c'`; do
             done
 
         done < ${file_prefix}_params.txt
+    else
+        echo "File ${file_prefix}_params.txt is missing!"
     fi
 
 done

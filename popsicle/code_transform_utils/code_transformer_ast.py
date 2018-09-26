@@ -2,11 +2,11 @@ from typing import Iterable
 from pycparser import c_ast, c_parser
 from popsicle.code_transform_utils.expr_estimator import ExprEstimator, remove_non_extreme_numbers
 from popsicle.code_transform_utils.malloc_builder import MallocBuilder
-from popsicle.code_transform_utils.code_transform_utils import ArrayRefVisitor, ForVisitor, AssignmentVisitor, PtrDeclVisitor, \
-    StructVisitor, ArrayDeclVisitor, VarTypeVisitor, ForPragmaUnrollVisitor, DeclRemoveModifiersVisitor, \
-    FuncDefFindVisitor, CompoundInsertNextToVisitor, ForDepthCounter, SingleToCompoundVisitor, \
-    ParseException, ReturnIntVisitor, ArrayDeclToPtrVisitor, papi_instr, pragma_unroll, loop_func_params, \
-    RemoveBoundDeclsVisitor
+from popsicle.code_transform_utils.code_transform_utils import ArrayRefVisitor, ForVisitor, AssignmentVisitor, \
+    PtrDeclVisitor, StructVisitor, ArrayDeclVisitor, VarTypeVisitor, ForPragmaUnrollVisitor, \
+    DeclRemoveModifiersVisitor, FuncDefFindVisitor, CompoundInsertNextToVisitor, ForDepthCounter, \
+    SingleToCompoundVisitor, ParseException, ReturnIntVisitor, ArrayDeclToPtrVisitor, papi_instr, pragma_unroll, \
+    loop_func_params, RemoveBoundDeclsVisitor, dtype_size
 import math
 
 
@@ -18,6 +18,9 @@ class CodeTransformerAST:
         self.dtypes = {}
         self.bounds = set()
         self.verbose = verbose
+
+        self.memory_limit = 200000000
+        self.n_iter_limit = 20000000000
 
         astparser = c_parser.CParser()
         self.ast = astparser.parse(code)
@@ -130,11 +133,20 @@ class CodeTransformerAST:
             raise ParseException('No refs found - cannot determine max_arr_dim')
 
         max_arr_dim = max([len(refs) for refs in self.refs.values()])
+        max_el_size = max([dtype_size(dtype) for var, dtype in self.dtypes.items() if self.__is_array(var)])
         arr_count = len(self.refs)
+
         loop_depth = self.__for_depth()
 
-        max_param_arr = math.pow(200000000 / arr_count, 1 / max_arr_dim)
-        max_param_loop = math.pow(20000000000, 1 / loop_depth)
+        max_param_arr = math.pow(
+            self.memory_limit / max_el_size / arr_count,
+            1 / max_arr_dim
+        )
+
+        max_param_loop = math.pow(
+            self.n_iter_limit,
+            1 / loop_depth
+        )
         max_param = int(min(max_param_arr, max_param_loop))
 
         return max_param, max_arr_dim, loop_depth
@@ -209,6 +221,9 @@ class CodeTransformerAST:
         fdc = ForDepthCounter(0)
         fdc.visit(self.ast)
         return fdc.result
+
+    def __is_array(self, var_name):
+        return var_name in self.refs
 
     def __return_int(self):
         """

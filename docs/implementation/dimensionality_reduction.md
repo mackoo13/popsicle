@@ -29,7 +29,7 @@ This pseudocode assumes checking only top 5 components in each iteration. This p
 
     1. selected_features = []
     2. for each of the top 5 features:
-          calculate kNN score if we added this feature to selected_features
+          calculate kNN score if we add this feature
     3. let best_feature be the one potentially giving highest score 
     4. if score(selected_features + best_feature) > score(selected_features):
           selected_features.append(best_feature)

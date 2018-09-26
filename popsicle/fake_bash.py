@@ -8,6 +8,7 @@ def display_message(script_name):
           + script_name + '.sh')
 
 
+# noinspection PyShadowingBuiltins
 def exec():
     display_message('popsicle-exec')
 

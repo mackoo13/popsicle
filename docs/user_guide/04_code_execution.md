@@ -19,48 +19,31 @@ Different scripts are used to execute the programs, depending on the purpose of 
 
 The results will be saved in `$OUT_DIR`.
 
-## Usage (for time prediction)
+## Usage
 
-### `popsicle-exec.sh t [output_file_name]`
+### `popsicle-exec.sh [mode] [output_file_name]`
 
-`output_file_name` should be provided without extension. The output will be saved to `$OUT_DIR/time/[output_file_name].csv`.
+#### `mode`
 
-Compiler: gcc
+* `t` for execution time prediction
+* `g` for GCC speedup prediction
+* `u` for loop unrolling speedup prediction
 
+#### `output_file_name`
 
-## Usage (for GCC optimisation speedup prediction)
-
-Runs the programs compiled with `-O0` and `-O3` [optimisation flags](https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html).
-
-### `popsicle-exec.sh g [output_file_name]`
-
-#### `[output_file_name]`
-File name without extension. The output will be saved as two files: 
-
-* `$OUT_DIR/gcc/[output_file_name]_O0.csv` (compiled with `-O0`)
-* `$OUT_DIR/gcc/[output_file_name]_O3.csv` (compiled with `-O3`)
-
-Compiler: gcc
+Should be provided without extension. The output will be saved to:
+* `$OUT_DIR/time/[output_file_name].csv` in `t` mode.
 
 
-## Usage (for loop unrolling speedup prediction)
+* `$OUT_DIR/gcc/[output_file_name]_O0.csv` (compiled with `-O0`) and `$OUT_DIR/gcc/[output_file_name]_O3.csv` (compiled with `-O3`) in `g` mode
 
-Used to collect data for speedup prediction (comparing the same programs with or without loop unrolling).
 
-### `popsicle-exec.sh u [output_file_name]`
-
-#### `[output_file_name]` 
-File name without extension. The output will be saved as two files: 
-
-* `$OUT_DIR/unroll/[output_file_name]_ur.csv` (unrolling enabled)
-* `$OUT_DIR/unroll/[output_file_name]_nour.csv` (unrolling disabled)
-
-Compiler: clang
+* `$OUT_DIR/unroll/[output_file_name]_ur.csv` (unrolling enabled) and `$OUT_DIR/unroll/[output_file_name]_nour.csv` (unrolling disabled) in `u` mode
 
 
 ## Output
 
-The outputs of the script in three modes will be saved into separate subdirectories of `$OUT_DIR`:
+The output of the script in three modes will be saved into separate subdirectories of `$OUT_DIR`:
 
     $OUT_DIR
     ├-- gcc             // gcc mode
@@ -68,6 +51,13 @@ The outputs of the script in three modes will be saved into separate subdirector
     ├-- predict   
     └-- unroll          // unroll mode
         
+Output file format:
+
+    alg, run, PAPI_EVENT_1, PAPI_EVENT_2, ..., PAPI_EVENT_n, time
+    program1, -D N=100, 42, 434, ..., 65, 9.433
+    program1, -D N=200, 80, 730, ..., 144, 22.563
+    
+Where `alg` is the program name, `run` are the parameters injected during compilation and `time` is the execution time in milliseconds.
 
 ## Next step
 

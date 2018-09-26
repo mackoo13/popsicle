@@ -10,7 +10,7 @@ class Data:
             self.y_col = 'time'
         elif mode in ('gcc', 'g'):
             self.mode = 'gcc'
-            self.drop_cols = ['time_O0', 'time_O3']     # todo max dim
+            self.drop_cols = ['time_O0', 'time_O3']
             self.y_col = 'speedup'
         elif mode in ('unroll', 'u'):
             self.mode = 'unroll'

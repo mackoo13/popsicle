@@ -20,7 +20,7 @@ class WeightsTuner:
         self.__random_init()
 
     def fit(self):
-        print('Weights tuning (using genetic algorithm)')
+        print('Weights tuning (using genetic implementation)')
         for gen in range(self.n_generations):
             print('\tGeneration ' + str(gen) + '/' + str(self.n_generations))
 

@@ -1,4 +1,7 @@
-# Training data collection
+# Source codes for training
+
+A large amount of data must be collected to train a model. To use performance counters, we need not only the source codes of programs, but also be able to execute them.
+
 
 ## LORE programs
 

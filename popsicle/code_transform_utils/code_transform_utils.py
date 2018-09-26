@@ -2,8 +2,6 @@ from __future__ import print_function
 from functools import reduce
 import numpy as np
 import re
-import os
-import pandas as pd
 # noinspection PyPep8Naming
 from typing import List, Tuple
 from pycparser import c_ast
@@ -485,6 +483,21 @@ class VarTypeVisitor(c_ast.NodeVisitor):
 def build_decl(var_name: str, var_type: str) -> c_ast.Decl:
     type_decl = c_ast.TypeDecl(var_name, [], c_ast.IdentifierType([var_type]))
     return c_ast.Decl(var_name, [], [], [], type_decl, None, None)
+
+
+def dtype_size(dtype):
+    dtype = dtype.split(' ')[-1]    # signed, unsigned etc
+
+    if dtype == 'char':
+        return 1
+    elif dtype in ('int', 'short'):
+        return 2
+    elif dtype == 'float':
+        return 4
+    elif dtype == 'double':
+        return 8
+    else:
+        return 2
 
 
 def exprs_prod(exprs: List[c_ast.Node]) -> c_ast.Node:
