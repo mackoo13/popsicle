@@ -10,4 +10,4 @@ notebooks/.ipynb_checkpoints/*
 logs
 venv
 CMakeLists.txt
-config/lore.cfg
+config/popsicle.cfg
