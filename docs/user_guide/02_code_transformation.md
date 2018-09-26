@@ -1,6 +1,6 @@
 # Code transformation
 
-Scripts `popsicle-transform-lore` prepares C source code to be executed and to perform measurements with PAPI.
+`popsicle-transform-lore` prepares C source code to be executed and to perform measurements with PAPI.
 
 The input is meant to be in a format used in LORE.
 
