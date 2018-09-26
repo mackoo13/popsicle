@@ -1,6 +1,6 @@
 # Prediction
 
-The script 
+After training the model, you can use it for prediction for own programs. Popsicle will insert all instructions responsible for PAPI measurements, run the program and perform the prediction using persisted models.
 
 
 ## Prerequisites
@@ -16,7 +16,7 @@ Remember to run `source config/lore.cfg` first. It will populate the following e
 
 ### `popsicle-predict.sh [mode] [file_path]`
 
-###`mode`
+### `mode`
 * `time` or `t` to predict execution time
 * `gcc` or `g` to predict speedup between `-O0` and `-O3` 
 * `unroll` or `u` to predict speedup after loop unrolling 
