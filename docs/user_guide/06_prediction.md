@@ -14,10 +14,14 @@ Remember to run `source config/lore.cfg` first. It will populate the following e
 
 ## Usage: 
 
-### `popsicle-predict.sh [file_path]`
+### `popsicle-predict.sh [mode] [file_path]`
+
+### `mode`
+`t` (time prediction), `g` (gcc speedup prediction) or `u` (unroll speedup prediction)
 
 ### `file_path`
 Path to your C file. The required file format is presented below. Please make sure you conform to it or your file might be handled incorrectly by Popsicle.
+
 
 ## Input code format
 

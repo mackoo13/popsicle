@@ -16,4 +16,5 @@ elif [[ ${mode} == "u" ]]; then
     popsicle-exec-unroll.sh $2
 else
     echo "Available modes are: t (time), g (gcc) and u (unroll)."
+    exit 1
 fi
